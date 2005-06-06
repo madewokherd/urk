@@ -4,6 +4,11 @@ import conf
 import pygtk
 import gtk
 
+class data:
+    def __init__(self, **kwargs):
+        for attr in kwargs:
+            setattr(self, attr, kwargs[attr])
+
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
     def write(self, text):
@@ -16,6 +21,20 @@ class IrcWindow(gtk.VBox):
         
         if True: # i want this to be not scroller up...
             self.view.scroll_mark_onscreen(self.mark)
+    
+    # we entered some text in the entry box
+    def entered_text(self, entry, event, data=None):
+        if event.keyval == 65293:
+            lines = entry.get_text().split("\n")
+
+            for line in lines:
+                if line:
+                    self.entered_line(line)
+            
+            entry.set_text("")
+    
+    def entered_line(self, text):
+        events.trigger('Input', data(window=self, text=text))
         
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
@@ -39,6 +58,8 @@ class IrcWindow(gtk.VBox):
     # this is our editbox   
     def bottom_section(self):
         self.entry = gtk.Entry()
+        
+        self.entry.connect("key_press_event", self.entered_text)
         
         self.entry.show()
         
@@ -107,7 +128,7 @@ class IrcUI:
 
         self.newTab(initialWindow)
 
-        self.newTab(IrcWindow("Extra Window"))
+        #self.newTab(IrcWindow("Extra Window"))
 
         self.window.add(self.tabs)
         

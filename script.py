@@ -9,3 +9,6 @@ def dothebartmanJoin(event):
     
 def dothebartmanPart(event):
     print "bartmano", "part"
+
+def onInput(event):
+    event.window.write(event.text)
