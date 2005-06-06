@@ -5,6 +5,18 @@ import pygtk
 import gtk
 
 class IrcWindow(gtk.VBox):        
+    # the all knowing print to our text window function
+    def write(self, text):
+        newline = "\n"
+    
+        if self.text.get_char_count() == 0:
+            newline = ""
+    
+        self.text.insert(self.text.get_end_iter(),newline + text)
+        
+        if True: # i want this to be not scroller up...
+            self.view.scroll_mark_onscreen(self.mark)
+        
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
         self.view = gtk.TextView()
@@ -20,15 +32,20 @@ class IrcWindow(gtk.VBox):
         scrwin.add(self.view)
         scrwin.show()
         
+        self.mark = self.text.create_mark('end',self.text.get_end_iter(),False)
+        
         return scrwin
      
     # this is our editbox   
     def bottom_section(self):
-        textEntry = gtk.Entry()
+        self.entry = gtk.Entry()
         
-        textEntry.show()
+        self.entry.show()
         
-        return textEntry
+        return self.entry
+
+    def focus(self, widget, event):
+        self.entry.grab_focus()
 
     def __init__(self, title=None):
         gtk.VBox.__init__(self, False)
@@ -37,6 +54,10 @@ class IrcWindow(gtk.VBox):
 
         self.pack_start(self.top_section())
         self.pack_end(self.bottom_section(), expand=False)
+        
+        self.set_focus_child(self.entry)
+        
+        self.connect('focus', self.focus)
         
         self.show()
         
@@ -67,14 +88,14 @@ class IrcUI:
 
     def __init__(self):
         # create a new window
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
-        window.connect("delete_event", self.delete_event)
-        window.connect("destroy", self.destroy)
+        self.window.connect("delete_event", self.delete_event)
+        self.window.connect("destroy", self.destroy)
 
-        window.set_border_width(10)
-        window.set_title("Irc")
-        window.resize(500, 500) 
+        self.window.set_border_width(10)
+        self.window.set_title("Irc")
+        self.window.resize(500, 500) 
         
         # create some tabs
         self.tabs = gtk.Notebook()
@@ -82,12 +103,19 @@ class IrcUI:
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
-        self.newTab(IrcWindow("Status Window"))
+        initialWindow = IrcWindow("Status Window")
 
-        window.add(self.tabs)
+        self.newTab(initialWindow)
+
+        self.newTab(IrcWindow("Extra Window"))
+
+        self.window.add(self.tabs)
         
         self.tabs.show()
-        window.show()       
+        
+        self.window.show()
+        
+        self.tabs.set_focus_child(initialWindow)
 
 def main():
     IrcUI()
