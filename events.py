@@ -1,6 +1,11 @@
 import sys
 import os
 
+class data:
+    def __init__(self, **kwargs):
+        for attr in kwargs:
+            setattr(self, attr, kwargs[attr])
+
 trigger_sequence = ("setup", "pre", "on", "post")
 
 events = {}
