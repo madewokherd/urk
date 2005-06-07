@@ -19,12 +19,12 @@ class IrcWindow(gtk.VBox):
     
         self.text.insert(self.text.get_end_iter(),newline + text)
         
-        if True: # i want this to be not scroller up...
+        if True: # i want this to be not scrolled up...
             self.view.scroll_mark_onscreen(self.mark)
     
     # we entered some text in the entry box
     def entered_text(self, entry, event, data=None):
-        if event.keyval == 65293:
+        if event.keyval == gtk.gdk.keyval_from_name("Return"):
             lines = entry.get_text().split("\n")
 
             for line in lines:
