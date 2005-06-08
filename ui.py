@@ -3,6 +3,34 @@ import events
 import pygtk
 import gtk
 
+import gobject
+
+menu = (
+    ("FileMenu", None, "_File"),
+        ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
+    
+    ("EditMenu", None, "_Edit"),
+        ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
+    
+    ("HelpMenu", None, "_Help"),
+        ("About", gtk.STOCK_ABOUT, "_About", None, None)
+)
+
+ui_info = \
+"""<ui>
+ <menubar name="MenuBar">
+  <menu action="FileMenu">
+   <menuitem action="Quit"/>
+  </menu>
+  <menu action="EditMenu">
+   <menuitem action="Preferences"/>
+  </menu>
+  <menu action="HelpMenu">
+   <menuitem action="About"/>
+  </menu>
+ </menubar>
+</ui>"""
+
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
     def write(self, text):
@@ -36,14 +64,12 @@ class IrcWindow(gtk.VBox):
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
-        self.view.show()
 
         self.text = self.view.get_buffer()
         
         scrwin = gtk.ScrolledWindow()
         scrwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrwin.add(self.view)
-        scrwin.show()
         
         self.mark = self.text.create_mark('end', self.text.get_end_iter(), False)
         
@@ -52,11 +78,8 @@ class IrcWindow(gtk.VBox):
     # this is our editbox   
     def bottom_section(self):
         self.entry = gtk.Entry()
-        
         self.entry.connect("key_press_event", self.entered_text)
-        
-        self.entry.show()
-        
+
         return self.entry
 
     def focus(self, widget, event):
@@ -74,22 +97,21 @@ class IrcWindow(gtk.VBox):
         
         self.connect('focus', self.focus)
         
-        self.show()
+        self.show_all()
         
 class IrcChannelWindow(IrcWindow):
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
         self.nicklist = gtk.TreeView()
-        self.nicklist.show()
         
         win = gtk.HPaned()
         win.pack1(IrcWindow.top_section(self), resize=True)
         win.pack2(self.nicklist, resize=False)
-        win.show()
+        win.show_all()
         
         return win
 
-class IrcUI:
+class IrcUI(gtk.Window):
     def newTab(self, window):
         title = gtk.Label(window.title)
          
@@ -106,18 +128,31 @@ class IrcUI:
         gtk.gdk.threads_init()
         
         # create a new window
-        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
-        self.window.connect("delete_event", self.delete_event)
-        self.window.connect("destroy", self.destroy)
+        self.connect("delete_event", self.delete_event)
+        self.connect("destroy", self.destroy)
 
-        self.window.set_border_width(10)
-        self.window.set_title("Irc")
-        self.window.resize(500, 500) 
+        #self.set_border_width(10)
+        self.set_title("Urk")
+        self.resize(500, 500) 
+        
+        actions = gtk.ActionGroup("Actions")
+        actions.add_actions(menu)
+        
+        ui = gtk.UIManager()
+        ui.insert_action_group(actions, 0)
+        
+        try:
+            mergeid = ui.add_ui_from_string(ui_info)
+        except gobject.GError, msg:
+            print "building menus failed: %s" % msg
+        
         
         # create some tabs
         self.tabs = gtk.Notebook()
-                
+        
+        self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
@@ -126,12 +161,14 @@ class IrcUI:
         self.newTab(initialWindow)
 
         #self.newTab(IrcWindow("Extra Window"))
+        
+        box = gtk.VBox(False)
+        box.pack_start(ui.get_widget("/MenuBar"), expand=False)
+        box.pack_end(self.tabs)
 
-        self.window.add(self.tabs)
+        self.add(box)
         
-        self.tabs.show()
-        
-        self.window.show()
+        self.show_all()
         
         self.tabs.set_focus_child(initialWindow)
         
