@@ -2,7 +2,11 @@ import events
 import conf
 
 if __name__ == "__main__":
-    # FIXME, load an irc object ready to do our networked bidding
+    import irc
+    irc.DEBUG = True
+    
+    x = irc.Network("irc.arlott.org", "Marc", "irc.arlott.org")
+    x.connect()
 
     # FIXME, look in our conf
     #        what have we got?

@@ -47,7 +47,7 @@ def parseIrc(message, server):
             
     return result
 
-def handle_connect(socket, init, network, address):   
+def handle_connect(socket, init, network, address):
     try:
         socket.connect(address)
         
@@ -131,9 +131,6 @@ class Network:
         parsed = parseIrc(msg, self.server)
 
         events.trigger('Raw', events.data(rawmsg=msg, msg=parsed, network=self))
-        
-        if parsed[1] == "PING":
-            self.raw("PONG :%s" % parsed[-1])
     
     #this is probably not necessary
     #def onDisconnect(self, **kwargs):
@@ -146,6 +143,8 @@ class Network:
             #self.raw("NICK %s" % self.nick)
             #self.raw("USER %s %s %s :%s" % ("a", "b", "c", "Marc Liddell"))
             events.trigger('SocketConnect', events.data(network=self))
+            
+            print "."
         
         if not self.connecting:
             self.connecting = True

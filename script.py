@@ -29,3 +29,10 @@ def onStart(event):
         #        network_object.connect()
         
         print "Connecting to %s" % network
+
+def onRaw(event):
+    if event.msg[1] == "PONG":
+        event.network.raw("PONG :%s" % event.msg[-1])
+        
+def onDisconnect(event):
+    print "disconnect"
