@@ -102,6 +102,9 @@ class IrcUI:
         gtk.main_quit()
 
     def __init__(self):
+        # threading stuff
+        gtk.gdk.threads_init()
+        
         # create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
