@@ -112,7 +112,7 @@ class IrcChannelWindow(IrcWindow):
         return win
 
 class IrcUI(gtk.Window):
-    def newTab(self, window):
+    def new_tab(self, window):
         title = gtk.Label(window.title)
          
         self.tabs.append_page(window, title)
@@ -158,9 +158,9 @@ class IrcUI(gtk.Window):
 
         initialWindow = IrcWindow("Status Window")
 
-        self.newTab(initialWindow)
+        self.new_tab(initialWindow)
 
-        #self.newTab(IrcWindow("Extra Window"))
+        #self.new_tab(IrcWindow("Extra Window"))
         
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
