@@ -11,7 +11,7 @@ import __main__ as urk
 
 DEBUG = 0
 
-def parseIrc(message, server):
+def parse_irc(message, server):
     result = []
     
     message = message.rstrip()
@@ -54,29 +54,29 @@ def handle_connect(socket, init, network, address):
         init()
          
         reply = socket.recv(8192)
-        inBuffer = reply
+        in_buffer = reply
             
         while reply:
             while 1:
-                pos = inBuffer.find("\r\n")
+                pos = in_buffer.find("\r\n")
                 if pos == -1:
                     break
-                line = inBuffer[0:pos]
-                inBuffer = inBuffer[pos+2:]
+                line = in_buffer[0:pos]
+                in_buffer = in_buffer[pos+2:]
                 
                 if DEBUG:
                     print ">>> %s" % line
                 
                 #gtk.gdk.threads_enter()
                 try:
-                    network.gotMsg(line)
+                    network.got_msg(line)
                 except:
                     print "Error processing incoming text: "+line
                     traceback.print_exception(*sys.exc_info())
                 #gtk.gdk.threads_leave()
             
             reply = socket.recv(8192)
-            inBuffer += reply
+            in_buffer += reply
     except:
         error = sys.exc_info()
     else:
@@ -127,8 +127,8 @@ class Network:
         
         self.sock.send(msg)
         
-    def gotMsg(self, msg):
-        parsed = parseIrc(msg, self.server)
+    def got_msg(self, msg):
+        parsed = parse_irc(msg, self.server)
 
         events.trigger('Raw', events.data(rawmsg=msg, msg=parsed, network=self))
     
@@ -155,45 +155,45 @@ class Network:
             
             events.trigger('Connecting', events.data(network=self))
             
-    def normalizeCase(self, string):
+    def normalize_case(self, string):
         return string.lower()
     
     #returns a User object for the user
     def user(self, name):
-        normalName = self.normalizeCase(name)
-        result = self._users.get(normalName)
+        normal_name = self.normalize_case(name)
+        result = self._users.get(normal_name)
         if not result:
             result = User()
             result.name = name
-            result.normalName = normalName
+            result.normal_name = normal_name
             result.network = self
-            self._users[normalName] = result
+            self._users[normal_name] = result
         return result
     
     #returns a User or Channel
     def entity(self, name):
-        normalName = self.normalizeCase(name)
-        result = self._channels.get(normalName)
+        normal_name = self.normalize_case(name)
+        result = self._channels.get(normal_name)
         if not result:
-            result = self._users.get(normalName)
+            result = self._users.get(normal_name)
             if not result:
                 result = User()
                 result.name = name
-                result.normalName = normalName
+                result.normal_name = normal_name
                 result.network = self
-                self._users[normalName] = result
+                self._users[normal_name] = result
         return result
     
     #returns a Channel
     def channel(self, name):
-        normalName = self.normalizeCase(name)
-        result = self._channels.get(normalName)
+        normal_name = self.normalize_case(name)
+        result = self._channels.get(normal_name)
         if not result:
             result = Channel()
             result.name = name
-            result.normalName = normalName
+            result.normal_name = normal_name
             result.network = self
-            self._channels[normalName] = result
+            self._channels[normal_name] = result
         return result
     
     #I'm not sure I like these, but there doesn't seem to be a reason to get
@@ -221,22 +221,22 @@ class Channel:
     type = "channel"
     
     name = ""
-    normalName = ""
+    normal_name = ""
     address = ""
     network = ""
     # window = None
     
     def __eq__(self,oth):
-        if hasattr(oth,'normalName'):
-            return self.normalName == oth.normalName
+        if hasattr(oth,'normal_name'):
+            return self.normal_name == oth.normal_name
         else:
-            return self.normalName == self.network.normalizeCase(str(oth))
+            return self.normal_name == self.network.normalize_case(str(oth))
     
     def __init__(self):
         self.nicks = []
     
     def __hash__(self):
-        return hash(self.normalName)
+        return hash(self.normal_name)
 
     def __repr__(self):
         return "<User instance "+repr(self.name)+">"
@@ -253,19 +253,19 @@ class Channel:
 class User:
     type = "user"
     name = ""
-    normalName = ""
+    normal_name = ""
     address = ""
     network = ""
     # window = None
     
     def __eq__(self,oth):
-        if hasattr(oth,'normalName'):
-            return self.normalName == oth.normalName
+        if hasattr(oth,'normal_name'):
+            return self.normal_name == oth.normal_name
         else:
-            return self.normalName == self.network.normalizeCase(str(oth))
+            return self.normal_name == self.network.normalize_case(str(oth))
 
     def __hash__(self):
-        return hash(self.normalName)
+        return hash(self.normal_name)
 
     def __repr__(self):
         return "<User instance "+repr(self.name)+">"
