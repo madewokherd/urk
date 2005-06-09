@@ -4,7 +4,7 @@ import gconf
 
 client = gconf.client_get_default()
 
-client.add_dir("/apps/ork",gconf.CLIENT_PRELOAD_ONELEVEL)
+client.add_dir("/apps/urk",gconf.CLIENT_PRELOAD_ONELEVEL)
 
 def valueToPython(value):
     if value:
@@ -24,7 +24,7 @@ def valueToPython(value):
         return None
 
 def get(key):
-    return valueToPython(client.get("/apps/ork/"+key))
+    return valueToPython(client.get("/apps/urk/"+key))
 
 #def onCommandGetconfig(args,window,output,**kwargs):
 #    if 'auto' in output:
@@ -32,11 +32,11 @@ def get(key):
 #        window.write(repr(get(args[0])))
 
 def set(key, value):
-    key = "/apps/ork/"+key
+    key = "/apps/urk/"+key
     setfunctions = {int: client.set_int, float: client.set_float, bool: client.set_bool}    
     if type(value) in setfunctions:
         setfunctions[type(value)](key, value)
-    elif type(value) == str and not value.startswith("python:"):
+    elif isinstance(value, str) and not value.startswith("python:"):
         client.set_string(key, value)
     else:
         client.set_string(key, "python:"+repr(value))
@@ -48,7 +48,7 @@ def set(key, value):
 
 class notify:
     def __init__(self, key, function):
-        self.key = "/apps/ork/"+key
+        self.key = "/apps/urk/"+key
         self.function = function
         self.notify_id = client.notify_add(key, self.call_function)
     def call_function(self, client, cnxn_id, entry):

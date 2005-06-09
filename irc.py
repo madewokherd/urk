@@ -140,12 +140,8 @@ class Network:
     
     def connect(self):
         def init():
-            #self.raw("NICK %s" % self.nick)
-            #self.raw("USER %s %s %s :%s" % ("a", "b", "c", "Marc Liddell"))
             events.trigger('SocketConnect', events.data(network=self))
-            
-            print "."
-        
+
         if not self.connecting:
             self.connecting = True
             self.sock = socket.socket()

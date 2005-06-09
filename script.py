@@ -57,7 +57,7 @@ def onStart(event):
     #         then join them
     def list_of_networks_to_join_from_somewhere():
         return ["ANet", "BNet", "CNet"]
-    
+
     on_start_networks = list_of_networks_to_join_from_somewhere()
     
     for network in on_start_networks:
@@ -68,10 +68,22 @@ def onStart(event):
         #        network_object.connect()
         
         print "Connecting to %s" % network
+        
+def onConnectArlottOrg(event):
+    import irc
+    irc.DEBUG = 1
+    
+    print "Connecting to blackhole.arlott.org..."
+ 
+    irc.Network("irc.arlott.org", "MrUrk", "blackhole.arlott.org").connect()
 
 def onRaw(event):
-    if event.msg[1] == "PONG":
+    if event.msg[1] == "PING":
         event.network.raw("PONG :%s" % event.msg[-1])
+        
+def onSocketConnect(event):
+    event.network.raw("NICK %s" % "MrUrk")
+    event.network.raw("USER %s %s %s :%s" % ("a", "b", "c", "MrUrk"))
         
 def onDisconnect(event):
     print "disconnect"

@@ -5,9 +5,15 @@ import gtk
 
 import gobject
 
+import conf
+
+def connectToArlottOrg(widget):
+    events.trigger("ConnectArlottOrg")
+
 menu = (
     ("FileMenu", None, "_File"),
         ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
+        ("Connect", None, "_Connect", None, None, connectToArlottOrg),
     
     ("EditMenu", None, "_Edit"),
         ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
@@ -20,11 +26,14 @@ ui_info = \
 """<ui>
  <menubar name="MenuBar">
   <menu action="FileMenu">
+   <menuitem action="Connect"/>
    <menuitem action="Quit"/>
   </menu>
+  
   <menu action="EditMenu">
    <menuitem action="Preferences"/>
   </menu>
+  
   <menu action="HelpMenu">
    <menuitem action="About"/>
   </menu>
@@ -116,11 +125,20 @@ class IrcUI(gtk.Window):
         title = gtk.Label(window.title)
          
         self.tabs.append_page(window, title)
+        
+    def shutdown(self):
+        conf.set("width", self.w)
+        conf.set("height", self.h)
+
+        conf.set("x", self.x)
+        conf.set("y", self.y)
 
     def delete_event(self, widget, event, data=None):
         return False
 
     def destroy(self, widget, data=None):
+        self.shutdown()
+    
         gtk.main_quit()
 
     def __init__(self):
@@ -128,14 +146,33 @@ class IrcUI(gtk.Window):
         gtk.gdk.threads_init()
         
         # create a new window
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        gtk.Window.__init__(self)
 
         self.connect("delete_event", self.delete_event)
         self.connect("destroy", self.destroy)
+        
+        def record_resize(widget, event):
+            self.w, self.h = event.width, event.height
+            self.x, self.y = event.x, event.y
+        
+        self.connect("configure_event", record_resize)
 
-        #self.set_border_width(10)
         self.set_title("Urk")
-        self.resize(500, 500) 
+        
+        # FIXME reduce all of this to 1 line of code, or somehow make it
+        #       neater
+              
+        self.w = conf.get("width") or 500        
+        self.h = conf.get("height") or 500
+        self.set_default_size(self.w, self.h)
+        
+        self.x, self.y = conf.get("x"), conf.get("y")
+        if self.x == None:
+            self.x = -1
+
+        if self.y == None:
+            self.y = -1
+        self.move(self.x, self.y)
         
         actions = gtk.ActionGroup("Actions")
         actions.add_actions(menu)
@@ -147,8 +184,7 @@ class IrcUI(gtk.Window):
             mergeid = ui.add_ui_from_string(ui_info)
         except gobject.GError, msg:
             print "building menus failed: %s" % msg
-        
-        
+
         # create some tabs
         self.tabs = gtk.Notebook()
         
@@ -171,6 +207,11 @@ class IrcUI(gtk.Window):
         self.show_all()
         
         self.tabs.set_focus_child(initialWindow)
-        
-IrcUI()
-gtk.main()
+
+ui = IrcUI()
+
+def start():
+    try:
+        gtk.main()
+    except KeyboardInterrupt:
+        ui.shutdown()
