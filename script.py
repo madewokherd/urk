@@ -42,6 +42,10 @@ command_handlers = {
     'echo': handle_echo,
 }
 
+def setupCommand(event):
+    if not hasattr(event, 'actions'):
+        event.actions = set(['default'])
+
 def onCommand(event):
     if 'default' in event.actions and event.name in command_handlers:
         command_handlers[event.name](event)
