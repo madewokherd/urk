@@ -1,22 +1,13 @@
 import events
+import __main__ as urk
 
-def onStart(event):
-    print "Omg, we've started"
-    
-def preJoin(event):
-    print "pre", "join"
-    
-def dothebartmanJoin(event):
-    print "bartman", "join"
-    
-def dothebartmanPart(event):
-    print "bartmano", "part"
+command_char = "/"
 
 def setupInput(event):
     if not hasattr(event, 'actions'):
         event.actions = set()
         
-    if event.text[0] == '/':
+    if event.text[0] == command_char:
         event.actions.add('command')
         event.command = event.text[1:]
     else:
@@ -55,35 +46,34 @@ def postCommand(event):
     if 'default' in event.actions:
         event.window.write("Unknown command: "+event.name)
         event.actions.remove('default')
+        
+# FIXME, find a list of networks to join from somewhere, prolly conf
+#         then join them
+def start_networks():
+    return []
 
 def onStart(event):
-    # FIXME, find a list of networks to join from somewhere, prolly conf
-    #         then join them
-    def list_of_networks_to_join_from_somewhere():
-        return ["ANet", "BNet", "CNet"]
-
-    on_start_networks = list_of_networks_to_join_from_somewhere()
+    on_start_networks = start_networks()
     
     for network in on_start_networks:
-        # FIXME, connect to it
-        #        how do we do this?
-        #        we prolly call something.connect(network)
-        #        or else maybe we create a network object and call
-        #        network_object.connect()
-        
-        print "Connecting to %s" % network
+        # FIXME, given a network, might we want to look up servers?, possibly 
+        #        this should happen on instantiation of the Network() otherwise
+        #        i guess it should be done whenever we need to connect to a
+        #        network, ie. here and some other places
+        urk.connect(network)
         
 def onConnectArlottOrg(event):
     import irc
-    irc.DEBUG = 1
+
+    x = irc.Network("irc.arlott.org", "MrUrk", "blackhole.arlott.org")
     
-    print "Connecting to blackhole.arlott.org..."
- 
-    irc.Network("irc.arlott.org", "MrUrk", "blackhole.arlott.org").connect()
+    urk.connect(x)
 
 def onRaw(event):
     if event.msg[1] == "PING":
         event.network.raw("PONG :%s" % event.msg[-1])
+        
+    event.window.write(event.rawmsg)
         
 def onSocketConnect(event):
     event.network.raw("NICK %s" % "MrUrk")

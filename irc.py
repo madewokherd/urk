@@ -97,8 +97,6 @@ class Network:
     password = ''
     
     connecting = False
-    
-    #window = None  #this should probably be handled elsewhere
     #name = ''
     
     me = None # me as a user
@@ -128,9 +126,13 @@ class Network:
         self.sock.send(msg)
         
     def got_msg(self, msg):
-        parsed = parse_irc(msg, self.server)
+        data = events.data()
+        data.rawmsg = msg
+        data.msg = parse_irc(msg, self.server)
+        data.network = self
+        data.window = urk.get_window[self]
 
-        events.trigger('Raw', events.data(rawmsg=msg, msg=parsed, network=self))
+        events.trigger('Raw', data)
     
     #this is probably not necessary
     #def onDisconnect(self, **kwargs):
