@@ -1,5 +1,6 @@
 import events
 import __main__ as urk
+import ui
 
 command_char = "/"
 
@@ -21,6 +22,7 @@ def onInput(event):
            args=split[1:],
            text=event.command,
            window=event.window,
+           network=event.network,
            ))
         event.actions.remove('command')
 
@@ -29,8 +31,23 @@ def onInput(event):
 def handle_echo(event):
     event.window.write(' '.join(event.args))
 
+def handle_query(event):
+    target = event.network.user(event.args[0])
+    if target.window:
+        #FIXME: select the window
+        pass
+    else:
+        window = ui.IrcWindow(str(target))
+           # str so if we say /query byte and we see Byte, we query Byte
+        window.set_data('type', 'query')
+        window.set_data('target', target)
+        target.window = window
+        ui.ui.new_tab(target.window, event.network)
+        
+
 command_handlers = {
     'echo': handle_echo,
+    'query': handle_query,
 }
 
 def setupCommand(event):

@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 
 class data:
     def __init__(self, **kwargs):
@@ -20,8 +21,8 @@ def trigger(e_name, e_data=None):
                 for f_ref, s_name in event_f[t]:
                     try:
                         f_ref(e_data)
-                    except Exception, e:
-                        print f_ref.__name__, e_data, e
+                    except:
+                        traceback.print_exc()
     
 def dir_and_file(filename):
     d = os.path.dirname(filename)

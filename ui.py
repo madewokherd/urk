@@ -65,7 +65,11 @@ class IrcWindow(gtk.VBox):
             entry.set_text("")
     
     def entered_line(self, text):
-        events.trigger('Input', events.data(window=self, text=text))
+        e_data = events.data()
+        e_data.window = self
+        e_data.text = text
+        e_data.network = self.get_data('network')
+        events.trigger('Input', e_data)
         
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
@@ -121,10 +125,26 @@ class IrcChannelWindow(IrcWindow):
         return win
 
 class IrcUI(gtk.Window):
-    def new_tab(self, window):
+    def new_tab(self, window, network=None):
+        #gtk.gdk.threads_enter()
+        
         title = gtk.Label(window.title)
-         
-        self.tabs.append_page(window, title)
+        
+        window.set_data('network', network)
+        
+        if network:
+            n = self.tabs.get_n_pages()
+            for i in xrange(n-1,-1,-1):
+                insert_candidate = self.tabs.get_nth_page(i)
+                if insert_candidate.get_data('network') == network:
+                    self.tabs.insert_page(window, title, i+1)
+                    break
+            else:
+                self.tabs.append_page(window, title)
+        else:
+            self.tabs.append_page(window, title)
+        
+        #gtk.gdk.threads_leave()
         
     def shutdown(self):
         conf.set("width", self.w)

@@ -16,7 +16,7 @@ def connect(network):
     
     network_window = ui.IrcWindow(network.fullname)
     
-    ui.ui.new_tab(network_window)
+    ui.ui.new_tab(network_window, network)
     
     get_network[network_window] = network
     get_window[network] = network_window

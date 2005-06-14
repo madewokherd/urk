@@ -222,7 +222,7 @@ class Channel:
     normal_name = ""
     address = ""
     network = ""
-    # window = None
+    window = None
     
     def __eq__(self,oth):
         if hasattr(oth,'normal_name'):
@@ -254,7 +254,7 @@ class User:
     normal_name = ""
     address = ""
     network = ""
-    # window = None
+    window = None
     
     def __eq__(self,oth):
         if hasattr(oth,'normal_name'):
