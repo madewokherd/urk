@@ -44,11 +44,13 @@ class IrcWindow(gtk.VBox):
     # the all knowing print to our text window function
     def write(self, text):
         newline = "\n"
+        
+        v_buffer = self.view.get_buffer()
     
-        if self.text.get_char_count() == 0:
+        if v_buffer.get_char_count() == 0:
             newline = ""
     
-        self.text.insert(self.text.get_end_iter(),newline + text)
+        v_buffer.insert(v_buffer.get_end_iter(),newline + text)
         
         if True: # i want this to be not scrolled up...
             self.view.scroll_mark_onscreen(self.mark)
@@ -78,13 +80,13 @@ class IrcWindow(gtk.VBox):
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
 
-        self.text = self.view.get_buffer()
+        v_buffer = self.view.get_buffer()
         
         scrwin = gtk.ScrolledWindow()
         scrwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrwin.add(self.view)
         
-        self.mark = self.text.create_mark('end', self.text.get_end_iter(), False)
+        self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
         
         return scrwin
      
