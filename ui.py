@@ -56,15 +56,14 @@ class IrcWindow(gtk.VBox):
             self.view.scroll_mark_onscreen(self.mark)
     
     # we entered some text in the entry box
-    def entered_text(self, entry, event, data=None):
-        if event.keyval == gtk.gdk.keyval_from_name("Return"):
-            lines = entry.get_text().split("\n")
+    def entered_text(self, entry, data=None):
+        lines = entry.get_text().split("\n")
 
-            for line in lines:
-                if line:
-                    self.entered_line(line)
-            
-            entry.set_text("")
+        for line in lines:
+            if line:
+                self.entered_line(line)
+        
+        entry.set_text("")
     
     def entered_line(self, text):
         e_data = events.data()
@@ -80,12 +79,11 @@ class IrcWindow(gtk.VBox):
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
 
-        v_buffer = self.view.get_buffer()
-        
         scrwin = gtk.ScrolledWindow()
         scrwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrwin.add(self.view)
         
+        v_buffer = self.view.get_buffer()        
         self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
         
         return scrwin
@@ -93,7 +91,12 @@ class IrcWindow(gtk.VBox):
     # this is our editbox   
     def bottom_section(self):
         self.entry = gtk.Entry()
-        self.entry.connect("key_press_event", self.entered_text)
+        self.entry.connect("activate", self.entered_text)
+        
+        def f(*args):
+            print "."
+            
+        self.entry.connect("focus", f)
 
         return self.entry
 
@@ -107,10 +110,6 @@ class IrcWindow(gtk.VBox):
 
         self.pack_start(self.top_section())
         self.pack_end(self.bottom_section(), expand=False)
-        
-        self.set_focus_child(self.entry)
-        
-        self.connect('focus', self.focus)
         
         self.show_all()
         
@@ -136,8 +135,10 @@ class IrcUI(gtk.Window):
         
         if network:
             n = self.tabs.get_n_pages()
-            for i in xrange(n-1,-1,-1):
+            
+            for i in reversed(xrange(n)):
                 insert_candidate = self.tabs.get_nth_page(i)
+                
                 if insert_candidate.get_data('network') == network:
                     self.tabs.insert_page(window, title, i+1)
                     break
@@ -149,11 +150,11 @@ class IrcUI(gtk.Window):
         #gtk.gdk.threads_leave()
         
     def shutdown(self):
-        conf.set("width", self.w)
-        conf.set("height", self.h)
-
         conf.set("x", self.x)
         conf.set("y", self.y)
+    
+        conf.set("width", self.w)
+        conf.set("height", self.h)
 
     def delete_event(self, widget, event, data=None):
         return False
@@ -183,18 +184,19 @@ class IrcUI(gtk.Window):
         
         # FIXME reduce all of this to 1 line of code, or somehow make it
         #       neater
-              
-        self.w = conf.get("width") or 500        
-        self.h = conf.get("height") or 500
-        self.set_default_size(self.w, self.h)
-        
+
         self.x, self.y = conf.get("x"), conf.get("y")
         if self.x == None:
             self.x = -1
 
         if self.y == None:
             self.y = -1
+            
+        self.w = conf.get("width") or 500        
+        self.h = conf.get("height") or 500            
+            
         self.move(self.x, self.y)
+        self.set_default_size(self.w, self.h)
         
         actions = gtk.ActionGroup("Actions")
         actions.add_actions(menu)
@@ -210,6 +212,9 @@ class IrcUI(gtk.Window):
         # create some tabs
         self.tabs = gtk.Notebook()
         
+        def f(notebook, something):
+            print "."
+
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
@@ -217,8 +222,6 @@ class IrcUI(gtk.Window):
         initialWindow = IrcWindow("Status Window")
 
         self.new_tab(initialWindow)
-
-        #self.new_tab(IrcWindow("Extra Window"))
         
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
