@@ -92,16 +92,8 @@ class IrcWindow(gtk.VBox):
     def bottom_section(self):
         self.entry = gtk.Entry()
         self.entry.connect("activate", self.entered_text)
-        
-        def f(*args):
-            print "."
-            
-        self.entry.connect("focus", f)
 
         return self.entry
-
-    def focus(self, widget, event):
-        self.entry.grab_focus()
 
     def __init__(self, title=None):
         gtk.VBox.__init__(self, False)
@@ -110,6 +102,11 @@ class IrcWindow(gtk.VBox):
 
         self.pack_start(self.top_section())
         self.pack_end(self.bottom_section(), expand=False)
+        
+        def focus_entry(*args):
+            self.entry.grab_focus()
+
+        self.connect("focus", focus_entry)
         
         self.show_all()
         
@@ -211,27 +208,21 @@ class IrcUI(gtk.Window):
 
         # create some tabs
         self.tabs = gtk.Notebook()
-        
-        def f(notebook, something):
-            print "."
 
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
-        initialWindow = IrcWindow("Status Window")
-
-        self.new_tab(initialWindow)
-        
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
+        
+        initialWindow = IrcWindow("Status Window")
+        
+        self.new_tab(initialWindow)
 
         self.add(box)
-        
         self.show_all()
-        
-        self.tabs.set_focus_child(initialWindow)
 
 ui = IrcUI()
 
