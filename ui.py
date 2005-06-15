@@ -172,9 +172,9 @@ class IrcUI(gtk.Window):
         self.connect("destroy", self.destroy)
         
         def record_resize(widget, event):
-            self.w, self.h = event.width, event.height
-            self.x, self.y = event.x, event.y
-        
+            self.w, self.h = self.get_size()
+            self.x, self.y = self.get_position()
+
         self.connect("configure_event", record_resize)
 
         self.set_title("Urk")
