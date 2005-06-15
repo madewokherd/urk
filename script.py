@@ -17,13 +17,15 @@ def setupInput(event):
 def onInput(event):
     if 'command' in event.actions:
         split = event.command.split()
-        events.trigger('Command', events.data(
-           name=split[0],
-           args=split[1:],
-           text=event.command,
-           window=event.window,
-           network=event.network,
-           ))
+        e_data = events.data()
+        e_data.name = split[0]
+        e_data.args = split[1:]
+        e_data.text = event.command
+        e_data.window = event.window
+        e_data.network = event.network
+        events.trigger('Command', e_data)
+        if 'default' in e_data.actions:
+            event.window.write('Unknown command: '+e_data.name)
         event.actions.remove('command')
 
 #should this be something like onCommandEcho?
@@ -43,11 +45,18 @@ def handle_query(event):
         window.set_data('target', target)
         target.window = window
         ui.ui.new_tab(target.window, event.network)
-        
+
+def handle_raw(event):
+    if event.network.connected:
+        event.network.raw(' '.join(event.args))
+    else:
+        event.window.write("* /raw: We're not connected.")
 
 command_handlers = {
     'echo': handle_echo,
     'query': handle_query,
+    'raw': handle_raw,
+    'quote': handle_raw,
 }
 
 def setupCommand(event):
@@ -60,10 +69,10 @@ def onCommand(event):
         event.actions.remove('default')
 
 def postCommand(event):
-    if 'default' in event.actions:
-        event.window.write("Unknown command: "+event.name)
+    if 'default' in event.actions and event.network.connected:
+        event.network.raw(event.text)
         event.actions.remove('default')
-        
+
 # FIXME, find a list of networks to join from somewhere, prolly conf
 #         then join them
 def start_networks():
@@ -95,6 +104,16 @@ def onRaw(event):
 def onSocketConnect(event):
     event.network.raw("NICK %s" % "MrUrk")
     event.network.raw("USER %s %s %s :%s" % ("a", "b", "c", "MrUrk"))
-        
+
+def setupDisconnect(event):
+    if not hasattr(event, 'window'):
+        event.window = urk.get_window[event.network]
+    if not hasattr(event, 'actions'):
+        event.actions = set(['default'])
+
 def onDisconnect(event):
-    print "disconnect"
+    if 'default' in event.actions:
+        if event.error:
+            print event.error
+        event.window.write('* Disconnected')
+        event.actions.remove('default')

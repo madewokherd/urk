@@ -47,11 +47,12 @@ def parse_irc(message, server):
             
     return result
 
-def handle_connect(socket, init, network, address):
+def handle_connect(socket, network, address):
     try:
         socket.connect(address)
         
-        init()
+        network.connected = True
+        events.trigger('SocketConnect', events.data(network=network))
          
         reply = socket.recv(8192)
         in_buffer = reply
@@ -82,6 +83,7 @@ def handle_connect(socket, init, network, address):
     else:
         error = None
     network.connecting = False
+    network.connected = False
     events.trigger('Disconnect', events.data(network=network, error=error))
 
 class Network:
@@ -97,6 +99,7 @@ class Network:
     password = ''
     
     connecting = False
+    connected = False
     #name = ''
     
     me = None # me as a user
@@ -141,14 +144,11 @@ class Network:
         #dispatch.DisconnectIrc(self, **kwargs)
     
     def connect(self):
-        def init():
-            events.trigger('SocketConnect', events.data(network=self))
-
         if not self.connecting:
             self.connecting = True
             self.sock = socket.socket()
             
-            args = self.sock, init, self, (self.server, self.port)
+            args = self.sock, self, (self.server, self.port)
             thread.start_new_thread(handle_connect, args)
             
             events.trigger('Connecting', events.data(network=self))
