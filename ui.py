@@ -208,17 +208,21 @@ class IrcUI(gtk.Window):
 
         # create some tabs
         self.tabs = gtk.Notebook()
-
+        
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
+        
+        def focus_entry(*args):
+            initialWindow.entry.grab_focus()
+        self.tabs.connect("focus", focus_entry)
 
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
         
         initialWindow = IrcWindow("Status Window")
-        
+
         self.new_tab(initialWindow)
 
         self.add(box)
