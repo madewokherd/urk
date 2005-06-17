@@ -9,6 +9,20 @@ import conf
 
 def connectToArlottOrg(widget):
     events.trigger("ConnectArlottOrg")
+    
+class UrkAbout(gtk.AboutDialog):
+    def __init__(self, action):
+        gtk.AboutDialog.__init__(self)
+        
+        self.set_name("Urk")
+        self.set_version("8")
+        self.set_copyright("Yes, 2004")
+        self.set_comments("Comments")
+        self.set_license("Gee Pee Ell")
+        self.set_website("http://urk.sf.net")
+        self.set_authors("Vincent and Marc")
+        
+        self.show_all()
 
 menu = (
     ("FileMenu", None, "_File"),
@@ -19,7 +33,7 @@ menu = (
         ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
     
     ("HelpMenu", None, "_Help"),
-        ("About", gtk.STOCK_ABOUT, "_About", None, None)
+        ("About", gtk.STOCK_ABOUT, "_About", None, None, UrkAbout)
 )
 
 ui_info = \
@@ -39,6 +53,8 @@ ui_info = \
   </menu>
  </menubar>
 </ui>"""
+
+
 
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
@@ -78,15 +94,20 @@ class IrcWindow(gtk.VBox):
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
-
-        scrwin = gtk.ScrolledWindow()
-        scrwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        scrwin.add(self.view)
+        
+        #def blah(*args):
+        #    print args
+        
+        #self.view.connect("move-cursor", blah)
         
         v_buffer = self.view.get_buffer()        
         self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
-        
-        return scrwin
+
+        win = gtk.ScrolledWindow()
+        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        win.add(self.view)
+
+        return win
      
     # this is our editbox   
     def bottom_section(self):
@@ -99,14 +120,21 @@ class IrcWindow(gtk.VBox):
         gtk.VBox.__init__(self, False)
         
         self.title = title
+        
+        top, bot = self.top_section(), self.bottom_section()
 
-        self.pack_start(self.top_section())
-        self.pack_end(self.bottom_section(), expand=False)
+        self.pack_start(top)
+        self.pack_end(bot, expand=False)
         
         def focus_entry(*args):
             self.entry.grab_focus()
 
         self.connect("focus", focus_entry)
+        
+        def blah(*args):
+            print args
+        
+        top.connect("focus", blah)
         
         self.show_all()
         
