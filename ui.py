@@ -12,19 +12,18 @@ import conf
 def connectToArlottOrg(widget):
     events.trigger("ConnectArlottOrg")
     
-class UrkAbout(gtk.AboutDialog):
-    def __init__(self, action):
-        gtk.AboutDialog.__init__(self)
-        
-        self.set_name("Urk")
-        self.set_version("8")
-        self.set_copyright("Yes, 2004")
-        self.set_comments("Comments")
-        self.set_license("Gee Pee Ell")
-        self.set_website("http://urk.sf.net")
-        self.set_authors(["Marc","MadEwokHerd"])
-        
-        self.show_all()
+def urk_about(action):
+    about = gtk.AboutDialog()
+    
+    about.set_name("Urk")
+    about.set_version("8")
+    about.set_copyright("Yes, 2004")
+    about.set_comments("Comments")
+    about.set_license("Gee Pee Ell")
+    about.set_website("http://urk.sf.net")
+    about.set_authors(__import__("random").sample(["Marc","MadEwokHerd"], 2))
+    
+    about.show_all()
 
 def quit(action=None):
     enqueue(raise_keyboard_interrupt)
@@ -38,7 +37,7 @@ menu = (
         ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
     
     ("HelpMenu", None, "_Help"),
-        ("About", gtk.STOCK_ABOUT, "_About", None, None, UrkAbout)
+        ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
 )
 
 ui_info = \
