@@ -1,3 +1,5 @@
+import time
+
 import events
 
 import pygtk
@@ -20,13 +22,16 @@ class UrkAbout(gtk.AboutDialog):
         self.set_comments("Comments")
         self.set_license("Gee Pee Ell")
         self.set_website("http://urk.sf.net")
-        self.set_authors("Vincent and Marc")
+        self.set_authors(["Marc","MadEwokHerd"])
         
         self.show_all()
 
+def quit(action=None):
+    enqueue(raise_keyboard_interrupt)
+
 menu = (
     ("FileMenu", None, "_File"),
-        ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
+        ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, quit),
         ("Connect", None, "_Connect", None, None, connectToArlottOrg),
     
     ("EditMenu", None, "_Edit"),
@@ -59,6 +64,9 @@ ui_info = \
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
     def write(self, text):
+        enqueue(self.write_unsafe, text)
+    
+    def write_unsafe(self, text):
         newline = "\n"
         
         v_buffer = self.view.get_buffer()
@@ -187,7 +195,7 @@ class IrcUI(gtk.Window):
     def destroy(self, widget, data=None):
         self.shutdown()
     
-        gtk.main_quit()
+        enqueue(raise_quit)
 
     def __init__(self):
         # threading stuff
@@ -256,10 +264,30 @@ class IrcUI(gtk.Window):
         self.add(box)
         self.show_all()
 
+queue = []
+def enqueue(f, *args, **kwargs):
+    queue.append((f, args, kwargs))
+
+class Quitting(Exception):
+    pass
+
+def raise_quit():
+    raise Quitting
+
+def raise_keyboard_interrupt():
+    raise KeyboardInterrupt
+
 ui = IrcUI()
 
 def start():
     try:
-        gtk.main()
+        while 1:
+            gtk.main_iteration(block=False)
+            while queue:
+                f, args, kwargs = queue.pop()
+                f(*args,**kwargs)
+            time.sleep(.001)
     except KeyboardInterrupt:
         ui.shutdown()
+    except Quitting:
+        pass
