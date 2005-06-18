@@ -160,7 +160,7 @@ class IrcChannelWindow(IrcWindow):
 
 class IrcUI(gtk.Window):
     def new_tab(self, window, network=None):
-        enqueue(self.new_tab_unsafe, window, network=None)
+        enqueue(self.new_tab_unsafe, window, network)
 
     def new_tab_unsafe(self, window, network=None):
         title = gtk.Label(window.title)
@@ -262,6 +262,18 @@ class IrcUI(gtk.Window):
 
         self.add(box)
         self.show_all()
+
+def getChannelWindow(channel, src_event=None, src_name=''):
+    if channel.window:
+        return channel.window
+    else:
+        e_data = events.data()
+        e_data.src_event = src_event
+        e_data.src_name = src_name
+        e_data.channel = channel
+        e_data.window = None
+        events.trigger('NewChannelWindow', e_data)
+        return e_data.window
 
 queue = []
 def enqueue(f, *args, **kwargs):

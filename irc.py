@@ -134,6 +134,11 @@ class Network:
         data.msg = parse_irc(msg, self.server)
         data.network = self
         data.window = urk.get_window[self]
+        source = data.msg[0].split('!')
+        data.source = self.entity(source[0])
+        data.source.name = source[0]
+        if len(source) > 1:
+            data.source.address = source[1]
 
         events.trigger('Raw', data)
     
@@ -194,8 +199,6 @@ class Network:
             self._channels[normal_name] = result
         return result
     
-    #I'm not sure I like these, but there doesn't seem to be a reason to get
-    # rid of them just yet. -MEH
     def quit(self,msg="."):
         self.raw("QUIT :%s" % msg)
         

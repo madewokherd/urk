@@ -52,11 +52,21 @@ def handle_raw(event):
     else:
         event.window.write("* /raw: We're not connected.")
 
+def handle_join(event):
+    if not event.args:
+        event.window.write("* /join: You must supply a channel.")
+    elif not event.network.connected:
+        event.window.write("* /join: We're not connected.")
+    else:
+        # FIXME: We might want to activate tabs for channels we /joined
+        event.network.join(event.args[0])
+
 command_handlers = {
     'echo': handle_echo,
     'query': handle_query,
     'raw': handle_raw,
     'quote': handle_raw,
+    'join': handle_join,
 }
 
 def setupCommand(event):
@@ -98,7 +108,17 @@ def onConnectArlottOrg(event):
 def onRaw(event):
     if event.msg[1] == "PING":
         event.network.raw("PONG :%s" % event.msg[-1])
-        
+    
+    e_data = events.data()
+    e_data.msg = event.msg
+    e_data.rawmsg = event.rawmsg
+    e_data.source = event.source
+    
+    if event.msg[1] == "JOIN":
+        e_data.channel = event.network.channel(event.msg[2])
+        e_data.target = e_data.channel
+        events.trigger('Join', e_data)
+    
     event.window.write(event.rawmsg)
         
 def onSocketConnect(event):
@@ -116,4 +136,34 @@ def onDisconnect(event):
         if event.error:
             print event.error
         event.window.write('* Disconnected')
+        event.actions.remove('default')
+
+def setupNewChannelWindow(event):
+    if not hasattr(event, 'actions'):
+        event.actions = set(['default'])
+    else:
+        event.actions.add('default')
+    #FIXME: This should be 'virtual' if we don't want to make a new window
+    # and onNewChannelWindow should handle it.
+
+def onNewChannelWindow(event):
+    if 'default' in event.actions:
+        window = ui.IrcChannelWindow(str(event.channel))
+        event.channel.window = window
+        event.window = window
+        window.set_data('type', 'channel')
+        window.set_data('target', event.channel)
+        ui.ui.new_tab(window, event.channel.network)
+        event.actions.remove('default')
+
+def setupJoin(event):
+    if not hasattr(event, 'actions'):
+        event.actions = set(['default'])
+    else:
+        event.actions.add('default')
+    event.window = ui.getChannelWindow(event.channel, event, 'Join')
+
+def onJoin(event):
+    if 'default' in event.actions:
+        event.window.write("* Joins: %s" % event.source)
         event.actions.remove('default')
