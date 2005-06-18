@@ -58,8 +58,6 @@ ui_info = \
  </menubar>
 </ui>"""
 
-
-
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
     def write(self, text):
@@ -102,10 +100,10 @@ class IrcWindow(gtk.VBox):
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
         
-        #def blah(*args):
-        #    print args
+        def f(*args):
+            print args
         
-        #self.view.connect("move-cursor", blah)
+        self.view.connect("focus", f)
         
         v_buffer = self.view.get_buffer()        
         self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
@@ -113,15 +111,25 @@ class IrcWindow(gtk.VBox):
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         win.add(self.view)
+        
+        win.set_border_width(2)
 
         return win
      
     # this is our editbox   
     def bottom_section(self):
+        box = gtk.HBox()
+        
         self.entry = gtk.Entry()
         self.entry.connect("activate", self.entered_text)
+        
+        self.nick_label = gtk.Label(conf.get("nick"))
+        self.nick_label.set_padding(5, 0)
 
-        return self.entry
+        box.pack_start(self.entry)
+        box.pack_end(self.nick_label, expand=False)
+
+        return box
 
     def __init__(self, title=None):
         gtk.VBox.__init__(self, False)
@@ -135,13 +143,7 @@ class IrcWindow(gtk.VBox):
         
         def focus_entry(*args):
             self.entry.grab_focus()
-
         self.connect("focus", focus_entry)
-        
-        def blah(*args):
-            print args
-        
-        top.connect("focus", blah)
         
         self.show_all()
         
@@ -246,19 +248,13 @@ class IrcUI(gtk.Window):
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
-        
-        def focus_entry(*args):
-            initialWindow.entry.grab_focus()
-        self.tabs.connect("focus", focus_entry)
 
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
+
+        self.new_tab(IrcWindow("Status Window"))
         
-        initialWindow = IrcWindow("Status Window")
-
-        self.new_tab(initialWindow)
-
         self.add(box)
         self.show_all()
 

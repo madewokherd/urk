@@ -90,7 +90,7 @@ def start_networks():
 
 def onStart(event):
     on_start_networks = start_networks()
-    
+
     for network in on_start_networks:
         # FIXME, given a network, might we want to look up servers?, possibly 
         #        this should happen on instantiation of the Network() otherwise
@@ -99,9 +99,9 @@ def onStart(event):
         urk.connect(network)
         
 def onConnectArlottOrg(event):
-    import irc
+    import irc, conf
 
-    x = irc.Network("irc.arlott.org", "MrUrk", "blackhole.arlott.org")
+    x = irc.Network("irc.arlott.org", conf.get("nick"), "blackhole.arlott.org")
     
     urk.connect(x)
 
@@ -122,7 +122,9 @@ def onRaw(event):
     event.window.write(event.rawmsg)
         
 def onSocketConnect(event):
-    event.network.raw("NICK %s" % "MrUrk")
+    import conf
+
+    event.network.raw("NICK %s" % conf.get("nick"))
     event.network.raw("USER %s %s %s :%s" % ("a", "b", "c", "MrUrk"))
 
 def setupDisconnect(event):
