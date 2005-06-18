@@ -295,7 +295,7 @@ def start():
         while 1:
             gtk.main_iteration(block=False)
             while queue:
-                f, args, kwargs = queue.pop()
+                f, args, kwargs = queue.pop(0)
                 f(*args,**kwargs)
             time.sleep(.001)
     except KeyboardInterrupt:
