@@ -160,8 +160,9 @@ class IrcChannelWindow(IrcWindow):
 
 class IrcUI(gtk.Window):
     def new_tab(self, window, network=None):
-        #gtk.gdk.threads_enter()
-        
+        enqueue(self.new_tab_unsafe, window, network=None)
+
+    def new_tab_unsafe(self, window, network=None):
         title = gtk.Label(window.title)
         
         window.set_data('network', network)
@@ -179,8 +180,6 @@ class IrcUI(gtk.Window):
                 self.tabs.append_page(window, title)
         else:
             self.tabs.append_page(window, title)
-        
-        #gtk.gdk.threads_leave()
         
     def shutdown(self):
         conf.set("x", self.x)
