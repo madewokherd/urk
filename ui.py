@@ -99,20 +99,13 @@ class IrcWindow(gtk.VBox):
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
-        
-        def f(*args):
-            print args
-        
-        self.view.connect("focus", f)
-        
-        v_buffer = self.view.get_buffer()        
-        self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
+        self.view.set_property("can-focus", False)
 
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        win.add(self.view)
-        
         win.set_border_width(2)
+        
+        win.add(self.view)
 
         return win
      
@@ -137,27 +130,34 @@ class IrcWindow(gtk.VBox):
         self.title = title
         
         top, bot = self.top_section(), self.bottom_section()
-
-        self.pack_start(top)
-        self.pack_end(bot, expand=False)
+        
+        v_buffer = self.view.get_buffer()        
+        self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
         
         def focus_entry(*args):
-            self.entry.grab_focus()
-        self.connect("focus", focus_entry)
-        
+            self.entry.set_property("has-focus", True)
+        self.view.connect("focus", focus_entry, "here1")
+
+        self.pack_start(top)
+        self.pack_end(bot, expand=False)       
         self.show_all()
         
 class IrcChannelWindow(IrcWindow):
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
+        top = IrcWindow.top_section(self)
+        
         self.nicklist = gtk.TreeView()
         
         win = gtk.HPaned()
-        win.pack1(IrcWindow.top_section(self), resize=True)
+        
+        win.pack1(top, resize=True)
         win.pack2(self.nicklist, resize=False)
-        win.show_all()
         
         return win
+        
+def print_args(*args):
+    print args
 
 class IrcUI(gtk.Window):
     def new_tab(self, window, network=None):
@@ -165,6 +165,8 @@ class IrcUI(gtk.Window):
 
     def new_tab_unsafe(self, window, network=None):
         title = gtk.Label(window.title)
+        
+        title.connect("focus", print_args)
         
         window.set_data('network', network)
         
@@ -244,6 +246,8 @@ class IrcUI(gtk.Window):
 
         # create some tabs
         self.tabs = gtk.Notebook()
+        
+        self.tabs.set_property("enable-popup", True)
         
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)

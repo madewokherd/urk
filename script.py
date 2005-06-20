@@ -169,3 +169,5 @@ def onJoin(event):
     if 'default' in event.actions:
         event.window.write("* Joins: %s" % event.source)
         event.actions.remove('default')
+        
+        ui.ui.tabs.next_page()
