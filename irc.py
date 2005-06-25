@@ -208,14 +208,19 @@ class Network:
     def join(self, name):        
         self.raw("JOIN %s" % name)
         
-    def part(self, name, msg=""):
+    def part(self, target, msg=""):
         if msg:
             msg = " :" + msg
         
-        self.raw("PART %s%s" % (name, msg))
+        self.raw("PART %s%s" % (target, msg))
         
-    def msg(self, name, msg):
-        self.raw("PRIVMSG %s :%s" % (name, msg))
+    def msg(self, target, msg):
+        self.raw("PRIVMSG %s :%s" % (target, msg))
+        e_data = events.data()
+        e_data.source = self.me
+        e_data.target = self.entity(str(target))
+        e_data.text = msg
+        events.trigger('Text', e_data)
         
 class Channel:
     nicks = None

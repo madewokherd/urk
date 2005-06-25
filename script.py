@@ -27,6 +27,9 @@ def onInput(event):
         if 'default' in e_data.todo:
             event.window.write('Unknown command: '+e_data.name)
         event.todo.remove('command')
+    if 'default' in event.todo and event.window.type in ('channel', 'user'):
+        event.network.msg(event.window.target, event.text)
+        event.todo.remove('default')
 
 #should this be something like onCommandEcho?
 #if so, how?
@@ -41,8 +44,8 @@ def handle_query(event):
     else:
         window = ui.IrcWindow(str(target))
            # str so if we say /query byte and we see Byte, we query Byte
-        window.set_data('type', 'query')
-        window.set_data('target', target)
+        window.type = user
+        window.target = target
         target.window = window
         ui.ui.new_tab(target.window, event.network)
 
@@ -109,7 +112,7 @@ def onStart(event):
 def onConnectArlottOrg(event):
     import irc, conf
 
-    x = irc.Network("irc.arlott.org", conf.get("nick"), "blackhole.arlott.org")
+    x = irc.Network("irc.gamesurge.net", conf.get("nick"), "irc.gamesurge.net")
     
     urk.connect(x)
 
@@ -129,9 +132,13 @@ def onRaw(event):
         e_data.channel = event.network.channel(event.msg[2])
         e_data.target = e_data.channel
         events.trigger('Join', e_data)
+    elif event.msg[1] == "PRIVMSG":
+        e_data.target = event.network.entity(event.msg[2])
+        e_data.text = event.msg[-1]
+        events.trigger('Text', e_data)
     
     event.window.write(event.rawmsg)
-        
+
 def onSocketConnect(event):
     import conf
 
@@ -153,22 +160,25 @@ def onDisconnect(event):
         event.window.write('* Disconnected')
         event.todo.remove('default')
 
-def setupNewChannelWindow(event):
+def setupNewWindow(event):
     if not hasattr(event, 'todo'):
         event.todo = set(['default'])
     else:
         event.todo.add('default')
     #FIXME: This should be 'virtual' if we don't want to make a new window
-    # and onNewChannelWindow should handle it.
+    # and onNewWindow should handle it.
 
-def onNewChannelWindow(event):
+def onNewWindow(event):
     if 'default' in event.todo:
-        window = ui.IrcChannelWindow(str(event.channel))
-        event.channel.window = window
+        if event.target.type == 'channel':
+            window = ui.IrcChannelWindow(str(event.target))
+        else:
+            window = ui.IrcWindow(str(event.target))
+        event.target.window = window
         event.window = window
-        window.set_data('type', 'channel')
-        window.set_data('target', event.channel)
-        ui.ui.new_tab(window, event.channel.network)
+        window.type = event.target.type
+        window.target = event.target
+        ui.ui.new_tab(window, event.target.network)
         event.todo.remove('default')
 
 def setupJoin(event):
@@ -177,7 +187,7 @@ def setupJoin(event):
     else:
         event.todo.add('default')
 
-    event.window = ui.getChannelWindow(event.channel, event, 'Join')
+    event.window = ui.getWindow(event.target, event, 'Join')
 
 def onJoin(event):
     if 'default' in event.todo:
@@ -189,3 +199,16 @@ def onJoin(event):
         #  or ui.ui.activate(window)
         #for i in xrange(ui.ui.tabs.get_n_pages()):
         #    print ui.ui.tabs.get_nth_page(i).title
+
+def setupText(event):
+    if not hasattr(event, 'todo'):
+        event.todo = set(['default'])
+    else:
+        event.todo.add('default')
+
+    event.window = ui.getWindow(event.target, event, 'Text')
+
+def onText(event):
+    if 'default' in event.todo:
+        event.window.write("<%s> %s" % (event.source, event.text))
+        event.todo.remove('default')
