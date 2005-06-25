@@ -166,8 +166,6 @@ class IrcUI(gtk.Window):
     def new_tab_unsafe(self, window, network=None):
         title = gtk.Label(window.title)
         
-        title.connect("focus", print_args)
-        
         window.set_data('network', network)
         
         if network:

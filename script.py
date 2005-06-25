@@ -163,6 +163,7 @@ def setupJoin(event):
         event.actions = set(['default'])
     else:
         event.actions.add('default')
+
     event.window = ui.getChannelWindow(event.channel, event, 'Join')
 
 def onJoin(event):
@@ -170,4 +171,6 @@ def onJoin(event):
         event.window.write("* Joins: %s" % event.source)
         event.actions.remove('default')
         
-        ui.ui.tabs.next_page()
+        
+        for i in xrange(ui.ui.tabs.get_n_pages()):
+            print ui.ui.tabs.get_nth_page(i).title

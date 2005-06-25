@@ -25,10 +25,6 @@ def connect(network):
 
 if __name__ == "__main__":
     import irc
-    
-    # FIXME  
-    if not conf.get("nick"):
-        conf.set("nick", "MadEwokHerd")
 
     scripts_to_load = conf.get("scripts_to_load")
     for script in scripts_to_load:
