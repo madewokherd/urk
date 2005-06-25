@@ -61,12 +61,20 @@ def handle_join(event):
         # FIXME: We might want to activate tabs for channels we /joined
         event.network.join(event.args[0])
 
+def handle_pyeval(event):
+    event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
+
+def handle_pyexec(event):
+    exec ' '.join(event.args) in globals(), event.__dict__
+
 command_handlers = {
     'echo': handle_echo,
     'query': handle_query,
     'raw': handle_raw,
     'quote': handle_raw,
     'join': handle_join,
+    'pyeval': handle_pyeval,
+    'pyexec': handle_pyexec,
 }
 
 def setupCommand(event):
@@ -114,6 +122,9 @@ def onRaw(event):
     e_data.rawmsg = event.rawmsg
     e_data.source = event.source
     
+    if not event.network.me and event.msg[1] == '001':
+        event.network.me = event.network.user(event.msg[2])
+    
     if event.msg[1] == "JOIN":
         e_data.channel = event.network.channel(event.msg[2])
         e_data.target = e_data.channel
@@ -126,6 +137,8 @@ def onSocketConnect(event):
 
     event.network.raw("NICK %s" % conf.get("nick"))
     event.network.raw("USER %s %s %s :%s" % ("a", "b", "c", "MrUrk"))
+    
+    event.network.me = None
 
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
