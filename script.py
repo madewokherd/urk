@@ -5,17 +5,17 @@ import ui
 command_char = "/"
 
 def setupInput(event):
-    if not hasattr(event, 'actions'):
-        event.actions = set()
+    if not hasattr(event, 'todo'):
+        event.todo = set()
         
     if event.text[0] == command_char:
-        event.actions.add('command')
+        event.todo.add('command')
         event.command = event.text[1:]
     else:
-        event.actions.add('default')
+        event.todo.add('default')
 
 def onInput(event):
-    if 'command' in event.actions:
+    if 'command' in event.todo:
         split = event.command.split()
         e_data = events.data()
         e_data.name = split[0]
@@ -24,9 +24,9 @@ def onInput(event):
         e_data.window = event.window
         e_data.network = event.network
         events.trigger('Command', e_data)
-        if 'default' in e_data.actions:
+        if 'default' in e_data.todo:
             event.window.write('Unknown command: '+e_data.name)
-        event.actions.remove('command')
+        event.todo.remove('command')
 
 #should this be something like onCommandEcho?
 #if so, how?
@@ -70,18 +70,18 @@ command_handlers = {
 }
 
 def setupCommand(event):
-    if not hasattr(event, 'actions'):
-        event.actions = set(['default'])
+    if not hasattr(event, 'todo'):
+        event.todo = set(['default'])
 
 def onCommand(event):
-    if 'default' in event.actions and event.name in command_handlers:
+    if 'default' in event.todo and event.name in command_handlers:
         command_handlers[event.name](event)
-        event.actions.remove('default')
+        event.todo.remove('default')
 
 def postCommand(event):
-    if 'default' in event.actions and event.network.connected:
+    if 'default' in event.todo and event.network.connected:
         event.network.raw(event.text)
-        event.actions.remove('default')
+        event.todo.remove('default')
 
 # FIXME, find a list of networks to join from somewhere, prolly conf
 #         then join them
@@ -130,47 +130,49 @@ def onSocketConnect(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = urk.get_window[event.network]
-    if not hasattr(event, 'actions'):
-        event.actions = set(['default'])
+    if not hasattr(event, 'todo'):
+        event.todo = set(['default'])
 
 def onDisconnect(event):
-    if 'default' in event.actions:
+    if 'default' in event.todo:
         if event.error:
             print event.error
         event.window.write('* Disconnected')
-        event.actions.remove('default')
+        event.todo.remove('default')
 
 def setupNewChannelWindow(event):
-    if not hasattr(event, 'actions'):
-        event.actions = set(['default'])
+    if not hasattr(event, 'todo'):
+        event.todo = set(['default'])
     else:
-        event.actions.add('default')
+        event.todo.add('default')
     #FIXME: This should be 'virtual' if we don't want to make a new window
     # and onNewChannelWindow should handle it.
 
 def onNewChannelWindow(event):
-    if 'default' in event.actions:
+    if 'default' in event.todo:
         window = ui.IrcChannelWindow(str(event.channel))
         event.channel.window = window
         event.window = window
         window.set_data('type', 'channel')
         window.set_data('target', event.channel)
         ui.ui.new_tab(window, event.channel.network)
-        event.actions.remove('default')
+        event.todo.remove('default')
 
 def setupJoin(event):
-    if not hasattr(event, 'actions'):
-        event.actions = set(['default'])
+    if not hasattr(event, 'todo'):
+        event.todo = set(['default'])
     else:
-        event.actions.add('default')
+        event.todo.add('default')
 
     event.window = ui.getChannelWindow(event.channel, event, 'Join')
 
 def onJoin(event):
-    if 'default' in event.actions:
+    if 'default' in event.todo:
         event.window.write("* Joins: %s" % event.source)
-        event.actions.remove('default')
+        event.todo.remove('default')
         
-        
-        for i in xrange(ui.ui.tabs.get_n_pages()):
-            print ui.ui.tabs.get_nth_page(i).title
+        # FIXME: We can't manipulate gtk stuff directly unless we're sure
+        #  we're in the main thread. There should really be a window.activate()
+        #  or ui.ui.activate(window)
+        #for i in xrange(ui.ui.tabs.get_n_pages()):
+        #    print ui.ui.tabs.get_nth_page(i).title
