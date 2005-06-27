@@ -1,13 +1,15 @@
 import time
 
-import events
-
 import pygtk
 import gtk
-
 import gobject
 
 import conf
+import events
+
+# FIXME, get rid of this
+def print_args(*args):
+    print args
 
 def connectToArlottOrg(widget):
     events.trigger("ConnectArlottOrg")
@@ -97,9 +99,14 @@ class IrcWindow(gtk.VBox):
     def top_section(self):
         self.view = gtk.TextView()
         self.view.set_wrap_mode(gtk.WRAP_WORD)
-        self.view.set_editable(False)
-        self.view.set_cursor_visible(False)
-        self.view.set_property("can-focus", False)
+        #self.view.set_editable(False)
+        #self.view.set_cursor_visible(False)
+        #self.view.set_property("can-focus", False)
+        
+        self.view.connect("insert-at-cursor", print_args, "iac")
+        self.view.connect("delete-from-cursor", print_args, "dc")
+        self.view.connect("move-cursor", print_args, "mc")
+        self.view.connect("populate-popup", print_args, "pp")
 
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
