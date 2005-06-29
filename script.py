@@ -2,9 +2,9 @@ import events
 import __main__ as urk
 import ui
 
-command_char = "/"
-
 def setupInput(event):
+    command_char = "/"
+
     if not hasattr(event, 'todo'):
         event.todo = set()
         
@@ -47,7 +47,7 @@ def handle_query(event):
         window.type = user
         window.target = target
         target.window = window
-        ui.ui.new_tab(target.window, event.network)
+        ui.new_tab(target.window, event.network)
 
 def handle_raw(event):
     if event.network.connected:
@@ -63,6 +63,15 @@ def handle_join(event):
     else:
         # FIXME: We might want to activate tabs for channels we /joined
         event.network.join(event.args[0])
+        
+    if event.args:
+        if event.network.connected:
+            # FIXME: We might want to activate tabs for channels we /joined
+            event.network.join(event.args[0])
+        else:
+            event.window.write("* /join: We're not connected.")
+    else:
+        event.window.write("* /join: You must supply a channel.")
 
 def handle_pyeval(event):
     event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
@@ -178,7 +187,7 @@ def onNewWindow(event):
         event.window = window
         window.type = event.target.type
         window.target = event.target
-        ui.ui.new_tab(window, event.target.network)
+        ui.new_tab(window, event.target.network)
         event.todo.remove('default')
 
 def setupJoin(event):
@@ -193,12 +202,8 @@ def onJoin(event):
     if 'default' in event.todo:
         event.window.write("* Joins: %s" % event.source)
         event.todo.remove('default')
-        
-        # FIXME: We can't manipulate gtk stuff directly unless we're sure
-        #  we're in the main thread. There should really be a window.activate()
-        #  or ui.ui.activate(window)
-        #for i in xrange(ui.ui.tabs.get_n_pages()):
-        #    print ui.ui.tabs.get_nth_page(i).title
+            
+        ui.activate(window)
 
 def setupText(event):
     if not hasattr(event, 'todo'):

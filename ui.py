@@ -103,10 +103,15 @@ class IrcWindow(gtk.VBox):
         #self.view.set_cursor_visible(False)
         #self.view.set_property("can-focus", False)
         
-        self.view.connect("insert-at-cursor", print_args, "iac")
-        self.view.connect("delete-from-cursor", print_args, "dc")
-        self.view.connect("move-cursor", print_args, "mc")
-        self.view.connect("populate-popup", print_args, "pp")
+        #self.view.connect("insert-at-cursor", print_args, "iac")
+        #self.view.connect("delete-from-cursor", print_args, "dc")
+        #self.view.connect("move-cursor", print_args, "mc")
+        #self.view.connect("populate-popup", print_args, "pp")
+        
+        def f(*args):
+            self.entry.grab_focus()
+        
+        self.view.connect("key-press-event", f, "kp")
 
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -188,6 +193,11 @@ class IrcUI(gtk.Window):
                 self.tabs.append_page(window, title)
         else:
             self.tabs.append_page(window, title)
+            
+        def f(*args):
+            window.entry.grab_focus()
+            
+        window.connect("focus", f, "f")
         
     def shutdown(self):
         conf.set("x", self.x)
@@ -196,25 +206,25 @@ class IrcUI(gtk.Window):
         conf.set("width", self.w)
         conf.set("height", self.h)
 
-    def delete_event(self, widget, event, data=None):
-        return False
-
-    def destroy(self, widget, data=None):
-        self.shutdown()
-    
-        enqueue(raise_quit)
-
     def __init__(self):
         # threading stuff
         gtk.gdk.threads_init()
         
         # create a new window
         gtk.Window.__init__(self)
-
-        self.connect("delete_event", self.delete_event)
-        self.connect("destroy", self.destroy)
         
-        def record_resize(widget, event):
+        def delete_event(*args):
+            return False
+
+        self.connect("delete_event", delete_event)
+        
+        def destroy(*args):
+            self.shutdown()
+            enqueue(raise_quit)
+   
+        self.connect("destroy", destroy)
+        
+        def record_resize(*args):
             self.w, self.h = self.get_size()
             self.x, self.y = self.get_position()
 
@@ -240,14 +250,10 @@ class IrcUI(gtk.Window):
         
         actions = gtk.ActionGroup("Actions")
         actions.add_actions(menu)
-        
+
         ui = gtk.UIManager()
+        ui.add_ui_from_string(ui_info)
         ui.insert_action_group(actions, 0)
-        
-        try:
-            mergeid = ui.add_ui_from_string(ui_info)
-        except gobject.GError, msg:
-            print "building menus failed: %s" % msg
 
         # create some tabs
         self.tabs = gtk.Notebook()
@@ -264,8 +270,23 @@ class IrcUI(gtk.Window):
 
         self.new_tab(IrcWindow("Status Window"))
         
+        def focus_initial_window_entry():
+            self.tabs.get_nth_page(0).entry.grab_focus()
+        
+        enqueue(focus_initial_window_entry)
+
         self.add(box)
         self.show_all()
+        
+def activate(widget):
+    if not isinstance(widget, int):
+        widget = ui.tabs.page_num(widget)
+        
+    def to_activate():
+        ui.tabs.set_current_page(widget)
+        ui.tabs.get_nth_page(widget).entry.grab_focus()
+        
+    enqueue(to_activate)
 
 def getWindow(target, src_event=None, src_name=''):
     if target.window:
@@ -293,6 +314,7 @@ def raise_keyboard_interrupt():
     raise KeyboardInterrupt
 
 ui = IrcUI()
+new_tab = ui.new_tab
 
 def start():
     try:
