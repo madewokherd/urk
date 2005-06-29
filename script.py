@@ -55,15 +55,7 @@ def handle_raw(event):
     else:
         event.window.write("* /raw: We're not connected.")
 
-def handle_join(event):
-    if not event.args:
-        event.window.write("* /join: You must supply a channel.")
-    elif not event.network.connected:
-        event.window.write("* /join: We're not connected.")
-    else:
-        # FIXME: We might want to activate tabs for channels we /joined
-        event.network.join(event.args[0])
-        
+def handle_join(event):  
     if event.args:
         if event.network.connected:
             # FIXME: We might want to activate tabs for channels we /joined
@@ -121,7 +113,7 @@ def onStart(event):
 def onConnectArlottOrg(event):
     import irc, conf
 
-    x = irc.Network("irc.gamesurge.net", conf.get("nick"), "irc.gamesurge.net")
+    x = irc.Network("irc.gamesurge.net", conf.get("nick"), "irc.mozilla.org")
     
     urk.connect(x)
 
@@ -196,14 +188,14 @@ def setupJoin(event):
     else:
         event.todo.add('default')
 
-    event.window = ui.getWindow(event.target, event, 'Join')
+    event.window = ui.get_window(event.target, event, 'Join')
 
 def onJoin(event):
     if 'default' in event.todo:
         event.window.write("* Joins: %s" % event.source)
         event.todo.remove('default')
             
-        ui.activate(window)
+        ui.activate(event.window)
 
 def setupText(event):
     if not hasattr(event, 'todo'):
@@ -211,7 +203,7 @@ def setupText(event):
     else:
         event.todo.add('default')
 
-    event.window = ui.getWindow(event.target, event, 'Text')
+    event.window = ui.get_window(event.target, event, 'Text')
 
 def onText(event):
     if 'default' in event.todo:

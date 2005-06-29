@@ -60,6 +60,10 @@ ui_info = \
  </menubar>
 </ui>"""
 
+class NickLabel(gtk.Label):
+    def __init__(self, *args, **kwargs):
+        gtk.Label.__init__(self, *args, **kwargs)
+
 class IrcWindow(gtk.VBox):        
     # the all knowing print to our text window function
     def write(self, text):
@@ -69,17 +73,23 @@ class IrcWindow(gtk.VBox):
         newline = "\n"
         
         v_buffer = self.view.get_buffer()
+        
+        end_rect = self.view.get_iter_location(v_buffer.get_end_iter())
+        v_rect = self.view.get_visible_rect()
+
+        do_scroll = end_rect.y + end_rect.height <= v_rect.y + v_rect.height
     
         if v_buffer.get_char_count() == 0:
             newline = ""
     
         v_buffer.insert(v_buffer.get_end_iter(),newline + text)
-        
-        if True: # i want this to be not scrolled up...
-            self.view.scroll_mark_onscreen(self.mark)
+
+        if do_scroll:
+            scroll_to = v_buffer.create_mark("", v_buffer.get_end_iter())
+            self.view.scroll_mark_onscreen(scroll_to)
     
     # we entered some text in the entry box
-    def entered_text(self, entry, data=None):
+    def entered_text(self, entry, data=None):    
         lines = entry.get_text().split("\n")
 
         for line in lines:
@@ -100,18 +110,15 @@ class IrcWindow(gtk.VBox):
         self.view = gtk.TextView()
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         #self.view.set_editable(False)
-        #self.view.set_cursor_visible(False)
-        #self.view.set_property("can-focus", False)
+        self.view.set_cursor_visible(False)
         
-        #self.view.connect("insert-at-cursor", print_args, "iac")
-        #self.view.connect("delete-from-cursor", print_args, "dc")
-        #self.view.connect("move-cursor", print_args, "mc")
-        #self.view.connect("populate-popup", print_args, "pp")
-        
-        def f(*args):
+        # is this the right way?
+        def transfer_text(widget, event):
             self.entry.grab_focus()
+            self.entry.insert_text(event.string, -1)
+            self.entry.set_position(-1)
         
-        self.view.connect("key-press-event", f, "kp")
+        self.view.connect("key-press-event", transfer_text)
 
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -128,7 +135,7 @@ class IrcWindow(gtk.VBox):
         self.entry = gtk.Entry()
         self.entry.connect("activate", self.entered_text)
         
-        self.nick_label = gtk.Label(conf.get("nick"))
+        self.nick_label = NickLabel(conf.get("nick"))
         self.nick_label.set_padding(5, 0)
 
         box.pack_start(self.entry)
@@ -136,7 +143,7 @@ class IrcWindow(gtk.VBox):
 
         return box
 
-    def __init__(self, title=None):
+    def __init__(self, title=""):
         gtk.VBox.__init__(self, False)
         
         self.title = title
@@ -144,10 +151,11 @@ class IrcWindow(gtk.VBox):
         top, bot = self.top_section(), self.bottom_section()
         
         v_buffer = self.view.get_buffer()        
-        self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
+        #self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
         
         def focus_entry(*args):
             self.entry.set_property("has-focus", True)
+
         self.view.connect("focus", focus_entry, "here1")
 
         self.pack_start(top)
@@ -167,12 +175,14 @@ class IrcChannelWindow(IrcWindow):
         win.pack2(self.nicklist, resize=False)
         
         return win
-        
-def print_args(*args):
-    print args
 
 class IrcUI(gtk.Window):
     def new_tab(self, window, network=None):
+        def focus_entry(*args):
+            window.entry.grab_focus()
+            
+        window.connect("focus", focus_entry)
+    
         enqueue(self.new_tab_unsafe, window, network)
 
     def new_tab_unsafe(self, window, network=None):
@@ -180,25 +190,18 @@ class IrcUI(gtk.Window):
         
         window.set_data('network', network)
         
+        pos = self.tabs.get_n_pages()
+        
         if network:
-            n = self.tabs.get_n_pages()
-            
-            for i in reversed(xrange(n)):
+            for i in reversed(xrange(pos)):
                 insert_candidate = self.tabs.get_nth_page(i)
                 
                 if insert_candidate.get_data('network') == network:
-                    self.tabs.insert_page(window, title, i+1)
+                    pos = i+1
                     break
-            else:
-                self.tabs.append_page(window, title)
-        else:
-            self.tabs.append_page(window, title)
             
-        def f(*args):
-            window.entry.grab_focus()
-            
-        window.connect("focus", f, "f")
-        
+        self.tabs.insert_page(window, title, pos)
+
     def shutdown(self):
         conf.set("x", self.x)
         conf.set("y", self.y)
@@ -257,8 +260,7 @@ class IrcUI(gtk.Window):
 
         # create some tabs
         self.tabs = gtk.Notebook()
-        
-        self.tabs.set_property("enable-popup", True)
+        self.tabs.set_property("tab-pos", gtk.POS_TOP)        
         
         self.tabs.set_border_width(10)                
         self.tabs.set_scrollable(True)
@@ -269,16 +271,13 @@ class IrcUI(gtk.Window):
         box.pack_end(self.tabs)
 
         self.new_tab(IrcWindow("Status Window"))
-        
-        def focus_initial_window_entry():
-            self.tabs.get_nth_page(0).entry.grab_focus()
-        
-        enqueue(focus_initial_window_entry)
+        activate(0) # status window
 
         self.add(box)
         self.show_all()
         
 def activate(widget):
+    # if this is an actual widget, then we want its tab number
     if not isinstance(widget, int):
         widget = ui.tabs.page_num(widget)
         
@@ -288,7 +287,7 @@ def activate(widget):
         
     enqueue(to_activate)
 
-def getWindow(target, src_event=None, src_name=''):
+def get_window(target, src_event=None, src_name=''):
     if target.window:
         return target.window
     else:
