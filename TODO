@@ -7,6 +7,10 @@
 
 -some sort of system for keeping separating settings for networks so that we connect from a list on start
 
+-ctrl+C doesn't work from channel cache
+
+-a history for the text entry
+
 -we need some sort of theme system, probably implemented via a script (we can only have one "default" way to handle things, so echoing from script.py would have to go)
 
 -a preferences ui, probably with a separate sort of "connect or edit connection" dialog

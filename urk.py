@@ -5,7 +5,7 @@ import ui
 get_window = {}
 
 def connect(network):
-    network_window = ui.IrcWindow(network.fullname)
+    network_window = ui.IrcWindow(network.server)
     
     ui.new_tab(network_window, network)    
     ui.activate(network_window)

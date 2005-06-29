@@ -113,7 +113,7 @@ def onStart(event):
 def onConnectArlottOrg(event):
     import irc, conf
 
-    x = irc.Network("irc.gamesurge.net", conf.get("nick"), "irc.mozilla.org")
+    x = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
     
     urk.connect(x)
 
@@ -126,8 +126,17 @@ def onRaw(event):
     e_data.rawmsg = event.rawmsg
     e_data.source = event.source
     
-    if not event.network.me and event.msg[1] == '001':
-        event.network.me = event.network.user(event.msg[2])
+    if not event.network.me:
+        if event.msg[1] == '001':
+            event.network.me = event.network.user(event.msg[2])
+            event.network.connected = True
+        elif event.msg[1] in ('431','432','433','436','437'):
+            failednick = event.msg[3]
+            nicks = [event.network.nick] + list(event.network.anicks)
+            if failednick in nicks[:-1]:
+                index = nicks.index(failednick)+1
+                event.network.raw('NICK %s' % nicks[index])
+            # else get the user to supply a nick or make one up?
     
     if event.msg[1] == "JOIN":
         e_data.channel = event.network.channel(event.msg[2])
@@ -142,9 +151,13 @@ def onRaw(event):
 
 def onSocketConnect(event):
     import conf
-
-    event.network.raw("NICK %s" % conf.get("nick"))
-    event.network.raw("USER %s %s %s :%s" % ("a", "b", "c", "MrUrk"))
+    
+    #this needs to be tested--anyone have a server that uses PASS?
+    if event.network.password:
+        event.network.raw("PASS :%s" % event.network.password)
+    event.network.raw("NICK %s" % event.network.nick)
+    event.network.raw("USER %s %s %s :%s" %
+          ("a", "b", "c", event.network.fullname))
     
     event.network.me = None
 

@@ -90,7 +90,7 @@ class Network:
     sock = None
     
     nick = "" # not necessarily my nick, just the one I want
-    anicks = None # other nicks I might want
+    anicks = ('MrUrk',) # other nicks I might want
     fullname = ""
     email = ""
     
@@ -106,6 +106,9 @@ class Network:
     _users = None
     _channels = None
     channels = None #set of channels I'm on
+    
+    #network-specific data
+    channel_prefixes = '&#+$' #from rfc2812
     
     def __init__(self, fullname, nick, server, port=6667):
         #self.sock = socket.socket()
@@ -180,7 +183,10 @@ class Network:
         if not result:
             result = self._users.get(normal_name)
             if not result:
-                result = User()
+                if name[0] in self.channel_prefixes:
+                    result = Channel()
+                else:
+                    result = User()
                 result.name = name
                 result.normal_name = normal_name
                 result.network = self
@@ -245,7 +251,7 @@ class Channel:
         return hash(self.normal_name)
 
     def __repr__(self):
-        return "<User instance "+repr(self.name)+">"
+        return "<Channel instance "+repr(self.name)+">"
     
     def __str__(self):
         return self.name
