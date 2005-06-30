@@ -103,8 +103,6 @@ class Network:
     #name = ''
     
     me = None # me as a user
-    _users = None
-    _channels = None
     channels = None #set of channels I'm on
     
     #network-specific data
@@ -119,8 +117,7 @@ class Network:
         self.server = server
         self.port = port
         
-        self._users = weakref.WeakValueDictionary()
-        self._channels = weakref.WeakValueDictionary()
+        self._entities = weakref.WeakValueDictionary()
         self.channels = set()
         
     def raw(self, msg):
@@ -164,45 +161,22 @@ class Network:
     def normalize_case(self, string):
         return string.lower()
     
-    #returns a User object for the user
-    def user(self, name):
-        normal_name = self.normalize_case(name)
-        result = self._users.get(normal_name)
-        if not result:
-            result = User()
-            result.name = name
-            result.normal_name = normal_name
-            result.network = self
-            self._users[normal_name] = result
-        return result
-    
     #returns a User or Channel
     def entity(self, name):
         normal_name = self.normalize_case(name)
-        result = self._channels.get(normal_name)
+        result = self._entities.get(normal_name)
+        
         if not result:
-            result = self._users.get(normal_name)
-            if not result:
-                if name[0] in self.channel_prefixes:
-                    result = Channel()
-                else:
-                    result = User()
-                result.name = name
-                result.normal_name = normal_name
-                result.network = self
-                self._users[normal_name] = result
-        return result
-    
-    #returns a Channel
-    def channel(self, name):
-        normal_name = self.normalize_case(name)
-        result = self._channels.get(normal_name)
-        if not result:
-            result = Channel()
+            if name[0] in self.channel_prefixes:
+                result = Channel()
+            else:
+                result = User()
+
             result.name = name
             result.normal_name = normal_name
             result.network = self
-            self._channels[normal_name] = result
+            self._entities[normal_name] = result
+                
         return result
     
     def quit(self,msg="."):
@@ -227,60 +201,36 @@ class Network:
         e_data.target = self.entity(str(target))
         e_data.text = msg
         events.trigger('Text', e_data)
-        
-class Channel:
-    nicks = None
+
+class Entity:
+    name = ""
+    normal_name = ""
+    
+    address = ""
+    network = ""
+    
+    window = None
+    
+    def __eq__(self,oth):
+        if hasattr(oth,'normal_name'):
+            return self.normal_name == oth.normal_name
+        else:
+            return self.normal_name == self.network.normalize_case(str(oth))
+
+    def __hash__(self):
+        return hash(self.normal_name)
+
+    def __repr__(self):
+        return "<%s instance %s>" % (self.__class__.__name__, repr(self.name))
+    
+    def __str__(self):
+        return self.name
+
+class User(Entity):
+    type = "user"
+
+class Channel(Entity):#, set):
     type = "channel"
     
-    name = ""
-    normal_name = ""
-    address = ""
-    network = ""
-    window = None
-    
-    def __eq__(self,oth):
-        if hasattr(oth,'normal_name'):
-            return self.normal_name == oth.normal_name
-        else:
-            return self.normal_name == self.network.normalize_case(str(oth))
-    
-    def __init__(self):
-        self.nicks = []
-    
-    def __hash__(self):
-        return hash(self.normal_name)
-
-    def __repr__(self):
-        return "<Channel instance "+repr(self.name)+">"
-    
-    def __str__(self):
-        return self.name
-    
-    def add(self, user):
-        self.nicks.append(user)
-        
-    def remove(self, user):
-        self.nicks = [u for u in self.nicks if u != user]
-
-class User:
-    type = "user"
-    name = ""
-    normal_name = ""
-    address = ""
-    network = ""
-    window = None
-    
-    def __eq__(self,oth):
-        if hasattr(oth,'normal_name'):
-            return self.normal_name == oth.normal_name
-        else:
-            return self.normal_name == self.network.normalize_case(str(oth))
-
-    def __hash__(self):
-        return hash(self.normal_name)
-
-    def __repr__(self):
-        return "<User instance "+repr(self.name)+">"
-    
-    def __str__(self):
-        return self.name
+    def __nonzero__(self):
+        return True

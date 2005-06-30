@@ -114,9 +114,10 @@ class IrcWindow(gtk.VBox):
         
         # is this the right way?
         def transfer_text(widget, event):
-            self.entry.grab_focus()
-            self.entry.insert_text(event.string, -1)
-            self.entry.set_position(-1)
+            if event.string and not event.state:
+                self.entry.grab_focus()
+                self.entry.insert_text(event.string, -1)
+                self.entry.set_position(-1)
         
         self.view.connect("key-press-event", transfer_text)
 

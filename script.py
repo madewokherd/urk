@@ -37,7 +37,7 @@ def handle_echo(event):
     event.window.write(' '.join(event.args))
 
 def handle_query(event):
-    target = event.network.user(event.args[0])
+    target = event.network.entity(event.args[0])
     if target.window:
         #FIXME: select the window
         pass
@@ -128,7 +128,7 @@ def onRaw(event):
     
     if not event.network.me:
         if event.msg[1] == '001':
-            event.network.me = event.network.user(event.msg[2])
+            event.network.me = event.network.entity(event.msg[2])
             event.network.connected = True
         elif event.msg[1] in ('431','432','433','436','437'):
             failednick = event.msg[3]
@@ -139,7 +139,7 @@ def onRaw(event):
             # else get the user to supply a nick or make one up?
     
     if event.msg[1] == "JOIN":
-        e_data.channel = event.network.channel(event.msg[2])
+        e_data.channel = event.network.entity(event.msg[2])
         e_data.target = e_data.channel
         events.trigger('Join', e_data)
     elif event.msg[1] == "PRIVMSG":
