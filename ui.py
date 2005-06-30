@@ -7,6 +7,14 @@ import gobject
 import conf
 import events
 
+modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
+                gtk.gdk.MOD2_MASK, gtk.gdk.MOD3_MASK,
+                gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK)
+                        
+MOD_MASK = 0
+for m in modifiers:
+    MOD_MASK |= m   
+
 # FIXME, get rid of this
 def print_args(*args):
     print args
@@ -111,17 +119,9 @@ class IrcWindow(gtk.VBox):
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
-        
-        modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
-                        gtk.gdk.MOD2_MASK, gtk.gdk.MOD3_MASK,
-                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK)
-                        
-        mod_mask = 0
-        for m in modifiers:
-            mod_mask |= m        
-        
+
         def transfer_text(widget, event):
-            modifiers_on = event.state & mod_mask
+            modifiers_on = event.state & MOD_MASK
 
             if event.string and not modifiers_on:
                 self.entry.grab_focus()
