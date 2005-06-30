@@ -109,12 +109,21 @@ class IrcWindow(gtk.VBox):
     def top_section(self):
         self.view = gtk.TextView()
         self.view.set_wrap_mode(gtk.WRAP_WORD)
-        #self.view.set_editable(False)
+        self.view.set_editable(False)
         self.view.set_cursor_visible(False)
         
-        # is this the right way?
+        modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
+                        gtk.gdk.MOD2_MASK, gtk.gdk.MOD3_MASK,
+                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK)
+                        
+        mod_mask = 0
+        for m in modifiers:
+            mod_mask |= m        
+        
         def transfer_text(widget, event):
-            if event.string and not event.state:
+            modifiers_on = event.state & mod_mask
+
+            if event.string and not modifiers_on:
                 self.entry.grab_focus()
                 self.entry.insert_text(event.string, -1)
                 self.entry.set_position(-1)
