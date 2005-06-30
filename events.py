@@ -46,7 +46,7 @@ def load(s_name):
     # split the directory and filename
     dirname, filename = dir_and_file(s_name)
     
-    # FIXME, how do we import without adding evil paths to our sys.path?
+    # FIXME: how do we import without adding evil paths to our sys.path?
     # add our path if it's not there
     in_path = True
     

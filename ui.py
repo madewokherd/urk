@@ -15,7 +15,7 @@ MOD_MASK = 0
 for m in modifiers:
     MOD_MASK |= m   
 
-# FIXME, get rid of this
+# FIXME: get rid of this
 def print_args(*args):
     print args
 
@@ -321,6 +321,7 @@ def raise_quit():
 
 def raise_keyboard_interrupt():
     raise KeyboardInterrupt
+
 
 ui = IrcUI()
 new_tab = ui.new_tab
