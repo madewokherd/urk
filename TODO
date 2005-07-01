@@ -1,4 +1,6 @@
 
+-test Marc's stupid IDE
+
 -the text entry should be selected by default
 
 -we need to process all the normal server messages and make events for them: kicks, modes, parts, quits; we also need to be able to do them
