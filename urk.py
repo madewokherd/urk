@@ -17,7 +17,7 @@ def connect(network):
     
     get_window[network] = network_window
 
-    network.connect()
+    #network.connect()
 
 if __name__ == "__main__":
     for script in conf.get("scripts_to_load"):

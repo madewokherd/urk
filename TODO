@@ -3,7 +3,7 @@
 
 -we need to process all the normal server messages and make events for them: kicks, modes, parts, quits; we also need to be able to do them
 
--a nice /server command that lets us set the server and such
+-we should update the server name when you do /server, possibly even filling in the network name when we get that
 
 -some sort of system for keeping separating settings for networks so that we connect from a list on start
 

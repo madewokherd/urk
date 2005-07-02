@@ -1,4 +1,9 @@
+import traceback
+import getopt
+
 import events
+import irc
+import conf
 import __main__ as urk
 import ui
 
@@ -66,10 +71,59 @@ def handle_join(event):
         event.window.write("* /join: You must supply a channel.")
 
 def handle_pyeval(event):
-    event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
+    try:
+        event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
+    except:
+        for line in traceback.format_exc().split('\n'):
+            event.window.write(line)
 
 def handle_pyexec(event):
-    exec ' '.join(event.args) in globals(), event.__dict__
+    try:
+        exec ' '.join(event.args) in globals(), event.__dict__
+    except:
+        for line in traceback.format_exc().split('\n'):
+            event.window.write(line)
+
+def handle_server(event):
+    new_window = False
+    connect = True
+    port = None
+    server = None
+    options, args = getopt.gnu_getopt(event.args,"nomp:",['new','noconnect','port='])
+    options = dict(options)
+    if ('-n' in options):
+        new_window, connect = True, False
+    if ('-m' in options) or ('--new' in options):
+        new_window = True
+    if ('-o' in options) or ('--noconnect' in options):
+        connect = False
+    if ('-p' in options):
+        port = options['-p']
+    if ('--port' in options):
+        port = options['--port']
+    if args:
+        server = args.pop(0)
+        if ':' in server:
+            split = server.split(':')
+            server = split[0]
+            port = int(split[1])
+    if args:
+        port = int(args.pop(0))
+    
+    def do_server():
+        if new_window:
+            network = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
+            urk.connect(network)
+        else:
+            network = event.network
+        if server:
+            network.server = server
+        if port:
+            network.port = port
+        if connect:
+            network.connect()
+    
+    ui.enqueue(do_server)
 
 command_handlers = {
     'echo': handle_echo,
@@ -79,6 +133,7 @@ command_handlers = {
     'join': handle_join,
     'pyeval': handle_pyeval,
     'pyexec': handle_pyexec,
+    'server': handle_server,
 }
 
 def setupCommand(event):
@@ -116,6 +171,8 @@ def onConnectArlottOrg(event):
     x = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
     
     urk.connect(x)
+    
+    x.connect()
 
 def onRaw(event):
     if event.msg[1] == "PING":
