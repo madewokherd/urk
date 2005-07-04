@@ -83,14 +83,14 @@ class IrcWindow(gtk.VBox):
         v_buffer = self.view.get_buffer()
         
         end_rect = self.view.get_iter_location(v_buffer.get_end_iter())
-        v_rect = self.view.get_visible_rect()
+        vis_rect = self.view.get_visible_rect()
 
-        do_scroll = end_rect.y + end_rect.height <= v_rect.y + v_rect.height
+        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
     
         if v_buffer.get_char_count() == 0:
             newline = ""
     
-        v_buffer.insert(v_buffer.get_end_iter(),newline + text)
+        v_buffer.insert(v_buffer.get_end_iter(), newline + text)
 
         if do_scroll:
             scroll_to = v_buffer.create_mark("", v_buffer.get_end_iter())
@@ -103,6 +103,8 @@ class IrcWindow(gtk.VBox):
         for line in lines:
             if line:
                 self.entered_line(line)
+                self.entry.history.insert(1, line)
+                self.entry.history_pos = 0
         
         entry.set_text("")
     
@@ -112,6 +114,54 @@ class IrcWindow(gtk.VBox):
         e_data.text = text
         e_data.network = self.get_data('network')
         events.trigger('Input', e_data)
+
+    # this is our editbox   
+    def bottom_section(self):
+        box = gtk.HBox()
+        
+        self.entry = gtk.Entry()
+        self.entry.connect("activate", self.entered_text)
+        
+        self.entry.history = [""]
+        self.entry.history_pos = 0
+        
+        def history_explore(widget, event):
+            up = gtk.gdk.keyval_from_name("Up")
+            down = gtk.gdk.keyval_from_name("Down")
+        
+            if event.keyval in (up, down):
+                # if we're going up, we go back in history
+                if event.keyval == up:
+                    # when we travel back in time, we need to remember
+                    # where we were, so we can go back to the future
+                    if self.entry.history_pos == 0 and self.entry.get_text():
+                        self.entry.history.insert(1, self.entry.get_text())
+                        self.entry.history_pos = 1
+                
+                    if self.entry.history_pos < len(self.entry.history)-1:
+                        self.entry.history_pos += 1
+                
+                # if we're going down, we go forward in history    
+                elif event.keyval == down:
+                    if self.entry.history_pos:
+                        self.entry.history_pos -= 1
+
+                self.entry.set_text(self.entry.history[self.entry.history_pos])
+                self.entry.set_position(-1)
+                
+                print self.entry.history, self.entry.history_pos
+                
+                return True # stop other events being triggered
+            
+        self.entry.connect("key-press-event", history_explore)
+        
+        self.nick_label = NickLabel(conf.get("nick"))
+        self.nick_label.set_padding(5, 0)
+
+        box.pack_start(self.entry)
+        box.pack_end(self.nick_label, expand=False)
+
+        return box
         
     # top half of an irc window, channel window and nicklist                
     def top_section(self):
@@ -137,21 +187,6 @@ class IrcWindow(gtk.VBox):
         win.add(self.view)
 
         return win
-     
-    # this is our editbox   
-    def bottom_section(self):
-        box = gtk.HBox()
-        
-        self.entry = gtk.Entry()
-        self.entry.connect("activate", self.entered_text)
-        
-        self.nick_label = NickLabel(conf.get("nick"))
-        self.nick_label.set_padding(5, 0)
-
-        box.pack_start(self.entry)
-        box.pack_end(self.nick_label, expand=False)
-
-        return box
 
     def __init__(self, title=""):
         gtk.VBox.__init__(self, False)
@@ -161,7 +196,6 @@ class IrcWindow(gtk.VBox):
         top, bot = self.top_section(), self.bottom_section()
         
         v_buffer = self.view.get_buffer()        
-        #self.mark = v_buffer.create_mark('end', v_buffer.get_end_iter(), False)
         
         def focus_entry(*args):
             self.entry.set_property("has-focus", True)
@@ -169,7 +203,7 @@ class IrcWindow(gtk.VBox):
         self.view.connect("focus", focus_entry, "here1")
 
         self.pack_start(top)
-        self.pack_end(bot, expand=False)       
+        self.pack_end(bot, expand=False)   
         self.show_all()
         
 class IrcChannelWindow(IrcWindow):
@@ -279,8 +313,11 @@ class IrcUI(gtk.Window):
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
+        
+        first_window = IrcWindow("Status Window")
+        first_window.type = "status"
 
-        self.new_tab(IrcWindow("Status Window"))
+        self.new_tab(first_window)
         activate(0) # status window
 
         self.add(box)

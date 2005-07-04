@@ -11,6 +11,7 @@ def connect(network):
         ui.ui.tabs.set_tab_label_text(network_window, network.server)
     else:
         network_window = ui.IrcWindow(network.server)
+        network_window.type = "status"
         ui.new_tab(network_window, network) 
            
     ui.activate(network_window)
