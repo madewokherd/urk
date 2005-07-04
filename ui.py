@@ -149,8 +149,6 @@ class IrcWindow(gtk.VBox):
                 self.entry.set_text(self.entry.history[self.entry.history_pos])
                 self.entry.set_position(-1)
                 
-                print self.entry.history, self.entry.history_pos
-                
                 return True # stop other events being triggered
             
         self.entry.connect("key-press-event", history_explore)
