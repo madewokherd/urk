@@ -246,54 +246,27 @@ class IrcUI(gtk.Window):
             
         self.tabs.insert_page(window, title, pos)
 
-    def shutdown(self):
-        conf.set("x", self.x)
-        conf.set("y", self.y)
-    
-        conf.set("width", self.w)
-        conf.set("height", self.h)
+    def shutdown(self, *args):
+        conf.set("xy", self.get_position())
+        conf.set("wh", self.get_size())
 
     def __init__(self):
         # threading stuff
         gtk.gdk.threads_init()
         
-        # create a new window
         gtk.Window.__init__(self)
-        
-        def delete_event(*args):
-            return False
-
-        self.connect("delete_event", delete_event)
-        
-        def destroy(*args):
-            self.shutdown()
-            enqueue(raise_quit)
-   
-        self.connect("destroy", destroy)
-        
-        def record_resize(*args):
-            self.w, self.h = self.get_size()
-            self.x, self.y = self.get_position()
-
-        self.connect("configure_event", record_resize)
-
         self.set_title("Urk")
+
+        def destroy(*args):
+            enqueue(raise_quit)
+        self.connect("destroy", destroy)
+        self.connect("delete_event", self.shutdown)
         
-        # FIXME reduce all of this to 1 line of code, or somehow make it
-        #       neater
-
-        self.x, self.y = conf.get("x"), conf.get("y")
-        if self.x == None:
-            self.x = -1
-
-        if self.y == None:
-            self.y = -1
-            
-        self.w = conf.get("width") or 500        
-        self.h = conf.get("height") or 500            
-            
-        self.move(self.x, self.y)
-        self.set_default_size(self.w, self.h)
+        xy = conf.get("xy") or (-1, -1)
+        wh = conf.get("wh") or (500, 500)
+        
+        self.move(*xy)
+        self.set_default_size(*wh)
         
         actions = gtk.ActionGroup("Actions")
         actions.add_actions(menu)
@@ -310,15 +283,15 @@ class IrcUI(gtk.Window):
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
-        box = gtk.VBox(False)
-        box.pack_start(ui.get_widget("/MenuBar"), expand=False)
-        box.pack_end(self.tabs)
-        
         first_window = IrcWindow("Status Window")
         first_window.type = "first_window"
 
         self.new_tab(first_window)
         activate(0) # status window
+        
+        box = gtk.VBox(False)
+        box.pack_start(ui.get_widget("/MenuBar"), expand=False)
+        box.pack_end(self.tabs)
 
         self.add(box)
         self.show_all()
