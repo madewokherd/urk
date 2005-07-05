@@ -72,7 +72,9 @@ class NickLabel(gtk.Label):
     def __init__(self, *args, **kwargs):
         gtk.Label.__init__(self, *args, **kwargs)
 
-class IrcWindow(gtk.VBox):        
+class IrcWindow(gtk.VBox):
+    network = None
+ 
     # the all knowing print to our text window function
     def write(self, text):
         enqueue(self.write_unsafe, text)
@@ -112,7 +114,7 @@ class IrcWindow(gtk.VBox):
         e_data = events.data()
         e_data.window = self
         e_data.text = text
-        e_data.network = self.get_data('network')
+        e_data.network = self.network
         events.trigger('Input', e_data)
 
     # this is our editbox   
@@ -230,7 +232,7 @@ class IrcUI(gtk.Window):
     def new_tab_unsafe(self, window, network=None):
         title = gtk.Label(window.title)
         
-        window.set_data('network', network)
+        window.network = network
         
         pos = self.tabs.get_n_pages()
         
@@ -238,7 +240,7 @@ class IrcUI(gtk.Window):
             for i in reversed(xrange(pos)):
                 insert_candidate = self.tabs.get_nth_page(i)
                 
-                if insert_candidate.get_data('network') == network:
+                if insert_candidate.network == network:
                     pos = i+1
                     break
             
@@ -313,7 +315,7 @@ class IrcUI(gtk.Window):
         box.pack_end(self.tabs)
         
         first_window = IrcWindow("Status Window")
-        first_window.type = "status"
+        first_window.type = "first_window"
 
         self.new_tab(first_window)
         activate(0) # status window
@@ -360,6 +362,7 @@ def raise_keyboard_interrupt():
 
 ui = IrcUI()
 new_tab = ui.new_tab
+tabs = ui.tabs
 
 def start():
     try:
