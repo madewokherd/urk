@@ -34,21 +34,19 @@ def urk_about(action):
     about.set_authors(__import__("random").sample(["Marc","MadEwokHerd"], 2))
     
     about.show_all()
-
-def quit(action=None):
-    enqueue(raise_keyboard_interrupt)
-
-menu = (
-    ("FileMenu", None, "_File"),
-        ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, quit),
-        ("Connect", None, "_Connect", None, None, connectToArlottOrg),
     
-    ("EditMenu", None, "_Edit"),
-        ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
-    
-    ("HelpMenu", None, "_Help"),
-        ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
-)
+def get_menu(ui):
+    return (
+        ("FileMenu", None, "_File"),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
+            ("Connect", None, "_Connect", None, None, connectToArlottOrg),
+        
+        ("EditMenu", None, "_Edit"),
+            ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
+        
+        ("HelpMenu", None, "_Help"),
+            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
+    )
 
 ui_info = \
 """<ui>
@@ -80,23 +78,23 @@ class IrcWindow(gtk.VBox):
         enqueue(self.write_unsafe, text)
     
     def write_unsafe(self, text):
-        newline = "\n"
+        buffer = self.view.get_buffer()
+        end = buffer.get_end_iter()
         
-        v_buffer = self.view.get_buffer()
-        
-        end_rect = self.view.get_iter_location(v_buffer.get_end_iter())
+        end_rect = self.view.get_iter_location(end)
         vis_rect = self.view.get_visible_rect()
 
         do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
     
-        if v_buffer.get_char_count() == 0:
+        if buffer.get_char_count():
+            newline = "\n"
+        else:
             newline = ""
     
-        v_buffer.insert(v_buffer.get_end_iter(), newline + text)
+        buffer.insert(end, newline + text)
 
         if do_scroll:
-            scroll_to = v_buffer.create_mark("", v_buffer.get_end_iter())
-            self.view.scroll_mark_onscreen(scroll_to)
+            self.view.scroll_mark_onscreen(buffer.create_mark("", end))
     
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
@@ -106,7 +104,7 @@ class IrcWindow(gtk.VBox):
             if line:
                 self.entered_line(line)
                 self.entry.history.insert(1, line)
-                self.entry.history_pos = 0
+                self.entry.history_i = 0
         
         entry.set_text("")
     
@@ -117,38 +115,38 @@ class IrcWindow(gtk.VBox):
         e_data.network = self.network
         events.trigger('Input', e_data)
 
-    # this is our editbox   
-    def bottom_section(self):
+    # this is our text entry widget
+    def entry_box(self):
         box = gtk.HBox()
         
         self.entry = gtk.Entry()
         self.entry.connect("activate", self.entered_text)
         
         self.entry.history = [""]
-        self.entry.history_pos = 0
+        self.entry.history_i = 0
         
         def history_explore(widget, event):
             up = gtk.gdk.keyval_from_name("Up")
             down = gtk.gdk.keyval_from_name("Down")
         
             if event.keyval in (up, down):
-                # if we're going up, we go back in history
+                # we go forward in history
+                di = -1
+                    
                 if event.keyval == up:
+                    # we go back in history
+                    di = 1
+                    
                     # when we travel back in time, we need to remember
                     # where we were, so we can go back to the future
-                    if self.entry.history_pos == 0 and self.entry.get_text():
+                    if self.entry.history_i == 0 and self.entry.get_text():
                         self.entry.history.insert(1, self.entry.get_text())
-                        self.entry.history_pos = 1
-                
-                    if self.entry.history_pos < len(self.entry.history)-1:
-                        self.entry.history_pos += 1
-                
-                # if we're going down, we go forward in history    
-                elif event.keyval == down:
-                    if self.entry.history_pos:
-                        self.entry.history_pos -= 1
+                        self.entry.history_i = 1
 
-                self.entry.set_text(self.entry.history[self.entry.history_pos])
+                if self.entry.history_i + di in range(len(self.entry.history)):
+                    self.entry.history_i += di
+
+                self.entry.set_text(self.entry.history[self.entry.history_i])
                 self.entry.set_position(-1)
                 
                 return True # stop other events being triggered
@@ -163,8 +161,8 @@ class IrcWindow(gtk.VBox):
 
         return box
         
-    # top half of an irc window, channel window and nicklist                
-    def top_section(self):
+    # non-channel channel window, no nicklist         
+    def chat_view(self):
         self.view = gtk.TextView()
         self.view.set_wrap_mode(gtk.WRAP_WORD)
         self.view.set_editable(False)
@@ -192,30 +190,19 @@ class IrcWindow(gtk.VBox):
         gtk.VBox.__init__(self, False)
         
         self.title = title
-        
-        top, bot = self.top_section(), self.bottom_section()
-        
-        v_buffer = self.view.get_buffer()        
-        
-        def focus_entry(*args):
-            self.entry.set_property("has-focus", True)
 
-        self.view.connect("focus", focus_entry, "here1")
-
-        self.pack_start(top)
-        self.pack_end(bot, expand=False)   
+        self.pack_start(self.chat_view())
+        self.pack_end(self.entry_box() , expand=False)
+  
         self.show_all()
         
 class IrcChannelWindow(IrcWindow):
-    # top half of an irc window, channel window and nicklist                
-    def top_section(self):
-        top = IrcWindow.top_section(self)
-        
+    # channel window and nicklist               
+    def chat_view(self):
         self.nicklist = gtk.TreeView()
         
         win = gtk.HPaned()
-        
-        win.pack1(top, resize=True)
+        win.pack1(IrcWindow.chat_view(self), resize=True)
         win.pack2(self.nicklist, resize=False)
         
         return win
@@ -249,6 +236,8 @@ class IrcUI(gtk.Window):
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
+        
+        enqueue(raise_quit)
 
     def __init__(self):
         # threading stuff
@@ -257,11 +246,6 @@ class IrcUI(gtk.Window):
         gtk.Window.__init__(self)
         self.set_title("Urk")
 
-        def destroy(*args):
-            enqueue(raise_quit)
-        self.connect("destroy", destroy)
-        self.connect("delete_event", self.shutdown)
-        
         xy = conf.get("xy") or (-1, -1)
         wh = conf.get("wh") or (500, 500)
         
@@ -269,7 +253,7 @@ class IrcUI(gtk.Window):
         self.set_default_size(*wh)
         
         actions = gtk.ActionGroup("Actions")
-        actions.add_actions(menu)
+        actions.add_actions(get_menu(self))
 
         ui = gtk.UIManager()
         ui.add_ui_from_string(ui_info)
@@ -287,11 +271,13 @@ class IrcUI(gtk.Window):
         first_window.type = "first_window"
 
         self.new_tab(first_window)
-        activate(0) # status window
+        activate(0) # first_window
         
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
+        
+        self.connect("delete_event", self.shutdown)
 
         self.add(box)
         self.show_all()
@@ -303,8 +289,7 @@ def activate(widget):
         
     def to_activate():
         ui.tabs.set_current_page(widget)
-        ui.tabs.get_nth_page(widget).entry.grab_focus()
-        
+        ui.tabs.get_nth_page(widget).entry.grab_focus() 
     enqueue(to_activate)
 
 def get_window(target, src_event=None, src_name=''):
@@ -328,10 +313,6 @@ class Quitting(Exception):
 
 def raise_quit():
     raise Quitting
-
-def raise_keyboard_interrupt():
-    raise KeyboardInterrupt
-
 
 ui = IrcUI()
 new_tab = ui.new_tab
