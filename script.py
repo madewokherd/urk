@@ -111,7 +111,7 @@ def handle_server(event):
         port = int(args.pop(0))
     
     def do_server():
-        if new_window:
+        if new_window or not event.network:
             network = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
             urk.connect(network)
         else:
