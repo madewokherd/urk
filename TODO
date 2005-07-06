@@ -1,42 +1,64 @@
 Server Messages
 
-	we need to process all the normal server messages and 
+    we need to process all the normal server messages and 
 make events for them: kicks, modes, parts, quits; we also 
-need to be able to do them
+need to be able to do them; and ctcp/actions
 
 
 Server Stuff
 
-	we should update the server name when you do /server, possibly 
+    we should update the server name when you do /server, possibly 
 even filling in the network name when we get that
+
+
+Formatting
+
+    We should support mIRC's and possibly besirc's formatting codes.
+IRCWindow.write() would be a good place for this.
 
 
 Network Prefs and Data
 
-	some sort of system for keeping separating settings for 
+    some sort of system for keeping separating settings for 
 networks so that we connect from a list on start
 
 
 Theme System
 
-	we need some sort of theme system, probably implemented via 
+    we need some sort of theme system, probably implemented via 
 a script (we can only have one "default" way to handle things, 
 so echoing from script.py would have to go)
 
 
 Preferences UI
 
-	a preferences ui, probably with a separate sort of 
+    a preferences ui, probably with a separate sort of 
 "connect or edit connection" dialog
 
 
+MEH likes closing tabs
+
+    We need a way to close tabs.       
+
+
+DCC Stuff
+
+    DCC server, sends, chat, etc. We should support mIRC's "passive" DCC.
+
+
+Logging
+
+    We'll need this at some point. If the theme system is good enough, maybe
+we can make it handle both at once (with different themes).
+
+        
 MEH hates tabs
 
-	the mdi system might need revised--some people like to be on 
+    the mdi system might need revised--some people like to be on 
 more channels than tabs can reasonably accomodate
 
 
 while 1: suckAtMainLoop()
 
-	the main loop really sucks; we'd love to get rid of it 
+    the main loop really sucks; we'd love to get rid of it 
 (use gtk.main() somehow), but we can't find anything else that works

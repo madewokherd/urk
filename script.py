@@ -36,8 +36,6 @@ def onInput(event):
         event.network.msg(event.window.target, event.text)
         event.todo.remove('default')
 
-#should this be something like onCommandEcho?
-#if so, how?
 def handle_echo(event):
     event.window.write(' '.join(event.args))
 
@@ -214,7 +212,8 @@ def onSocketConnect(event):
         event.network.raw("PASS :%s" % event.network.password)
     event.network.raw("NICK %s" % event.network.nick)
     event.network.raw("USER %s %s %s :%s" %
-          ("a", "b", "c", event.network.fullname))
+          ("urk", "8", "*", event.network.fullname))
+          #per rfc2812 these are username, user mode flags, unused, realname
     
     event.network.me = None
 
