@@ -67,8 +67,9 @@ ui_info = \
 </ui>"""
 
 class NickLabel(gtk.Label):
-    def __init__(self, *args, **kwargs):
-        gtk.Label.__init__(self, *args, **kwargs)
+    pass
+    #def __init__(self, *args, **kwargs):
+    #    gtk.Label.__init__(self, *args, **kwargs)
 
 class IrcWindow(gtk.VBox):
     network = None
@@ -117,8 +118,6 @@ class IrcWindow(gtk.VBox):
 
     # this is our text entry widget
     def entry_box(self):
-        box = gtk.HBox()
-        
         self.entry = gtk.Entry()
         self.entry.connect("activate", self.entered_text)
         
@@ -156,6 +155,7 @@ class IrcWindow(gtk.VBox):
         self.nick_label = NickLabel(conf.get("nick"))
         self.nick_label.set_padding(5, 0)
 
+        box = gtk.HBox()
         box.pack_start(self.entry)
         box.pack_end(self.nick_label, expand=False)
 
@@ -181,7 +181,6 @@ class IrcWindow(gtk.VBox):
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         win.set_border_width(2)
-        
         win.add(self.view)
 
         return win
@@ -225,9 +224,7 @@ class IrcUI(gtk.Window):
         
         if network:
             for i in reversed(xrange(pos)):
-                insert_candidate = self.tabs.get_nth_page(i)
-                
-                if insert_candidate.network == network:
+                if self.tabs.get_nth_page(i).network == network:
                     pos = i+1
                     break
             
@@ -237,7 +234,7 @@ class IrcUI(gtk.Window):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
         
-        enqueue(raise_quit)
+        enqueue(quit)
 
     def __init__(self):
         # threading stuff
@@ -261,9 +258,8 @@ class IrcUI(gtk.Window):
 
         # create some tabs
         self.tabs = gtk.Notebook()
-        self.tabs.set_property("tab-pos", gtk.POS_TOP)        
-        
-        self.tabs.set_border_width(10)                
+        self.tabs.set_property("tab-pos", gtk.POS_TOP)
+        self.tabs.set_border_width(10)          
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
@@ -311,7 +307,7 @@ def enqueue(f, *args, **kwargs):
 class Quitting(Exception):
     pass
 
-def raise_quit():
+def quit():
     raise Quitting
 
 ui = IrcUI()
