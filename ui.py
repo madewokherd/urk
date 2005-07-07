@@ -35,6 +35,9 @@ def urk_about(action):
     
     about.show_all()
     
+def close_tab(action):
+    ui.tabs.remove_page(ui.tabs.get_current_page())
+    
 def get_menu(ui):
     return (
         ("FileMenu", None, "_File"),
@@ -45,11 +48,14 @@ def get_menu(ui):
             ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
         
         ("HelpMenu", None, "_Help"),
-            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
+            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about),
+            
+        ("CloseTab", None, "_Close Tab", None, None, close_tab)
     )
 
 ui_info = \
-"""<ui>
+"""
+<ui>
  <menubar name="MenuBar">
   <menu action="FileMenu">
    <menuitem action="Connect"/>
@@ -64,7 +70,12 @@ ui_info = \
    <menuitem action="About"/>
   </menu>
  </menubar>
-</ui>"""
+ 
+ <popup name="TabPopup">
+   <menuitem action="CloseTab"/>
+ </popup>
+</ui>
+"""
 
 class NickLabel(gtk.Label):
     pass
@@ -235,28 +246,8 @@ class IrcUI(gtk.Window):
         conf.set("wh", self.get_size())
         
         enqueue(quit)
-
-    def __init__(self):
-        # threading stuff
-        gtk.gdk.threads_init()
         
-        gtk.Window.__init__(self)
-        self.set_title("Urk")
-
-        xy = conf.get("xy") or (-1, -1)
-        wh = conf.get("wh") or (500, 500)
-        
-        self.move(*xy)
-        self.set_default_size(*wh)
-        
-        actions = gtk.ActionGroup("Actions")
-        actions.add_actions(get_menu(self))
-
-        ui = gtk.UIManager()
-        ui.add_ui_from_string(ui_info)
-        ui.insert_action_group(actions, 0)
-
-        # create some tabs
+    def make_notebook(self, ui):
         self.tabs = gtk.Notebook()
         self.tabs.set_property("tab-pos", gtk.POS_TOP)
         self.tabs.set_border_width(10)          
@@ -269,6 +260,38 @@ class IrcUI(gtk.Window):
         self.new_tab(first_window)
         activate(0) # first_window
         
+        self.new_tab(IrcWindow("Blah"))
+        
+        def tab_popup(widget, event):
+            if event.button == 3: # right click
+                ui.get_widget("/TabPopup").popup(None, None, None, event.button, event.time)
+                    
+        self.tabs.connect("button-press-event", tab_popup)
+
+    def __init__(self):
+        # threading stuff
+        gtk.gdk.threads_init()
+        
+        gtk.Window.__init__(self)
+        self.set_title("Urk")
+        
+        # layout
+        xy = conf.get("xy") or (-1, -1)
+        wh = conf.get("wh") or (500, 500)
+        
+        self.move(*xy)
+        self.set_default_size(*wh)
+        
+        # set up actions        
+        actions = gtk.ActionGroup("Urk")
+        actions.add_actions(get_menu(self))
+
+        ui = gtk.UIManager()
+        ui.add_ui_from_string(ui_info)
+        ui.insert_action_group(actions, 0)
+        
+        self.make_notebook(ui)
+
         box = gtk.VBox(False)
         box.pack_start(ui.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
