@@ -4,6 +4,10 @@ import ui
 
 get_window = {}
 
+# KILL
+if not conf.get("start_networks"):
+    conf.set("start_networks", ["MozNet"])
+
 def connect(network):
     if ui.tabs.get_n_pages() and ui.tabs.get_nth_page(0).type == "first_window":
         network_window = ui.tabs.get_nth_page(0)
@@ -18,8 +22,6 @@ def connect(network):
     ui.activate(network_window)
     
     get_window[network] = network_window
-
-    #network.connect()
 
 if __name__ == "__main__":
     for script in conf.get("scripts_to_load"):
