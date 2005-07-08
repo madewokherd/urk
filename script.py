@@ -147,21 +147,26 @@ def postCommand(event):
     if 'default' in event.todo and event.network.connected:
         event.network.raw(event.text)
         event.todo.remove('default')
-
-# FIXME, find a list of networks to join from somewhere, prolly conf
-#         then join them
-def start_networks():
-    return []
+    
+def get_server(network):
+    return "irc.mozilla.org"
 
 def onStart(event):
-    on_start_networks = start_networks()
+    on_start_networks = conf.get("start_networks")
 
     for network in on_start_networks:
+        server = get_server(network)
+    
+        x = irc.Network("Urk user", conf.get("nick"), server)
+    
+        ui.enqueue(urk.connect, x)
+    
+        x.connect()
+    
         # FIXME, given a network, might we want to look up servers?, possibly 
         #        this should happen on instantiation of the Network() otherwise
         #        i guess it should be done whenever we need to connect to a
         #        network, ie. here and some other places
-        urk.connect(network)
         
 def onConnectArlottOrg(event):
     import irc, conf
