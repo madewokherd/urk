@@ -5,7 +5,7 @@ import ui
 get_window = {}
 
 def connect(network):
-    if ui.tabs.get_nth_page(0).type == "first_window":
+    if ui.tabs.get_n_pages() and ui.tabs.get_nth_page(0).type == "first_window":
         network_window = ui.tabs.get_nth_page(0)
         ui.tabs.set_tab_label_text(network_window, network.server)
     else:

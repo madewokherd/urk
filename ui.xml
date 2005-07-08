@@ -1,0 +1,16 @@
+<ui>
+ <menubar name="MenuBar">
+  <menu action="FileMenu">
+   <menuitem action="Connect"/>
+   <menuitem action="Quit"/>
+  </menu>
+  
+  <menu action="EditMenu">
+   <menuitem action="Preferences"/>
+  </menu>
+  
+  <menu action="HelpMenu">
+   <menuitem action="About"/>
+  </menu>
+ </menubar>
+</ui>

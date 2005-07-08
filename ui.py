@@ -19,9 +19,6 @@ for m in modifiers:
 def print_args(*args):
     print args
 
-def connectToArlottOrg(widget):
-    events.trigger("ConnectArlottOrg")
-    
 def urk_about(action):
     about = gtk.AboutDialog()
     
@@ -35,11 +32,28 @@ def urk_about(action):
     
     about.show_all()
     
-def close_tab(action):
-    ui.tabs.remove_page(ui.tabs.get_current_page())
+def get_tab_actions(tabs, page_num):
+    def close_tab(action):
+        ui.tabs.remove_page(page_num)
+        
+    to_add = (
+        ("CloseTab", gtk.STOCK_CLOSE, "_Close Tab", None, None, close_tab),
+        )
+        
+    actions = gtk.ActionGroup("Tab")
+    actions.add_actions(to_add)
     
-def get_menu(ui):
-    return (
+    return actions
+    
+def get_urk_actions(ui):
+    def connectToArlottOrg(widget):
+        events.trigger("ConnectArlottOrg")
+
+    def close_tab(action):
+        print "u"
+        ui.tabs.remove_page(ui.tabs.get_current_page())
+
+    to_add = (
         ("FileMenu", None, "_File"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
             ("Connect", None, "_Connect", None, None, connectToArlottOrg),
@@ -48,39 +62,23 @@ def get_menu(ui):
             ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
         
         ("HelpMenu", None, "_Help"),
-            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about),
-            
-        ("CloseTab", None, "_Close Tab", None, None, close_tab)
-    )
+            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
+        )
+    
+    urk_actions = gtk.ActionGroup("Urk")   
+    urk_actions.add_actions(to_add)
+    
+    return urk_actions
 
-ui_info = \
-"""
-<ui>
- <menubar name="MenuBar">
-  <menu action="FileMenu">
-   <menuitem action="Connect"/>
-   <menuitem action="Quit"/>
-  </menu>
-  
-  <menu action="EditMenu">
-   <menuitem action="Preferences"/>
-  </menu>
-  
-  <menu action="HelpMenu">
-   <menuitem action="About"/>
-  </menu>
- </menubar>
- 
- <popup name="TabPopup">
-   <menuitem action="CloseTab"/>
- </popup>
-</ui>
-"""
-
-class NickLabel(gtk.Label):
-    pass
-    #def __init__(self, *args, **kwargs):
-    #    gtk.Label.__init__(self, *args, **kwargs)
+class NickLabel(gtk.EventBox):
+    def __init__(self, *args, **kwargs):
+        self.label = gtk.Label(*args, **kwargs)
+        self.label.set_padding(5, 0)
+        
+        gtk.EventBox.__init__(self)
+        self.add(self.label)
+        
+        #self.connect("button-press-event", lambda *a: None)
 
 class IrcWindow(gtk.VBox):
     network = None
@@ -164,7 +162,6 @@ class IrcWindow(gtk.VBox):
         self.entry.connect("key-press-event", history_explore)
         
         self.nick_label = NickLabel(conf.get("nick"))
-        self.nick_label.set_padding(5, 0)
 
         box = gtk.HBox()
         box.pack_start(self.entry)
@@ -227,7 +224,11 @@ class IrcUI(gtk.Window):
         enqueue(self.new_tab_unsafe, window, network)
 
     def new_tab_unsafe(self, window, network=None):
-        title = gtk.Label(window.title)
+        title = gtk.EventBox()
+        title.add(gtk.Label(window.title))
+        title.child_window = window
+        title.connect("button-press-event", self.tabs.tab_popup)
+        title.show_all()
         
         window.network = network
         
@@ -238,7 +239,7 @@ class IrcUI(gtk.Window):
                 if self.tabs.get_nth_page(i).network == network:
                     pos = i+1
                     break
-            
+   
         self.tabs.insert_page(window, title, pos)
 
     def shutdown(self, *args):
@@ -254,19 +255,30 @@ class IrcUI(gtk.Window):
         self.tabs.set_scrollable(True)
         self.tabs.set_show_border(True)
 
+        def tab_popup(widget, event):
+            if event.button == 3: # right click
+                page_num = self.tabs.page_num(widget.child_window)
+                
+                tab_id = self.ui_manager.add_ui_from_file("tabui.xml")
+                self.ui_manager.insert_action_group(get_tab_actions(self.tabs, page_num), 0)
+
+                menu = self.ui_manager.get_widget("/TabPopup")
+                
+                def remove_tab_ui(action):
+                    self.ui_manager.remove_ui(tab_id)
+                menu.connect("deactivate", remove_tab_ui)
+
+                menu.popup(None, None, None, event.button, event.time)
+
+        self.tabs.tab_popup = tab_popup
+
         first_window = IrcWindow("Status Window")
         first_window.type = "first_window"
 
         self.new_tab(first_window)
-        activate(0) # first_window
+        activate(first_window)
         
         self.new_tab(IrcWindow("Blah"))
-        
-        def tab_popup(widget, event):
-            if event.button == 3: # right click
-                ui.get_widget("/TabPopup").popup(None, None, None, event.button, event.time)
-                    
-        self.tabs.connect("button-press-event", tab_popup)
 
     def __init__(self):
         # threading stuff
@@ -275,6 +287,8 @@ class IrcUI(gtk.Window):
         gtk.Window.__init__(self)
         self.set_title("Urk")
         
+        self.connect("delete_event", self.shutdown)
+        
         # layout
         xy = conf.get("xy") or (-1, -1)
         wh = conf.get("wh") or (500, 500)
@@ -282,34 +296,33 @@ class IrcUI(gtk.Window):
         self.move(*xy)
         self.set_default_size(*wh)
         
-        # set up actions        
-        actions = gtk.ActionGroup("Urk")
-        actions.add_actions(get_menu(self))
-
-        ui = gtk.UIManager()
-        ui.add_ui_from_string(ui_info)
-        ui.insert_action_group(actions, 0)
+        # set up ui manager stuff     
+        self.ui_manager = gtk.UIManager()
+        self.add_accel_group(self.ui_manager.get_accel_group())
+        self.ui_manager.add_ui_from_file("ui.xml")
+        self.ui_manager.insert_action_group(get_urk_actions(self), 1)
         
-        self.make_notebook(ui)
-
+        # tabs        
+        self.make_notebook(self.ui_manager)
+        
+        # widgets
         box = gtk.VBox(False)
-        box.pack_start(ui.get_widget("/MenuBar"), expand=False)
+        box.pack_start(self.ui_manager.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
-        
-        self.connect("delete_event", self.shutdown)
 
         self.add(box)
         self.show_all()
         
 def activate(widget):
-    # if this is an actual widget, then we want its tab number
-    if not isinstance(widget, int):
-        widget = ui.tabs.page_num(widget)
-        
-    def to_activate():
+    def to_activate(widget):
+        # if this is an actual widget, then we want its tab number
+        if not isinstance(widget, int):
+            widget = ui.tabs.page_num(widget)
+    
         ui.tabs.set_current_page(widget)
-        ui.tabs.get_nth_page(widget).entry.grab_focus() 
-    enqueue(to_activate)
+        ui.tabs.get_nth_page(widget).entry.grab_focus()
+
+    enqueue(to_activate, widget)
 
 def get_window(target, src_event=None, src_name=''):
     if target.window:

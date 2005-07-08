@@ -84,6 +84,7 @@ def handle_connect(socket, network, address):
         error = None
     network.connecting = False
     network.connected = False
+
     events.trigger('Disconnect', events.data(network=network, error=error))
 
 class Network:
