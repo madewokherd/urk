@@ -4,10 +4,6 @@ import ui
 
 get_window = {}
 
-# KILL
-if not conf.get("start_networks"):
-    conf.set("start_networks", ["MozNet"])
-
 def connect(network):
     if ui.tabs.get_n_pages() and ui.tabs.get_nth_page(0).type == "first_window":
         network_window = ui.tabs.get_nth_page(0)

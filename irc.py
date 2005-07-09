@@ -133,8 +133,11 @@ class Network:
         data = events.data()
         data.rawmsg = msg
         data.msg = parse_irc(msg, self.server)
+        data.text = data.msg[-1]
         data.network = self
         data.window = urk.get_window[self]
+        data.type = "raw"
+        
         source = data.msg[0].split('!')
         data.source = self.entity(source[0])
         data.source.name = source[0]

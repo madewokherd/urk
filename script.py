@@ -7,15 +7,30 @@ import conf
 import __main__ as urk
 import ui
 
-def setupInput(event):
-    command_char = "/"
+COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
-    if not hasattr(event, 'todo'):
+# when we begin the event stage, we start with the assumption
+# the default action will take place, this could be printing something
+# or doing something, to show this we add "default" to the todo list
+# 
+# if "default" is removed or if someone else already set up the todo
+# list then we don't interfere
+#
+# FIXME: should this be called in every setup?
+def default_todo(event):
+    if not hasattr(event, "todo"):
+        event.todo = set(["default"])
+    else:
+        event.todo.add("default")
+
+def setupInput(event):
+    if not hasattr(event, "todo"):
         event.todo = set()
-        
-    if event.text[0] == command_char:
+
+    # we need to differentiate between normal input and /commands
+    if event.text[0] == COMMAND_PREFIX:
         event.todo.add('command')
-        event.command = event.text[1:]
+        event.command = event.text[len(COMMAND_PREFIX):]
     else:
         event.todo.add('default')
 
@@ -58,7 +73,7 @@ def handle_raw(event):
     else:
         event.window.write("* /raw: We're not connected.")
 
-def handle_join(event):  
+def handle_join(event):
     if event.args:
         if event.network.connected:
             # FIXME: We might want to activate tabs for channels we /joined
@@ -135,8 +150,7 @@ command_handlers = {
 }
 
 def setupCommand(event):
-    if not hasattr(event, 'todo'):
-        event.todo = set(['default'])
+    default_todo(event)
 
 def onCommand(event):
     if 'default' in event.todo and event.name in command_handlers:
@@ -152,7 +166,7 @@ def get_server(network):
     return "irc.mozilla.org"
 
 def onStart(event):
-    on_start_networks = conf.get("start_networks")
+    on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
         server = get_server(network)
@@ -168,6 +182,7 @@ def onStart(event):
         #        i guess it should be done whenever we need to connect to a
         #        network, ie. here and some other places
         
+# FIXME: kill
 def onConnectArlottOrg(event):
     import irc, conf
 
@@ -185,6 +200,7 @@ def onRaw(event):
     e_data.msg = event.msg
     e_data.rawmsg = event.rawmsg
     e_data.source = event.source
+    e_data.text = event.text
     
     if not event.network.me:
         if event.msg[1] == '001':
@@ -201,13 +217,15 @@ def onRaw(event):
     if event.msg[1] == "JOIN":
         e_data.channel = event.network.entity(event.msg[2])
         e_data.target = e_data.channel
+        e_data.type = "join"
         events.trigger('Join', e_data)
+        
     elif event.msg[1] == "PRIVMSG":
         e_data.target = event.network.entity(event.msg[2])
-        e_data.text = event.msg[-1]
+        e_data.type = "text"
         events.trigger('Text', e_data)
     
-    event.window.write(event.rawmsg)
+    event.window.process(event)
 
 def onSocketConnect(event):
     import conf
@@ -225,21 +243,18 @@ def onSocketConnect(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = urk.get_window[event.network]
-    if not hasattr(event, 'todo'):
-        event.todo = set(['default'])
+    
+    default_todo(event)
 
 def onDisconnect(event):
     if 'default' in event.todo:
         if event.error:
             print event.error
-        event.window.write('* Disconnected')
+        event.window.prepare(event)
         event.todo.remove('default')
 
 def setupNewWindow(event):
-    if not hasattr(event, 'todo'):
-        event.todo = set(['default'])
-    else:
-        event.todo.add('default')
+    default_todo(event)
     #FIXME: This should be 'virtual' if we don't want to make a new window
     # and onNewWindow should handle it.
 
@@ -257,29 +272,23 @@ def onNewWindow(event):
         event.todo.remove('default')
 
 def setupJoin(event):
-    if not hasattr(event, 'todo'):
-        event.todo = set(['default'])
-    else:
-        event.todo.add('default')
+    default_todo(event)
 
     event.window = ui.get_window(event.target, event, 'Join')
 
 def onJoin(event):
     if 'default' in event.todo:
-        event.window.write("* Joins: %s" % event.source)
+        event.window.process(event)
         event.todo.remove('default')
             
         ui.activate(event.window)
 
 def setupText(event):
-    if not hasattr(event, 'todo'):
-        event.todo = set(['default'])
-    else:
-        event.todo.add('default')
+    default_todo(event)
 
     event.window = ui.get_window(event.target, event, 'Text')
 
 def onText(event):
     if 'default' in event.todo:
-        event.window.write("<%s> %s" % (event.source, event.text))
+        event.window.process(event)
         event.todo.remove('default')

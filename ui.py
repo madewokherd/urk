@@ -6,6 +6,7 @@ import gobject
 
 import conf
 import events
+import theme
 
 modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
                 gtk.gdk.MOD2_MASK, gtk.gdk.MOD3_MASK,
@@ -49,10 +50,6 @@ def get_urk_actions(ui):
     def connectToArlottOrg(widget):
         events.trigger("ConnectArlottOrg")
 
-    def close_tab(action):
-        print "u"
-        ui.tabs.remove_page(ui.tabs.get_current_page())
-
     to_add = (
         ("FileMenu", None, "_File"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
@@ -83,7 +80,7 @@ class NickLabel(gtk.EventBox):
 class IrcWindow(gtk.VBox):
     network = None
  
-    # the all knowing print to our text window function
+    # the unknowing print anything to our text window function
     def write(self, text):
         enqueue(self.write_unsafe, text)
     
@@ -105,6 +102,18 @@ class IrcWindow(gtk.VBox):
 
         if do_scroll:
             self.view.scroll_mark_onscreen(buffer.create_mark("", end))
+            
+    def process(self, event):
+        if event.type in theme.events:
+            to_write = theme.events[event.type] % event.__dict__
+            
+        elif "event" in theme.events:
+            to_write = theme.events["event"] % event.__dict__
+            
+        else:
+            return
+            
+        self.write(to_write)            
     
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
@@ -197,9 +206,21 @@ class IrcWindow(gtk.VBox):
         gtk.VBox.__init__(self, False)
         
         self.title = title
+        
+        cv = self.chat_view()
+        eb = self.entry_box()
+     
+        bg = gtk.gdk.color_parse("#2E3D49")
+        white = gtk.gdk.color_parse("white")
+        
+        self.view.modify_base(gtk.STATE_NORMAL, bg)
+        #self.entry.modify_base(gtk.STATE_NORMAL, black)
+        
+        self.view.modify_text(gtk.STATE_NORMAL, white)
+        #self.entry.modify_text(gtk.STATE_NORMAL, white)
 
-        self.pack_start(self.chat_view())
-        self.pack_end(self.entry_box() , expand=False)
+        self.pack_start(cv)
+        self.pack_end(eb, expand=False)
   
         self.show_all()
         
@@ -259,11 +280,13 @@ class IrcUI(gtk.Window):
             if event.button == 3: # right click
                 page_num = self.tabs.page_num(widget.child_window)
                 
+                # add some tab UI                
                 tab_id = self.ui_manager.add_ui_from_file("tabui.xml")
                 self.ui_manager.insert_action_group(get_tab_actions(self.tabs, page_num), 0)
 
                 menu = self.ui_manager.get_widget("/TabPopup")
                 
+                # remove the tab UI, so we can recompute it later
                 def remove_tab_ui(action):
                     self.ui_manager.remove_ui(tab_id)
                 menu.connect("deactivate", remove_tab_ui)
@@ -277,8 +300,6 @@ class IrcUI(gtk.Window):
 
         self.new_tab(first_window)
         activate(first_window)
-        
-        self.new_tab(IrcWindow("Blah"))
 
     def __init__(self):
         # threading stuff
@@ -286,13 +307,13 @@ class IrcUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("Urk")
-        
-        self.connect("delete_event", self.shutdown)
+
+        theme.load_theme("atheme.py")
         
         # layout
         xy = conf.get("xy") or (-1, -1)
         wh = conf.get("wh") or (500, 500)
-        
+
         self.move(*xy)
         self.set_default_size(*wh)
         
@@ -309,6 +330,8 @@ class IrcUI(gtk.Window):
         box = gtk.VBox(False)
         box.pack_start(self.ui_manager.get_widget("/MenuBar"), expand=False)
         box.pack_end(self.tabs)
+        
+        self.connect("delete_event", self.shutdown)
 
         self.add(box)
         self.show_all()
