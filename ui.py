@@ -113,6 +113,16 @@ class IrcWindow(gtk.VBox):
         else:
             return
             
+        # FIXME: I think what we want to do here is find where we are in 
+        # the buffer, find how long the text we're adding is. Then add it.
+        # Then apply lots of tags.
+        # I think we want to be able to add different tags around different
+        # parts which may make the code above not right.
+        # For example we want to wrap the entire line above with <event>
+        # and also <event.type> however we also want to wrap the individual
+        # bits with <event-source> and <event.type-source> which may remove
+        # the ability to use the nice python % interpolation and require
+        # us to write our own. This would suck.            
         self.write(to_write)            
     
     # we entered some text in the entry box
