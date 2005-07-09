@@ -9,3 +9,8 @@ style = {
         "foreground": "blue"
         }
     }
+    
+widgets = {
+    "chatview-bg": "#2E3D49",
+    "chatview-fg": "white"
+    }

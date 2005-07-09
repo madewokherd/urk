@@ -217,17 +217,12 @@ class IrcWindow(gtk.VBox):
         
         self.title = title
         
-        cv = self.chat_view()
-        eb = self.entry_box()
-     
-        bg = gtk.gdk.color_parse("#2E3D49")
-        white = gtk.gdk.color_parse("white")
+        cv, eb = self.chat_view(), self.entry_box()
         
-        self.view.modify_base(gtk.STATE_NORMAL, bg)
-        #self.entry.modify_base(gtk.STATE_NORMAL, black)
-        
-        self.view.modify_text(gtk.STATE_NORMAL, white)
-        #self.entry.modify_text(gtk.STATE_NORMAL, white)
+        theme.apply("chatview-fg", self.view.modify_text)
+        theme.apply("chatview-bg", self.view.modify_base)
+        theme.apply("entrybox-fg", self.entry.modify_text)
+        theme.apply("entrybox-bg", self.entry.modify_base)
 
         self.pack_start(cv)
         self.pack_end(eb, expand=False)
@@ -285,8 +280,6 @@ class IrcUI(gtk.Window):
         gtk.Window.__init__(self)
         self.set_title("Urk")
 
-        theme.load_theme("atheme.py")
-        
         # layout
         xy = conf.get("xy") or (-1, -1)
         wh = conf.get("wh") or (500, 500)
@@ -378,6 +371,8 @@ def quit():
 
 ui = IrcUI()
 tabs = ui.tabs
+
+theme.load_theme("atheme.py")
 
 first_window = IrcWindow("Status Window")
 first_window.type = "first_window"
