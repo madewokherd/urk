@@ -82,26 +82,26 @@ class IrcWindow(gtk.VBox):
  
     # the unknowing print anything to our text window function
     def write(self, text):
-        enqueue(self.write_unsafe, text)
-    
-    def write_unsafe(self, text):
-        buffer = self.view.get_buffer()
-        end = buffer.get_end_iter()
+        def write_unsafe(view, text):
+            buffer = view.get_buffer()
+            end = buffer.get_end_iter()
+            
+            end_rect = view.get_iter_location(end)
+            vis_rect = view.get_visible_rect()
+
+            do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
         
-        end_rect = self.view.get_iter_location(end)
-        vis_rect = self.view.get_visible_rect()
+            if buffer.get_char_count():
+                newline = "\n"
+            else:
+                newline = ""
+        
+            buffer.insert(end, newline + text)
 
-        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-    
-        if buffer.get_char_count():
-            newline = "\n"
-        else:
-            newline = ""
-    
-        buffer.insert(end, newline + text)
-
-        if do_scroll:
-            self.view.scroll_mark_onscreen(buffer.create_mark("", end))
+            if do_scroll:
+                view.scroll_mark_onscreen(buffer.create_mark("", end))
+            
+        enqueue(write_unsafe, self.view, text)
             
     def process(self, event):
         if event.type in theme.events:
@@ -246,33 +246,6 @@ class IrcChannelWindow(IrcWindow):
         return win
 
 class IrcUI(gtk.Window):
-    def new_tab(self, window, network=None):
-        def focus_entry(*args):
-            window.entry.grab_focus()
-            
-        window.connect("focus", focus_entry)
-    
-        enqueue(self.new_tab_unsafe, window, network)
-
-    def new_tab_unsafe(self, window, network=None):
-        title = gtk.EventBox()
-        title.add(gtk.Label(window.title))
-        title.child_window = window
-        title.connect("button-press-event", self.tabs.tab_popup)
-        title.show_all()
-        
-        window.network = network
-        
-        pos = self.tabs.get_n_pages()
-        
-        if network:
-            for i in reversed(xrange(pos)):
-                if self.tabs.get_nth_page(i).network == network:
-                    pos = i+1
-                    break
-   
-        self.tabs.insert_page(window, title, pos)
-
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
@@ -304,12 +277,6 @@ class IrcUI(gtk.Window):
                 menu.popup(None, None, None, event.button, event.time)
 
         self.tabs.tab_popup = tab_popup
-
-        first_window = IrcWindow("Status Window")
-        first_window.type = "first_window"
-
-        self.new_tab(first_window)
-        activate(first_window)
 
     def __init__(self):
         # threading stuff
@@ -346,6 +313,36 @@ class IrcUI(gtk.Window):
         self.add(box)
         self.show_all()
         
+def fix_tab_label(window):
+    label = gtk.EventBox()        
+    label.add(gtk.Label(window.title))
+    label.child_window = window
+    label.connect("button-press-event", ui.tabs.tab_popup)
+    label.show_all()
+
+    ui.tabs.set_tab_label(window, label)
+        
+def new_tab(window, network=None):
+    window.network = network
+        
+    def focus_entry(*args):
+        window.entry.grab_focus()
+    window.connect("focus", focus_entry)
+
+    def new_tab_unsafe(window, network):
+        pos = ui.tabs.get_n_pages()
+        
+        if network:
+            for i in reversed(xrange(pos)):
+                if ui.tabs.get_nth_page(i).network == network:
+                    pos = i+1
+                    break
+    
+        ui.tabs.insert_page(window, None, pos)
+        fix_tab_label(window)
+    
+    enqueue(new_tab_unsafe, window, network)
+        
 def activate(widget):
     def to_activate(widget):
         # if this is an actual widget, then we want its tab number
@@ -380,8 +377,13 @@ def quit():
     raise Quitting
 
 ui = IrcUI()
-new_tab = ui.new_tab
 tabs = ui.tabs
+
+first_window = IrcWindow("Status Window")
+first_window.type = "first_window"
+
+new_tab(first_window)
+activate(first_window)
 
 def start():
     try:
