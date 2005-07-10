@@ -104,26 +104,7 @@ class IrcWindow(gtk.VBox):
         enqueue(write_unsafe, self.view, text)
             
     def process(self, event):
-        if event.type in theme.events:
-            to_write = theme.events[event.type] % event.__dict__
-            
-        elif "event" in theme.events:
-            to_write = theme.events["event"] % event.__dict__
-            
-        else:
-            return
-            
-        # FIXME: I think what we want to do here is find where we are in 
-        # the buffer, find how long the text we're adding is. Then add it.
-        # Then apply lots of tags.
-        # I think we want to be able to add different tags around different
-        # parts which may make the code above not right.
-        # For example we want to wrap the entire line above with <event>
-        # and also <event.type> however we also want to wrap the individual
-        # bits with <event-source> and <event.type-source> which may remove
-        # the ability to use the nice python % interpolation and require
-        # us to write our own. This would suck.            
-        self.write(to_write)            
+        theme.__call__(event)          
     
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
@@ -219,10 +200,11 @@ class IrcWindow(gtk.VBox):
         
         cv, eb = self.chat_view(), self.entry_box()
         
-        theme.apply("chatview-fg", self.view.modify_text)
-        theme.apply("chatview-bg", self.view.modify_base)
-        theme.apply("entrybox-fg", self.entry.modify_text)
-        theme.apply("entrybox-bg", self.entry.modify_base)
+        # FIXME: i'm doing everything i can here to make it look like
+        # these values aren't just hardcoded when they are because these
+        # are the colours i like.
+        theme.color("white", self.view.modify_text)
+        theme.color("#2E3D49", self.view.modify_base)
 
         self.pack_start(cv)
         self.pack_end(eb, expand=False)
@@ -371,8 +353,6 @@ def quit():
 
 ui = IrcUI()
 tabs = ui.tabs
-
-theme.load_theme("atheme.py")
 
 first_window = IrcWindow("Status Window")
 first_window.type = "first_window"

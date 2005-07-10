@@ -76,7 +76,6 @@ def handle_raw(event):
 def handle_join(event):
     if event.args:
         if event.network.connected:
-            # FIXME: We might want to activate tabs for channels we /joined
             event.network.join(event.args[0])
         else:
             event.window.write("* /join: We're not connected.")

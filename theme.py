@@ -1,6 +1,9 @@
 import gtk
 
-class Theme:
+def __call__(event):
+    event.window.write(str(event))
+
+"""class Theme:
     pass
     
 class default_dict(dict):
@@ -30,10 +33,9 @@ def load_theme(theme_name):
         for name, value in style.items():
             tag.set_property(name, value)
 
-        tags.add(tag)
+        tags.add(tag)"""
         
-def apply(widget_style, widget_f):
-    if widget_style in widgets:
-        color = gtk.gdk.color_parse(widgets[widget_style])
+def color(widget_color, widget_f):
+    color = gtk.gdk.color_parse(widget_color)
 
-        widget_f(gtk.STATE_NORMAL, color)
+    widget_f(gtk.STATE_NORMAL, color)
