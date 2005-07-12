@@ -7,26 +7,6 @@ class data:
         for attr in kwargs.items():
             setattr(self, *attr)
 
-class cow(object):
-    __slots__ = ['__weakref__','target','dict']
-    
-    def __init__(self, target):
-        object.__setattr__(self,'target',target)
-        object.__setattr__(self,'dict',{})
-    
-    def __getattribute__(self, name):
-        if name == '__dict__':
-            result = dict(object.__getattribute__(self, 'target').__dict__)
-            result.update(object.__getattribute__(self, 'dict'))
-            return result
-        try:
-            return object.__getattribute__(self, 'dict')[name]
-        except KeyError:
-            return getattr(object.__getattribute__(self, 'target'), name)
-    
-    def __setattr__(self, name, value):
-        object.__getattribute__(self, 'dict')[name] = value
-
 class getdict(object):
     __slots__ = ['__weakref__', 'target']
     
