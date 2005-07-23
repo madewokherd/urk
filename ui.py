@@ -104,7 +104,7 @@ class IrcWindow(gtk.VBox):
         enqueue(write_unsafe, self.view, text)
             
     def process(self, event):
-        theme.__call__(event)          
+        theme.__call__(event)
     
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
@@ -364,6 +364,7 @@ def start():
     try:
         while 1:
             gtk.main_iteration(block=False)
+            #FIXME: We should be using an idle timer for this
             while queue:
                 f, args, kwargs = queue.pop(0)
                 f(*args,**kwargs)

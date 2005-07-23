@@ -160,9 +160,11 @@ def postCommand(event):
     if 'default' in event.todo and event.network.connected:
         event.network.raw(event.text)
         event.todo.remove('default')
-    
+
 def get_server(network):
-    return "irc.mozilla.org"
+    #FIXME: We should check if network is in a list of networks before falling
+    # back on this.
+    return network
 
 def onStart(event):
     on_start_networks = conf.get("start_networks") or []

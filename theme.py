@@ -1,7 +1,7 @@
 import gtk
 
 def __call__(event):
-    event.window.write(str(event))
+    event.window.write(str(event.msg))
 
 """class Theme:
     pass
