@@ -1,6 +1,15 @@
 import gtk
 import pango
 
+colors = (
+  'white', 'black', '#00007F', '#009300', 
+  'red', '#7F0000', '#9C009C', '#FF7F00',
+  'yellow', 'green', '#009393', '#00FFFF',
+  '#0000FF', '#FF00FF', '#7F7F7F', '#D2D2D2')
+
+def get_mirc_color(number):
+    return colors[int(number) % len(colors)]
+
 def parse_mirc(string):
     start = 0
     pos = 0
@@ -10,20 +19,85 @@ def parse_mirc(string):
     while pos < len(string):
         char = string[pos]
         if char == '\x02': #bold
-            if start != pos:
+            if start != len(new_string):
                 if props:
-                    tag_data.append((props.items(), start, pos))
-                start = pos
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
             if 'weight' in props:
                 del props['weight']
             else:
                 props['weight'] = pango.WEIGHT_BOLD
             pos += 1
+        elif char == '\x1F': #underline
+            if start != len(new_string):
+                if props:
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
+            if 'underline' in props:
+                del props['underline']
+            else:
+                props['underline'] = True
+            pos += 1
+        elif char == '\x16': #reverse
+            if start != len(new_string):
+                if props:
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
+            #This isn't entirely correct, but reverse is rarely used and I'd
+            # need to add extra state to really do it correctly
+            if props.get('foreground') == 'white' and \
+              props.get('background' == 'black'):
+                del props['foreground']
+                del props['background']
+            else:
+                props['foreground'] = 'white'
+                props['background'] = 'black'
+            pos += 1
+        elif char == '\x03': #khaled color
+            if start != len(new_string):
+                if props:
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
+            #This isn't entirely correct, but reverse is rarely-used and I'd
+            # need to add extra state to really do it correctly
+            pos += 1
+            if pos < len(string) and string[pos].isdigit():
+                fg = string[pos]
+                pos += 1
+                if pos < len(string) and string[pos].isdigit():
+                    fg += string[pos]
+                    pos += 1
+                if fg != '99':
+                    props['foreground'] = get_mirc_color(fg)
+                elif 'foreground' in props:
+                    del props['foreground']
+                if pos+1 < len(string) and string[pos] == ',' and string[pos+1].isdigit():
+                    bg = string[pos+1]
+                    pos += 2
+                    if pos < len(string) and string[pos].isdigit():
+                        bg += string[pos]
+                        pos += 1
+                    if bg != '99':
+                        props['background'] = get_mirc_color(bg)
+                    elif 'background' in props:
+                        del props['background']
+            else:
+                if 'foreground' in props:
+                    del props['foreground']
+                if 'background' in props:
+                    del props['background']
+        elif char == '\x0F': #reset formatting
+            if start != len(new_string):
+                if props:
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
+            props.clear()
+            pos += 1
         else:
             new_string += char
             pos += 1
-    if start != pos and props:
-        tag_data.append((props.items(), start, pos-1))
+    if start != len(new_string) and props:
+        tag_data.append((props.items(), start, len(new_string)))
     return tag_data, new_string
 
 def get_tag_table(tag_data):

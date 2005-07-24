@@ -104,8 +104,8 @@ class IrcWindow(gtk.VBox):
             for tag, start, end in tag_data:
                 tag_table.add(tag)
                 
-                start = buffer.get_iter_at_offset(start + end_pos)
-                end = buffer.get_iter_at_offset(end + end_pos)
+                start = buffer.get_iter_at_offset(start + end_pos + 1)
+                end = buffer.get_iter_at_offset(end + end_pos + 1)
                 
                 buffer.apply_tag(tag, start, end)
 
