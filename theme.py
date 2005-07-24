@@ -1,14 +1,59 @@
 import gtk
+import pango
+
+def parse_mirc(string):
+    start = 0
+    pos = 0
+    props = {}
+    tag_data = []
+    new_string = ''
+    while pos < len(string):
+        char = string[pos]
+        if char == '\x02': #bold
+            if start != pos:
+                if props:
+                    tag_data.append((props.items(), start, pos))
+                start = pos
+            if 'weight' in props:
+                del props['weight']
+            else:
+                props['weight'] = pango.WEIGHT_BOLD
+            pos += 1
+        else:
+            new_string += char
+            pos += 1
+    if start != pos and props:
+        tag_data.append((props.items(), start, pos-1))
+    return tag_data, new_string
+
+def get_tag_table(tag_data):
+    tags = []
+
+    for props, start, end in tag_data:
+        tag = gtk.TextTag()
+        
+        for prop, val in props:
+            tag.set_property(prop, val)
+        
+        tags.append((tag, start, end))
+    
+    return tags
 
 def __call__(event):
     if event.type in events:
-        event.window.write(events[event.type] % event.__dict__)
+        to_write = events[event.type] % event.__dict__
         
     elif "event" in events:
-        event.window.write(events["event"] % event.__dict__)
+        to_write = events["event"] % event.__dict__
         
     else:
-        event.window.write(" ".join(event.msg))
+        to_write = " ".join(event.msg)
+        
+    tag_data, to_write = parse_mirc(to_write)
+    
+    tag_data = get_tag_table(tag_data)
+    
+    event.window.write_with_tags(to_write, tag_data)
 
 class Theme:
     pass

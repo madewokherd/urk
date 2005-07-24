@@ -1,5 +1,5 @@
 format = {
-    #"event": "Source: %(source)s, Text: %(text)s",
+    "event": "Source: %(source)s, Text: \x02%(text)s\x02",
     "text": "<%(source)s> %(text)s"
     }
     
