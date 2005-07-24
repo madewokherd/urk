@@ -1,9 +1,16 @@
 import gtk
 
 def __call__(event):
-    event.window.write(str(event.msg))
+    if event.type in events:
+        event.window.write(events[event.type] % event.__dict__)
+        
+    elif "event" in events:
+        event.window.write(events["event"] % event.__dict__)
+        
+    else:
+        event.window.write(" ".join(event.msg))
 
-"""class Theme:
+class Theme:
     pass
     
 class default_dict(dict):
@@ -15,7 +22,6 @@ class default_dict(dict):
 
 events = {}
 widgets = default_dict()
-tags = gtk.TextTagTable()
 
 def load_theme(theme_name):
     theme_file = __import__(theme_name.strip(".py"))
@@ -25,15 +31,6 @@ def load_theme(theme_name):
     
     # go through widget decoration
     widgets.update(theme_file.widgets)
-
-    # go through tag styles
-    for tag_name, style in theme_file.style.items():
-        tag = gtk.TextTag(tag_name)
-
-        for name, value in style.items():
-            tag.set_property(name, value)
-
-        tags.add(tag)"""
         
 def color(widget_color, widget_f):
     color = gtk.gdk.color_parse(widget_color)

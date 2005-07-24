@@ -354,6 +354,8 @@ def quit():
 ui = IrcUI()
 tabs = ui.tabs
 
+theme.load_theme("atheme.py")
+
 first_window = IrcWindow("Status Window")
 first_window.type = "first_window"
 

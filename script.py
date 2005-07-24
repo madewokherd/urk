@@ -186,8 +186,10 @@ def onStart(event):
 # FIXME: kill
 def onConnectArlottOrg(event):
     import irc, conf
+    
+    server = get_server("irc.mozilla.org")
 
-    x = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
+    x = irc.Network("Urk user", conf.get("nick"), server)
     
     urk.connect(x)
     
@@ -244,6 +246,9 @@ def onSocketConnect(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = urk.get_window[event.network]
+        
+    event.msg = "potatoes"
+    event.type = "disconnect"
     
     default_todo(event)
 
@@ -251,7 +256,7 @@ def onDisconnect(event):
     if 'default' in event.todo:
         if event.error:
             print event.error
-        event.window.prepare(event)
+        event.window.process(event)
         event.todo.remove('default')
 
 def setupNewWindow(event):
