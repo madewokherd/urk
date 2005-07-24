@@ -10,6 +10,12 @@ def connect(network):
         window.title = network.server
         ui.fix_tab_label(window)
 
+    #FIXME: this is what I want to write
+    #for window in ui.tabs:
+    #    if window.type == "first_window":
+    #        window.title = network.server
+    #        ui.fix_tab_tabel(window)
+    #        break
     else:
         window = ui.IrcWindow(network.server)
         ui.new_tab(window, network)
