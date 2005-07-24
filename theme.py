@@ -10,6 +10,12 @@ colors = (
 def get_mirc_color(number):
     return colors[int(number) % len(colors)]
 
+def ishex(string):
+    for char in string:
+        if char.upper() not in '0123456789ABCDEF':
+            return False
+    return True
+
 def parse_mirc(string):
     start = 0
     pos = 0
@@ -58,8 +64,6 @@ def parse_mirc(string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
                 start = len(new_string)
-            #This isn't entirely correct, but reverse is rarely-used and I'd
-            # need to add extra state to really do it correctly
             pos += 1
             if pos < len(string) and string[pos].isdigit():
                 fg = string[pos]
@@ -81,6 +85,25 @@ def parse_mirc(string):
                         props['background'] = get_mirc_color(bg)
                     elif 'background' in props:
                         del props['background']
+            else:
+                if 'foreground' in props:
+                    del props['foreground']
+                if 'background' in props:
+                    del props['background']
+        elif char == '\x04': #bersirc color
+            if start != len(new_string):
+                if props:
+                    tag_data.append((props.items(), start, len(new_string)))
+                start = len(new_string)
+            pos += 1
+            if pos+5 < len(string) and ishex(string[pos:pos+6]):
+                fg = '#'+string[pos:pos+6]
+                pos += 6
+                props['foreground'] = fg
+                if pos+6 < len(string) and string[pos] == ',' and ishex(string[pos+1:pos+7]):
+                    bg = '#'+string[pos+1:pos+7]
+                    pos += 7
+                    props['background'] = bg
             else:
                 if 'foreground' in props:
                     del props['foreground']
