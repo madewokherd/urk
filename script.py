@@ -193,15 +193,12 @@ def onConnectArlottOrg(event):
     
     x.connect()
 
+def setupRaw(event):
+    event.done = False
+
 def onRaw(event):
     if event.msg[1] == "PING":
         event.network.raw("PONG :%s" % event.msg[-1])
-    
-    e_data = events.data()
-    e_data.msg = event.msg
-    e_data.rawmsg = event.rawmsg
-    e_data.source = event.source
-    e_data.text = event.text
     
     if not event.network.me:
         if event.msg[1] == '001':
@@ -216,17 +213,18 @@ def onRaw(event):
             # else get the user to supply a nick or make one up?
     
     if event.msg[1] == "JOIN":
-        e_data.channel = event.network.entity(event.msg[2])
-        e_data.target = e_data.channel
-        e_data.type = "join"
-        events.trigger('Join', e_data)
+        event.channel = event.network.entity(event.msg[2])
+        event.target = event.channel
+        event.type = "join"
+        events.trigger('Join', event)
         
     elif event.msg[1] == "PRIVMSG":
-        e_data.target = event.network.entity(event.msg[2])
-        e_data.type = "text"
-        events.trigger('Text', e_data)
+        event.target = event.network.entity(event.msg[2])
+        event.type = "text"
+        events.trigger('Text', event)
     
-    event.window.process(event)
+    if not event.done:
+        event.window.process(event)
 
 def onSocketConnect(event):
     import conf
