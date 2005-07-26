@@ -1,36 +1,24 @@
-import gtk
-import pango
-
 from parse_mirc import parse_mirc
 
-def get_tag_data(tag_data):
-    tags = []
-
-    for props, start, end in tag_data:
-        tag = gtk.TextTag()
-        
-        for prop, val in props:
-            tag.set_property(prop, val)
-        
-        tags.append((tag, start, end))
-    
-    return tags
-
 def __call__(event):
-    if event.type in events:
+    own = str(event.source) == event.network.me
+
+    if own and event.type in ownevents:
+        to_write = ownevents[event.type] % event.__dict__
+    
+    elif event.type in events:
         to_write = events[event.type] % event.__dict__
         
+    elif own and "event" in ownevents:
+        to_write = ownevents["event"] % event.__dict__
+    
     elif "event" in events:
         to_write = events["event"] % event.__dict__
         
     else:
         to_write = " ".join(event.msg)
-        
-    tag_data, to_write = parse_mirc(to_write)
-    
-    tag_data = get_tag_data(tag_data)
-    
-    event.window.write(to_write, tag_data)
+
+    event.window.write(to_write)
 
 class Theme:
     pass
@@ -43,10 +31,15 @@ class default_dict(dict):
             return None
 
 events = {}
+ownevents = {}
+
 widgets = {}
 
 def load_theme(theme_name):
     theme_file = __import__(theme_name.strip(".py"))
+    
+    # go through own event types
+    ownevents.update(theme_file.ownformat)
     
     # go through event types
     events.update(theme_file.format)
@@ -55,12 +48,16 @@ def load_theme(theme_name):
     widgets.update(theme_file.widgets)
     
 def font(widget_f, widget):
+    import pango
+
     if widget in widgets:
         font = pango.FontDescription(widgets[widget])
 
         widget_f(font)
         
 def color(widget_f, widget):
+    import gtk
+
     if widget in widgets:
         color = gtk.gdk.color_parse(widgets[widget])
 

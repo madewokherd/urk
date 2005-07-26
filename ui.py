@@ -80,8 +80,8 @@ class NickLabel(gtk.EventBox):
 class IrcWindow(gtk.VBox):
     network = None
     
-    # the unknowing print anything to our text window function
-    def write(self, text, tag_data=()):
+    # the unknowing print weird things to our text window function
+    def write(self, text):   
         def write_unsafe(view, text, tag_data):
             buffer = view.get_buffer()
             end = buffer.get_end_iter()
@@ -91,28 +91,29 @@ class IrcWindow(gtk.VBox):
 
             do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
             
-            end_pos = buffer.get_char_count()
-        
-            if end_pos > 0:
-                newline = "\n"
-            else:
-                newline = ""
-        
-            buffer.insert(end, newline + text)
+            char_count = buffer.get_char_count()
+
+            buffer.insert(end, text + "\n")
             
             tag_table = buffer.get_tag_table()
+
+            for props, start, end in tag_data:
+                start = buffer.get_iter_at_offset(start + char_count)
+                end = buffer.get_iter_at_offset(end + char_count)
             
-            for tag, start, end in tag_data:
+                tag = gtk.TextTag()
+                
+                for prop, val in props:
+                    tag.set_property(prop, val)
+
                 tag_table.add(tag)
-                
-                start = buffer.get_iter_at_offset(start + end_pos + 1)
-                end = buffer.get_iter_at_offset(end + end_pos + 1)
-                
                 buffer.apply_tag(tag, start, end)
 
             if do_scroll:
                 view.scroll_mark_onscreen(buffer.create_mark("", end))
                 
+        tag_data, text = theme.parse_mirc(text)
+        
         enqueue(write_unsafe, self.view, text, tag_data)
     
     def process(self, event):
