@@ -9,50 +9,41 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
-# when we begin the event stage, we start with the assumption
-# the default action will take place, this could be printing something
-# or doing something, to show this we add "default" to the todo list
-# 
-# if "default" is removed or if someone else already set up the todo
-# list then we don't interfere
-#
-# FIXME: should this be called in every setup?
-def default_todo(event):
-    if not hasattr(event, "todo"):
-        event.todo = set(["default"])
-    else:
-        event.todo.add("default")
-
 def setupInput(event):
-    if not hasattr(event, "todo"):
-        event.todo = set()
-
-    # we need to differentiate between normal input and /commands
-    if event.text[0] == COMMAND_PREFIX:
-        event.todo.add('command')
-        event.command = event.text[len(COMMAND_PREFIX):]
-    else:
-        event.todo.add('default')
+    event.done = False
 
 def onInput(event):
-    if 'command' in event.todo:
-        split = event.command.split()
+    if not event.done:
+        if event.text.startswith(COMMAND_PREFIX):
+            command = event.text[len(COMMAND_PREFIX):]
+            split = command.split()
+        else:
+            command = 'say '+event.text
+            split = ['say',event.text]
         e_data = events.data()
         e_data.name = split[0]
         e_data.args = split[1:]
-        e_data.text = event.command
+        e_data.text = command
+        e_data.type = 'command'
         e_data.window = event.window
         e_data.network = event.network
+        e_data.error_text = 'No such command exists'
         events.trigger('Command', e_data)
-        if 'default' in e_data.todo:
-            event.window.write('Unknown command: '+e_data.name)
-        event.todo.remove('command')
-    if 'default' in event.todo and event.window.type in ('channel', 'user'):
-        event.network.msg(event.window.target, event.text)
-        event.todo.remove('default')
+        if not e_data.done:
+            e_data.type = 'error'
+            event.window.process(e_data)
+        event.done = True
+
+def handle_say(event):
+    if event.window.type in ('channel', 'user'):
+        event.network.msg(event.window.target, ' '.join(event.args))
+        event.done = True
+    else:
+        event.error_text = "There's no one here to speak to."
 
 def handle_echo(event):
     event.window.write(' '.join(event.args))
+    event.done = True
 
 def handle_query(event):
     target = event.network.entity(event.args[0])
@@ -66,21 +57,24 @@ def handle_query(event):
         window.target = target
         target.window = window
         ui.new_tab(target.window, event.network)
+    event.done = True
 
 def handle_raw(event):
     if event.network.connected:
         event.network.raw(' '.join(event.args))
+        event.done = True
     else:
-        event.window.write("* /raw: We're not connected.")
+        event.error_text = "We're not connected to a network."
 
 def handle_join(event):
     if event.args:
         if event.network.connected:
             event.network.join(event.args[0])
+            event.done = True
         else:
-            event.window.write("* /join: We're not connected.")
+            event.error_text = "We're not connected."
     else:
-        event.window.write("* /join: You must supply a channel.")
+        event.error_text = "You must supply a channel."
 
 def handle_pyeval(event):
     try:
@@ -88,6 +82,7 @@ def handle_pyeval(event):
     except:
         for line in traceback.format_exc().split('\n'):
             event.window.write(line)
+    event.done = True
 
 def handle_pyexec(event):
     try:
@@ -95,6 +90,7 @@ def handle_pyexec(event):
     except:
         for line in traceback.format_exc().split('\n'):
             event.window.write(line)
+    event.done = True
 
 def handle_server(event):
     new_window = False
@@ -136,8 +132,10 @@ def handle_server(event):
             network.connect()
     
     ui.enqueue(do_server)
+    event.done = True
 
 command_handlers = {
+    'say': handle_say,
     'echo': handle_echo,
     'query': handle_query,
     'raw': handle_raw,
@@ -149,17 +147,17 @@ command_handlers = {
 }
 
 def setupCommand(event):
-    default_todo(event)
+    event.done = False
 
 def onCommand(event):
-    if 'default' in event.todo and event.name in command_handlers:
+    if not event.done and event.name in command_handlers:
         command_handlers[event.name](event)
-        event.todo.remove('default')
 
 def postCommand(event):
-    if 'default' in event.todo and event.network.connected:
+    if not event.done and event.error_text == 'No such command exists' \
+      and event.network.connected:
         event.network.raw(event.text)
-        event.todo.remove('default')
+        event.done = True
 
 def get_server(network):
     #FIXME: We should check if network is in a list of networks before falling
@@ -250,22 +248,21 @@ def setupDisconnect(event):
     event.msg = "potatoes"
     event.type = "disconnect"
     
-    default_todo(event)
+    event.done = False
 
 def onDisconnect(event):
-    if 'default' in event.todo:
+    if not event.done:
+        #FIXME: give a good description if we got a network error
         if event.error:
             print event.error
         event.window.process(event)
-        event.todo.remove('default')
+        event.done = True
 
 def setupNewWindow(event):
-    default_todo(event)
-    #FIXME: This should be 'virtual' if we don't want to make a new window
-    # and onNewWindow should handle it.
+    event.done = False
 
 def onNewWindow(event):
-    if 'default' in event.todo:
+    if not event.done:
         if event.target.type == 'channel':
             window = ui.IrcChannelWindow(str(event.target))
         else:
@@ -275,26 +272,26 @@ def onNewWindow(event):
         window.type = event.target.type
         window.target = event.target
         ui.new_tab(window, event.target.network)
-        event.todo.remove('default')
+        event.done = True
 
 def setupJoin(event):
-    default_todo(event)
+    event.done = False
 
     event.window = ui.get_window(event.target, event, 'Join')
 
 def onJoin(event):
-    if 'default' in event.todo:
+    if not event.done:
         event.window.process(event)
-        event.todo.remove('default')
+        event.done = True
             
         ui.activate(event.window)
 
 def setupText(event):
-    default_todo(event)
+    event.done = False
 
     event.window = ui.get_window(event.target, event, 'Text')
 
 def onText(event):
-    if 'default' in event.todo:
+    if not event.done:
         event.window.process(event)
-        event.todo.remove('default')
+        event.done = True

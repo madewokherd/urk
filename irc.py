@@ -52,7 +52,7 @@ def handle_connect(socket, network, address):
         socket.connect(address)
         
         network.connected = True
-        events.trigger('SocketConnect', events.data(network=network))
+        events.trigger('SocketConnect', events.data(network=network, type='socket_connect'))
          
         reply = socket.recv(8192)
         in_buffer = reply
@@ -85,7 +85,7 @@ def handle_connect(socket, network, address):
     network.connecting = False
     network.connected = False
 
-    events.trigger('Disconnect', events.data(network=network, error=error))
+    events.trigger('Disconnect', events.data(network=network, error=error, type='disconnect'))
 
 class Network:
     sock = None
@@ -160,7 +160,7 @@ class Network:
             args = self.sock, self, (self.server, self.port)
             thread.start_new_thread(handle_connect, args)
             
-            events.trigger('Connecting', events.data(network=self))
+            events.trigger('Connecting', events.data(network=self, type='connecting'))
             
     def normalize_case(self, string):
         return string.lower()
@@ -204,6 +204,7 @@ class Network:
         e_data.source = self.me
         e_data.target = self.entity(str(target))
         e_data.text = msg
+        e_data.type = 'text'
         events.trigger('Text', e_data)
 
 class Entity:
