@@ -211,6 +211,7 @@ class Network:
         e_data.target = self.entity(str(target))
         e_data.text = msg
         e_data.type = 'text'
+        e_data.network = self
         events.trigger('Text', e_data)
 
 class Entity:
