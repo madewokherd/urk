@@ -80,8 +80,9 @@ class NickLabel(gtk.EventBox):
 class IrcWindow(gtk.VBox):
     network = None
     
-    def write_with_tags(self, text, tag_data):
-        def write_with_tags_unsafe(view, text, tag_data):
+    # the unknowing print anything to our text window function
+    def write(self, text, tag_data=()):
+        def write_unsafe(view, text, tag_data):
             buffer = view.get_buffer()
             end = buffer.get_end_iter()
             
@@ -112,31 +113,8 @@ class IrcWindow(gtk.VBox):
             if do_scroll:
                 view.scroll_mark_onscreen(buffer.create_mark("", end))
                 
-        enqueue(write_with_tags_unsafe, self.view, text, tag_data)
- 
-    # the unknowing print anything to our text window function
-    def write(self, text):
-        def write_unsafe(view, text):
-            buffer = view.get_buffer()
-            end = buffer.get_end_iter()
-            
-            end_rect = view.get_iter_location(end)
-            vis_rect = view.get_visible_rect()
-
-            do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-        
-            if buffer.get_char_count():
-                newline = "\n"
-            else:
-                newline = ""
-        
-            buffer.insert(end, newline + text)
-
-            if do_scroll:
-                view.scroll_mark_onscreen(buffer.create_mark("", end))
-            
-        enqueue(write_unsafe, self.view, text)
-            
+        enqueue(write_unsafe, self.view, text, tag_data)
+    
     def process(self, event):
         theme.__call__(event)
     
@@ -237,8 +215,9 @@ class IrcWindow(gtk.VBox):
         # FIXME: i'm doing everything i can here to make it look like
         # these values aren't just hardcoded when they are because these
         # are the colours i like.
-        theme.color("white", self.view.modify_text)
-        theme.color("#2E3D49", self.view.modify_base)
+        theme.color(self.view.modify_text, "chatview-fg")
+        theme.color(self.view.modify_base, "chatview-bg")
+        theme.font(self.view.modify_font, "chatview-font")
 
         self.pack_start(cv)
         self.pack_end(eb, expand=False)
