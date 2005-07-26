@@ -141,9 +141,15 @@ class Network:
         source = data.msg[0].split('!')
         data.source = self.entity(source[0])
         data.source.name = source[0]
+        
         if len(source) > 1:
             data.source.address = source[1]
-
+        
+        if len(data.msg) > 2:
+            data.target = self.entity(data.msg[2])
+        else:
+            data.target = self.entity(data.msg[-1])
+        
         events.trigger('Raw', data)
     
     #this is probably not necessary

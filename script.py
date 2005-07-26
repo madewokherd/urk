@@ -213,13 +213,11 @@ def onRaw(event):
             # else get the user to supply a nick or make one up?
     
     if event.msg[1] == "JOIN":
-        event.channel = event.network.entity(event.msg[2])
-        event.target = event.channel
+        event.channel = event.target
         event.type = "join"
         events.trigger('Join', event)
         
     elif event.msg[1] == "PRIVMSG":
-        event.target = event.network.entity(event.msg[2])
         event.type = "text"
         events.trigger('Text', event)
     
