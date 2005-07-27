@@ -133,7 +133,7 @@ if __name__ == "__main__":
         
         "\x040000CC<\x04nick\x040000CC>\x04 text",
         
-        '\x04770077,FFFFFFbersirc color with background! \x04000077setting foreground! \x04reset!'
+        '\x04770077,FFFFFFbersirc color with background! \x04000077setting foreground! \x04reset!',
         ]
         
     results = [
@@ -146,6 +146,6 @@ if __name__ == "__main__":
         ([([('foreground', 'white'), ('background', 'black')], 3, 17), ([('foreground', 'red'), ('background', 'black')], 17, 29)], 'notwhite-on-blackred-on-blacknothing'),
         
         ([([('foreground', '#0000CC')], 0, 1), ([('foreground', '#0000CC')], 5, 6)], '<nick> text'),
-        ([([('foreground', '#770077'), ('background', '#FFFFFF')], 0, 31), ([('foreground', '#000077'), ('background', '#FFFFFF')], 31, 51)], 'bersirc color with background! setting foreground! reset!')
+        ([([('foreground', '#770077'), ('background', '#FFFFFF')], 0, 31), ([('foreground', '#000077'), ('background', '#FFFFFF')], 31, 51)], 'bersirc color with background! setting foreground! reset!'),
         ]   
     

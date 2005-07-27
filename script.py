@@ -1,5 +1,6 @@
 import traceback
 import getopt
+import copy
 
 import events
 import irc
@@ -218,8 +219,17 @@ def onRaw(event):
         events.trigger('Join', event)
         
     elif event.msg[1] == "PRIVMSG":
-        event.type = "text"
-        events.trigger('Text', event)
+        if event.text[0] == '\x01' and event.text[-1] == '\x01':
+            e_data = copy.copy(event)
+            e_data.type = 'ctcp'
+            e_data.text = event.text[1:-1]
+            tokens = e_data.text.split(' ')
+            e_data.name = tokens[0]
+            e_data.args = tokens[1:]
+            events.trigger('Ctcp', e_data)
+        else:
+            event.type = "text"
+            events.trigger('Text', event)
     
     if not event.done:
         event.window.process(event)
@@ -288,6 +298,32 @@ def setupText(event):
     event.window = ui.get_window(event.target, event, 'Text')
 
 def onText(event):
+    if not event.done:
+        event.window.process(event)
+        event.done = True
+
+def setupCtcp(event):
+    event.done = False
+
+def onCtcp(event):
+    if not event.done:
+        if event.name == 'ACTION':
+            e_data = copy.copy(event)
+            e_data.type = 'action'
+            e_data.text = ' '.join(event.args)
+            events.trigger('Action', e_data)
+            event.done = e_data.done
+
+def postCtcp(event):
+    if not event.done:
+        event.window.process(event)
+
+def setupAction(event):
+    event.done = False
+    
+    event.window = ui.get_window(event.target, event, 'Action')
+
+def onAction(event):
     if not event.done:
         event.window.process(event)
         event.done = True
