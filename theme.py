@@ -41,6 +41,21 @@ def preText(event):
     if event.network.me == event.source:
         to_write = "\x02\x04FF00FF<\x04\x02%s\x02\x04FF00FF>\x04\x02 %s" % (event.source, event.text)
     else:
-        to_write = "\x02\x04F0000CC<\x04\x02%s\x02\x040000CC>\x04\x02 %s" % (event.source, event.text)
+        to_write = "\x02\x040000CC<\x04\x02%s\x02\x040000CC>\x04\x02 %s" % (event.source, event.text)
         
     event.window.write(to_write)
+    
+def preJoin(event):
+    event.done = True
+    
+    if event.network.me == event.source:
+        to_write = "\x02You\x02 joined %s" % event.target
+    else:
+        to_write = "\x02%s\x02 (%s) joined %s" % (event.source, event.source.address, event.target)
+        
+    event.window.write(to_write)
+        
+def postRaw(event):
+    if not event.done:
+        event.window.write("* %s %s" % (event.source, event.text))
+    

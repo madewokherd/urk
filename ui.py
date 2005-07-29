@@ -376,9 +376,6 @@ first_window.type = "first_window"
 new_tab(first_window)
 activate(first_window)
 
-for e in theme.events:
-    first_window.write("%s: %s" % (e, theme.events[e]))
-
 def start():
     try:
         while 1:
