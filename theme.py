@@ -1,39 +1,22 @@
-from parse_mirc import parse_mirc
+import pango
+import gtk
 
-BOLD = '\x02'
-UNDERLINE = '\x1F'
-REVERSE = '\x16'
-MIRC_COLOR = '\x03'
-BERS_COLOR = '\x04'
-RESET = '\x0F'
+import ui
 
-events = {}
-widgets = {}
+oldWindowInit = ui.IrcWindow.__init__
 
-def load_theme(theme_name):
-    theme_file = __import__(theme_name.strip(".py"))
-
-    # go through event types
-    events.update(theme_file.format)
+def newWindowInit(self, title=""):
+    oldWindowInit(self, title)
     
-    # go through widget decoration
-    widgets.update(theme_file.widgets)
+    chatview_bg = gtk.gdk.color_parse("#2E3D49")
+    chatview_fg = gtk.gdk.color_parse("#DEDEDE")
+    chatview_font = pango.FontDescription("verdana 8")
+
+    self.view.modify_text(gtk.STATE_NORMAL, chatview_fg)
+    self.view.modify_base(gtk.STATE_NORMAL, chatview_bg)
+    self.view.modify_font(chatview_font)
     
-def font(widget_f, widget):
-    import pango
-
-    if widget in widgets:
-        font = pango.FontDescription(widgets[widget])
-
-        widget_f(font)
-        
-def color(widget_f, widget):
-    import gtk
-
-    if widget in widgets:
-        color = gtk.gdk.color_parse(widgets[widget])
-
-        widget_f(gtk.STATE_NORMAL, color)
+ui.IrcWindow.__init__ = newWindowInit
 
 def preText(event):
     event.done = True
@@ -58,4 +41,3 @@ def preJoin(event):
 def postRaw(event):
     if not event.done:
         event.window.write("* %s %s" % (event.source, event.text))
-    

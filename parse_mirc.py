@@ -1,5 +1,3 @@
-import theme
-
 BOLD = '\x02'
 UNDERLINE = '\x1F'
 REVERSE = '\x16'

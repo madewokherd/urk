@@ -7,7 +7,7 @@ import pango
 
 import conf
 import events
-import theme
+#import theme
 import parse_mirc
 
 modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
@@ -217,10 +217,6 @@ class IrcWindow(gtk.VBox):
         
         cv, eb = self.chat_view(), self.entry_box()
 
-        theme.color(self.view.modify_text, "chatview-fg")
-        theme.color(self.view.modify_base, "chatview-bg")
-        theme.font(self.view.modify_font, "chatview-font")
-
         self.pack_start(cv)
         self.pack_end(eb, expand=False)
   
@@ -369,15 +365,13 @@ def quit():
 ui = IrcUI()
 tabs = ui.tabs
 
-theme.load_theme("atheme.py")
-
-first_window = IrcWindow("Status Window")
-first_window.type = "first_window"
-
-new_tab(first_window)
-activate(first_window)
-
 def start():
+    first_window = IrcWindow("Status Window")
+    first_window.type = "first_window"
+
+    new_tab(first_window)
+    activate(first_window)
+    
     try:
         while 1:
             gtk.main_iteration(block=False)
