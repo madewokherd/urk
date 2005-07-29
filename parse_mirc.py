@@ -1,4 +1,4 @@
-import pango
+import theme
 
 colors = (
   'white', 'black', '#00007F', '#009300', 
@@ -23,7 +23,7 @@ def parse_mirc(string):
     new_string = ''
     while pos < len(string):
         char = string[pos]
-        if char == '\x02': #bold
+        if char == theme.BOLD: #bold
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -31,9 +31,9 @@ def parse_mirc(string):
             if 'weight' in props:
                 del props['weight']
             else:
-                props['weight'] = pango.WEIGHT_BOLD
+                props['weight'] = theme.BOLD
             pos += 1
-        elif char == '\x1F': #underline
+        elif char == theme.UNDERLINE: #underline
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -41,9 +41,9 @@ def parse_mirc(string):
             if 'underline' in props:
                 del props['underline']
             else:
-                props['underline'] = pango.UNDERLINE_SINGLE
+                props['underline'] = theme.UNDERLINE
             pos += 1
-        elif char == '\x16': #reverse
+        elif char == theme.REVERSE: #reverse
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -58,7 +58,7 @@ def parse_mirc(string):
                 props['foreground'] = 'white'
                 props['background'] = 'black'
             pos += 1
-        elif char == '\x03': #khaled color
+        elif char == theme.MIRC_COLOR: #khaled color
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -89,7 +89,7 @@ def parse_mirc(string):
                     del props['foreground']
                 if 'background' in props:
                     del props['background']
-        elif char == '\x04': #bersirc color
+        elif char == theme.BERS_COLOR: #bersirc color
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -108,7 +108,7 @@ def parse_mirc(string):
                     del props['foreground']
                 if 'background' in props:
                     del props['background']
-        elif char == '\x0F': #reset formatting
+        elif char == theme.RESET: #reset formatting
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -137,10 +137,10 @@ if __name__ == "__main__":
         ]
         
     results = [
-        ([([('weight', pango.WEIGHT_BOLD)], 3, 7)], 'notboldnot'),
-        ([([('underline', pango.UNDERLINE_SINGLE)], 3, 12)], 'notunderlinenot'),
+        ([([('weight', theme.BOLD)], 3, 7)], 'notboldnot'),
+        ([([('underline', theme.UNDERLINE)], 3, 12)], 'notunderlinenot'),
         
-        ([([('underline', pango.WEIGHT_BOLD), ('weight', pango.UNDERLINE_SINGLE)], 0, 2)], 'Hi'),
+        ([([('underline', theme.BOLD), ('weight', theme.UNDERLINE)], 0, 2)], 'Hi'),
 
         
         ([([('foreground', 'white'), ('background', 'black')], 3, 17), ([('foreground', 'red'), ('background', 'black')], 17, 29)], 'notwhite-on-blackred-on-blacknothing'),

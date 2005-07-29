@@ -1,46 +1,18 @@
 from parse_mirc import parse_mirc
 
-def __call__(event):
-    own = str(event.source) == event.network.me
-
-    if own and event.type in ownevents:
-        to_write = ownevents[event.type] % event.__dict__
-    
-    elif event.type in events:
-        to_write = events[event.type] % event.__dict__
-        
-    elif own and "event" in ownevents:
-        to_write = ownevents["event"] % event.__dict__
-    
-    elif "event" in events:
-        to_write = events["event"] % event.__dict__
-        
-    else:
-        to_write = " ".join(event.msg)
-
-    event.window.write(to_write)
-
-class Theme:
-    pass
-    
-class default_dict(dict):
-    def __getitem__(self, key):
-        if key in self:
-            return dict.__getitem__(self, key)
-        else:
-            return None
+BOLD = '\x02'
+UNDERLINE = '\x1F'
+REVERSE = '\x16'
+MIRC_COLOR = '\x03'
+BERS_COLOR = '\x04'
+RESET = '\x0F'
 
 events = {}
-ownevents = {}
-
 widgets = {}
 
 def load_theme(theme_name):
     theme_file = __import__(theme_name.strip(".py"))
-    
-    # go through own event types
-    ownevents.update(theme_file.ownformat)
-    
+
     # go through event types
     events.update(theme_file.format)
     

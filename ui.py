@@ -3,6 +3,7 @@ import time
 import pygtk
 import gtk
 import gobject
+import pango
 
 import conf
 import events
@@ -104,6 +105,11 @@ class IrcWindow(gtk.VBox):
                 tag = gtk.TextTag()
                 
                 for prop, val in props:
+                    if val == theme.BOLD:
+                        val = pango.WEIGHT_BOLD
+                    elif val == theme.UNDERLINE:
+                        val = pango.UNDERLINE_SINGLE
+
                     tag.set_property(prop, val)
 
                 tag_table.add(tag)
@@ -116,8 +122,15 @@ class IrcWindow(gtk.VBox):
         
         enqueue(write_unsafe, self.view, text, tag_data)
     
-    def process(self, event):
-        theme.__call__(event)
+    def process(self, event, *types):
+        print event.__dict__
+    
+        for t in types:
+            if t in theme.events:
+                event.window.write(theme.events[t] % event.__dict__)
+                return t
+        else:
+            return False
     
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
@@ -212,10 +225,7 @@ class IrcWindow(gtk.VBox):
         self.title = title
         
         cv, eb = self.chat_view(), self.entry_box()
-        
-        # FIXME: i'm doing everything i can here to make it look like
-        # these values aren't just hardcoded when they are because these
-        # are the colours i like.
+
         theme.color(self.view.modify_text, "chatview-fg")
         theme.color(self.view.modify_base, "chatview-bg")
         theme.font(self.view.modify_font, "chatview-font")
@@ -375,6 +385,9 @@ first_window.type = "first_window"
 
 new_tab(first_window)
 activate(first_window)
+
+for e in theme.events:
+    first_window.write("%s: %s" % (e, theme.events[e]))
 
 def start():
     try:
