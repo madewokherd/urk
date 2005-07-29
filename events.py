@@ -3,6 +3,8 @@ import os
 import traceback
 
 class data:
+    done = False
+    
     def __init__(self, **kwargs):
         for attr in kwargs.items():
             setattr(self, *attr)

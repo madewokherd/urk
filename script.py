@@ -10,9 +10,6 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
-def setupInput(event):
-    event.done = False
-
 def onInput(event):
     if not event.done:
         if event.text.startswith(COMMAND_PREFIX):
@@ -146,9 +143,6 @@ command_handlers = {
     'server': handle_server,
 }
 
-def setupCommand(event):
-    event.done = False
-
 def onCommand(event):
     if not event.done and event.name in command_handlers:
         command_handlers[event.name](event)
@@ -192,9 +186,6 @@ def onConnectArlottOrg(event):
     urk.connect(x)
     
     x.connect()
-
-def setupRaw(event):
-    event.done = False
 
 def onRaw(event):
     if event.msg[1] == "PING":
@@ -252,8 +243,6 @@ def setupDisconnect(event):
         
     event.msg = "potatoes"
     event.type = "disconnect"
-    
-    event.done = False
 
 def onDisconnect(event):
     if not event.done:
@@ -262,9 +251,6 @@ def onDisconnect(event):
             print event.error
 
         event.done = True
-
-def setupNewWindow(event):
-    event.done = False
 
 def onNewWindow(event):
     if not event.done:
@@ -280,8 +266,6 @@ def onNewWindow(event):
         event.done = True
 
 def setupJoin(event):
-    event.done = False
-
     event.window = ui.get_window(event.target, event, 'Join')
 
 def onJoin(event):
@@ -291,16 +275,11 @@ def onJoin(event):
         ui.activate(event.window)
 
 def setupText(event):
-    event.done = False
-
     event.window = ui.get_window(event.target, event, 'Text')
 
 def onText(event):
     if not event.done:
         event.done = True
-
-def setupCtcp(event):
-    event.done = False
 
 def onCtcp(event):
     if not event.done:
@@ -316,8 +295,6 @@ def postCtcp(event):
         pass
 
 def setupAction(event):
-    event.done = False
-    
     event.window = ui.get_window(event.target, event, 'Action')
 
 def onAction(event):
