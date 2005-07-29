@@ -32,7 +32,6 @@ def onInput(event):
         events.trigger('Command', e_data)
         if not e_data.done:
             e_data.type = 'error'
-            event.window.process(e_data, "error")
         event.done = True
 
 def handle_say(event):
@@ -232,10 +231,7 @@ def onRaw(event):
             events.trigger('Text', event)
     
     if not event.done:
-        if event.network.me == event.source:
-            event.window.process(event, "ownraw", "raw")
-        else:
-            event.window.process(event, "raw")
+        pass
 
 def onSocketConnect(event):
     import conf
@@ -264,11 +260,6 @@ def onDisconnect(event):
         #FIXME: give a good description if we got a network error
         if event.error:
             print event.error
-            
-        if event.network.me == event.source:
-            event.window.process(event, "owndisconnect", "disconnect")
-        else:
-            event.window.process(event, "disconnect")
 
         event.done = True
 
@@ -295,11 +286,6 @@ def setupJoin(event):
 
 def onJoin(event):
     if not event.done:
-        if event.network.me == event.source:
-            event.window.process(event, "ownjoin", "join")
-        else:
-            event.window.process(event, "join")
-
         event.done = True
             
         ui.activate(event.window)
@@ -311,11 +297,6 @@ def setupText(event):
 
 def onText(event):
     if not event.done:
-        if event.network.me == event.source:
-            event.window.process(event, "owntext", "text")
-        else:
-            event.window.process(event, "text")
-
         event.done = True
 
 def setupCtcp(event):
@@ -332,10 +313,7 @@ def onCtcp(event):
 
 def postCtcp(event):
     if not event.done:
-        if event.network.me == event.source:
-            event.window.process(event, "ownctcp", "ctcp")
-        else:
-            event.window.process(event, "ctcp")
+        pass
 
 def setupAction(event):
     event.done = False
@@ -344,9 +322,4 @@ def setupAction(event):
 
 def onAction(event):
     if not event.done:
-        if event.network.me == event.source:
-            event.window.process(event, "ownaction", "action")
-        else:
-            event.window.process(event, "action")
-
         event.done = True

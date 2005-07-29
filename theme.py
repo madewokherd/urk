@@ -34,3 +34,13 @@ def color(widget_f, widget):
         color = gtk.gdk.color_parse(widgets[widget])
 
         widget_f(gtk.STATE_NORMAL, color)
+
+def preText(event):
+    event.done = True
+
+    if event.network.me == event.source:
+        to_write = "\x02\x04FF00FF<\x04\x02%s\x02\x04FF00FF>\x04\x02 %s" % (event.source, event.text)
+    else:
+        to_write = "\x02\x04F0000CC<\x04\x02%s\x02\x040000CC>\x04\x02 %s" % (event.source, event.text)
+        
+    event.window.write(to_write)

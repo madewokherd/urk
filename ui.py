@@ -122,16 +122,6 @@ class IrcWindow(gtk.VBox):
         
         enqueue(write_unsafe, self.view, text, tag_data)
     
-    def process(self, event, *types):
-        print event.__dict__
-    
-        for t in types:
-            if t in theme.events:
-                event.window.write(theme.events[t] % event.__dict__)
-                return t
-        else:
-            return False
-    
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
         lines = entry.get_text().split("\n")
