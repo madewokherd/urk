@@ -10,7 +10,7 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
-def onInput(event):
+def defInput(event):
     if not event.done:
         if event.text.startswith(COMMAND_PREFIX):
             command = event.text[len(COMMAND_PREFIX):]
@@ -143,7 +143,7 @@ command_handlers = {
     'server': handle_server,
 }
 
-def onCommand(event):
+def defCommand(event):
     if not event.done and event.name in command_handlers:
         command_handlers[event.name](event)
 
@@ -175,7 +175,7 @@ def onStart(event):
         #        i guess it should be done whenever we need to connect to a
         #        network, ie. here and some other places
         
-# FIXME: kill
+# FIXME: crush, kill, destroy
 def onConnectArlottOrg(event):
     import irc, conf
     
@@ -187,72 +187,69 @@ def onConnectArlottOrg(event):
     
     x.connect()
 
-def onRaw(event):
-    if event.msg[1] == "PING":
-        event.network.raw("PONG :%s" % event.msg[-1])
-    
-    if not event.network.me:
-        if event.msg[1] == '001':
-            event.network.me = event.network.entity(event.msg[2])
-            event.network.connected = True
-        elif event.msg[1] in ('431','432','433','436','437'):
-            failednick = event.msg[3]
-            nicks = [event.network.nick] + list(event.network.anicks)
-            if failednick in nicks[:-1]:
-                index = nicks.index(failednick)+1
-                event.network.raw('NICK %s' % nicks[index])
-            # else get the user to supply a nick or make one up?
-    
-    if event.msg[1] == "JOIN":
-        event.channel = event.target
-        event.type = "join"
-        events.trigger('Join', event)
-        
-    elif event.msg[1] == "PRIVMSG":
-        if event.text[0] == '\x01' and event.text[-1] == '\x01':
-            e_data = copy.copy(event)
-            e_data.type = 'ctcp'
-            e_data.text = event.text[1:-1]
-            tokens = e_data.text.split(' ')
-            e_data.name = tokens[0]
-            e_data.args = tokens[1:]
-            events.trigger('Ctcp', e_data)
-        else:
-            event.type = "text"
-            events.trigger('Text', event)
-    
+def defRaw(event):
     if not event.done:
-        pass
+        if event.msg[1] == "PING":
+            event.network.raw("PONG :%s" % event.msg[-1])
+            event.done = True
+            event.quiet = True
+        
+        if not event.network.me:
+            if event.msg[1] == '001':
+                event.network.me = event.network.entity(event.msg[2])
+                event.network.connected = True
+            elif event.msg[1] in ('431','432','433','436','437'):
+                failednick = event.msg[3]
+                nicks = [event.network.nick] + list(event.network.anicks)
+                if failednick in nicks[:-1]:
+                    index = nicks.index(failednick)+1
+                    event.network.raw('NICK %s' % nicks[index])
+                # else get the user to supply a nick or make one up?
+        
+        if event.msg[1] == "JOIN":
+            event.channel = event.target
+            event.type = "join"
+            events.trigger('Join', event)
+            event.done = True
+            event.quiet = True
+            
+        elif event.msg[1] == "PRIVMSG":
+            if event.text[0] == '\x01' and event.text[-1] == '\x01':
+                e_data = copy.copy(event)
+                e_data.type = 'ctcp'
+                e_data.text = event.text[1:-1]
+                tokens = e_data.text.split(' ')
+                e_data.name = tokens[0]
+                e_data.args = tokens[1:]
+                events.trigger('Ctcp', e_data)
+            else:
+                event.type = "text"
+                events.trigger('Text', event)
+            event.done = True
+            event.quiet = True
 
-def onSocketConnect(event):
-    import conf
-    
-    #this needs to be tested--anyone have a server that uses PASS?
-    if event.network.password:
-        event.network.raw("PASS :%s" % event.network.password)
-    event.network.raw("NICK %s" % event.network.nick)
-    event.network.raw("USER %s %s %s :%s" %
-          ("urk", "8", "*", event.network.fullname))
-          #per rfc2812 these are username, user mode flags, unused, realname
-    
-    event.network.me = None
+def defSocketConnect(event):
+    if not event.done:
+        import conf
+        
+        #this needs to be tested--anyone have a server that uses PASS?
+        if event.network.password:
+            event.network.raw("PASS :%s" % event.network.password)
+        event.network.raw("NICK %s" % event.network.nick)
+        event.network.raw("USER %s %s %s :%s" %
+              ("urk", "8", "*", event.network.fullname))
+              #per rfc2812 these are username, user mode flags, unused, realname
+        
+        event.network.me = None
+        event.done = True
 
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = urk.get_window[event.network]
         
-    event.msg = "potatoes"
     event.type = "disconnect"
 
-def onDisconnect(event):
-    if not event.done:
-        #FIXME: give a good description if we got a network error
-        if event.error:
-            print event.error
-
-        event.done = True
-
-def onNewWindow(event):
+def defNewWindow(event):
     if not event.done:
         if event.target.type == 'channel':
             window = ui.IrcChannelWindow(str(event.target))
@@ -268,21 +265,21 @@ def onNewWindow(event):
 def setupJoin(event):
     event.window = ui.get_window(event.target, event, 'Join')
 
-def onJoin(event):
-    if not event.done:
+def defJoin(event):
+    if not event.done and event.source == event.network.me:
         ui.activate(event.window)
 
 def setupText(event):
     event.window = ui.get_window(event.target, event, 'Text')
 
-def onCtcp(event):
+def defCtcp(event):
     if not event.done:
         if event.name == 'ACTION':
             e_data = copy.copy(event)
             e_data.type = 'action'
             e_data.text = ' '.join(event.args)
             events.trigger('Action', e_data)
-            event.done = e_data.done
+        event.done = True
 
 def setupAction(event):
     event.window = ui.get_window(event.target, event, 'Action')

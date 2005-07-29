@@ -4,6 +4,7 @@ import traceback
 
 class data:
     done = False
+    quiet = False
     
     def __init__(self, **kwargs):
         for attr in kwargs.items():
@@ -18,7 +19,7 @@ class getdict(object):
     def __getitem__(self, name):
         return getattr(self.target, name)
 
-trigger_sequence = ("setup", "pre", "on", "post")
+trigger_sequence = ("setup", "pre", "def", "on", "post")
 
 events = {}
 
