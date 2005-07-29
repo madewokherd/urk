@@ -8,6 +8,7 @@ import pango
 import conf
 import events
 import theme
+import parse_mirc
 
 modifiers = (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK,
                 gtk.gdk.MOD2_MASK, gtk.gdk.MOD3_MASK,
@@ -105,9 +106,9 @@ class IrcWindow(gtk.VBox):
                 tag = gtk.TextTag()
                 
                 for prop, val in props:
-                    if val == theme.BOLD:
+                    if val == parse_mirc.BOLD:
                         val = pango.WEIGHT_BOLD
-                    elif val == theme.UNDERLINE:
+                    elif val == parse_mirc.UNDERLINE:
                         val = pango.UNDERLINE_SINGLE
 
                     tag.set_property(prop, val)
@@ -118,7 +119,7 @@ class IrcWindow(gtk.VBox):
             if do_scroll:
                 view.scroll_mark_onscreen(buffer.create_mark("", end))
                 
-        tag_data, text = theme.parse_mirc(text)
+        tag_data, text = parse_mirc.parse_mirc(text)
         
         enqueue(write_unsafe, self.view, text, tag_data)
     

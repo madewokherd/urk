@@ -1,5 +1,12 @@
 import theme
 
+BOLD = '\x02'
+UNDERLINE = '\x1F'
+REVERSE = '\x16'
+MIRC_COLOR = '\x03'
+BERS_COLOR = '\x04'
+RESET = '\x0F'
+
 colors = (
   'white', 'black', '#00007F', '#009300', 
   'red', '#7F0000', '#9C009C', '#FF7F00',
@@ -23,7 +30,7 @@ def parse_mirc(string):
     new_string = ''
     while pos < len(string):
         char = string[pos]
-        if char == theme.BOLD: #bold
+        if char == BOLD: #bold
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -31,9 +38,9 @@ def parse_mirc(string):
             if 'weight' in props:
                 del props['weight']
             else:
-                props['weight'] = theme.BOLD
+                props['weight'] = BOLD
             pos += 1
-        elif char == theme.UNDERLINE: #underline
+        elif char == UNDERLINE: #underline
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -41,9 +48,9 @@ def parse_mirc(string):
             if 'underline' in props:
                 del props['underline']
             else:
-                props['underline'] = theme.UNDERLINE
+                props['underline'] = UNDERLINE
             pos += 1
-        elif char == theme.REVERSE: #reverse
+        elif char == REVERSE: #reverse
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -58,7 +65,7 @@ def parse_mirc(string):
                 props['foreground'] = 'white'
                 props['background'] = 'black'
             pos += 1
-        elif char == theme.MIRC_COLOR: #khaled color
+        elif char == MIRC_COLOR: #khaled color
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -89,7 +96,7 @@ def parse_mirc(string):
                     del props['foreground']
                 if 'background' in props:
                     del props['background']
-        elif char == theme.BERS_COLOR: #bersirc color
+        elif char == BERS_COLOR: #bersirc color
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -108,7 +115,7 @@ def parse_mirc(string):
                     del props['foreground']
                 if 'background' in props:
                     del props['background']
-        elif char == theme.RESET: #reset formatting
+        elif char == RESET: #reset formatting
             if start != len(new_string):
                 if props:
                     tag_data.append((props.items(), start, len(new_string)))
@@ -137,10 +144,10 @@ if __name__ == "__main__":
         ]
         
     results = [
-        ([([('weight', theme.BOLD)], 3, 7)], 'notboldnot'),
-        ([([('underline', theme.UNDERLINE)], 3, 12)], 'notunderlinenot'),
+        ([([('weight', BOLD)], 3, 7)], 'notboldnot'),
+        ([([('underline', UNDERLINE)], 3, 12)], 'notunderlinenot'),
         
-        ([([('underline', theme.BOLD), ('weight', theme.UNDERLINE)], 0, 2)], 'Hi'),
+        ([([('underline', BOLD), ('weight', UNDERLINE)], 0, 2)], 'Hi'),
 
         
         ([([('foreground', 'white'), ('background', 'black')], 3, 17), ([('foreground', 'red'), ('background', 'black')], 17, 29)], 'notwhite-on-blackred-on-blacknothing'),

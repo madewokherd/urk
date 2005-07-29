@@ -10,7 +10,7 @@ format = {
     "ctcp": "[%(source)s %(text)s]",
     "action": "* %(source)s %(text)s",
     
-    "raw": "* %(source)s FF0000%(text)s",
+    "raw": "* %(source)s %(text)s",
     }
     
 widgets = {
