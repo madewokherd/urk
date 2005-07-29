@@ -28,7 +28,7 @@ def onInput(event):
         e_data.error_text = 'No such command exists'
         events.trigger('Command', e_data)
         if not e_data.done:
-            e_data.type = 'error'
+            event.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
         event.done = True
 
 def handle_say(event):
@@ -270,16 +270,10 @@ def setupJoin(event):
 
 def onJoin(event):
     if not event.done:
-        event.done = True
-            
         ui.activate(event.window)
 
 def setupText(event):
     event.window = ui.get_window(event.target, event, 'Text')
-
-def onText(event):
-    if not event.done:
-        event.done = True
 
 def onCtcp(event):
     if not event.done:
@@ -290,13 +284,5 @@ def onCtcp(event):
             events.trigger('Action', e_data)
             event.done = e_data.done
 
-def postCtcp(event):
-    if not event.done:
-        pass
-
 def setupAction(event):
     event.window = ui.get_window(event.target, event, 'Action')
-
-def onAction(event):
-    if not event.done:
-        event.done = True
