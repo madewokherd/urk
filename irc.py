@@ -214,6 +214,16 @@ class Network:
         e_data.network = self
         events.trigger('Text', e_data)
 
+    def emote(self, target, msg):
+        self.raw("PRIVMSG %s :\x01ACTION %s\x01" % (target, msg))
+        e_data = events.data()
+        e_data.source = self.me
+        e_data.target = self.entity(str(target))
+        e_data.text = msg
+        e_data.type = 'action'
+        e_data.network = self
+        events.trigger('Action', e_data)
+
 class Entity:
     name = ""
     normal_name = ""

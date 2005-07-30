@@ -54,7 +54,7 @@ def register(e_name, e_stage, f_ref, s_name=""):
 
 # Load a python script and register
 # the functions defined in it for events.
-def load(s_name):
+def load(s_name, reloading=False):
     # split the directory and filename
     dirname, filename = dir_and_file(s_name)
     
@@ -67,6 +67,9 @@ def load(s_name):
         in_path = False
 
     imported = __import__(filename.strip(".py"))
+    
+    if reloading:
+        reload(imported)
     
     if not in_path:
         sys.path.remove(dirname)
@@ -96,3 +99,7 @@ def unload(s_name):
             to_check = events[e_name][t]
         
             events[e_name][t] = [(f, m) for f, m in to_check if m != s_name]
+
+def refresh(s_name):
+    unload(s_name)
+    load(s_name, reloading=True)

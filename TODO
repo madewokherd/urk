@@ -5,29 +5,22 @@ make events for them: kicks, modes, parts, quits; we also
 need to be able to do them; and ctcp/actions
 
 
+Structures
+
+    we need to keep track of things like what channels we're on
+and who else is on those channels; nicklists should be displayed
+
+
 Server Stuff
 
     we should update the server name when you do /server, possibly 
 even filling in the network name when we get that
 
 
-Formatting
-
-    We should support mIRC's and possibly besirc's formatting codes.
-IRCWindow.write() would be a good place for this.
-
-
 Network Prefs and Data
 
     some sort of system for keeping separating settings for 
-networks so that we connect from a list on start
-
-
-Theme System
-
-    we need some sort of theme system, probably implemented via 
-a script (we can only have one "default" way to handle things, 
-so echoing from script.py would have to go)
+networks so that we can connect from a list on start
 
 
 Preferences UI
@@ -38,7 +31,7 @@ Preferences UI
 
 MEH likes closing tabs
 
-    We need a way to close tabs.       
+    we need an event so we can react to the closing of tabs
 
 
 DCC Stuff
@@ -48,8 +41,8 @@ DCC Stuff
 
 Logging
 
-    We'll need this at some point. If the theme system is good enough, maybe
-we can make it handle both at once (with different themes).
+    We'll need this at some point. Most likely we'll just put logging code
+in IRCWindow.write().
 
         
 MEH hates tabs
@@ -60,5 +53,4 @@ more channels than tabs can reasonably accomodate
 
 while 1: suckAtMainLoop()
 
-    the main loop really sucks; we'd love to get rid of it 
-(use gtk.main() somehow), but we can't find anything else that works
+    we should use idle timers or whatever they're called to read the queue

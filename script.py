@@ -38,6 +38,17 @@ def handle_say(event):
     else:
         event.error_text = "There's no one here to speak to."
 
+def handle_msg(event):
+    event.network.msg(event.args[0], ' '.join(event.args[1:]))
+    event.done = True
+
+def handle_me(event):
+    if event.window.type in ('channel', 'user'):
+        event.network.emote(event.window.target, ' '.join(event.args))
+        event.done = True
+    else:
+        event.error_text = "There's no one here to speak to."
+
 def handle_echo(event):
     event.window.write(' '.join(event.args))
     event.done = True
@@ -50,7 +61,7 @@ def handle_query(event):
     else:
         window = ui.IrcWindow(str(target))
            # str so if we say /query byte and we see Byte, we query Byte
-        window.type = user
+        window.type = 'user'
         window.target = target
         target.window = window
         ui.new_tab(target.window, event.network)
@@ -87,6 +98,11 @@ def handle_pyexec(event):
     except:
         for line in traceback.format_exc().split('\n'):
             event.window.write(line)
+    event.done = True
+
+def handle_reload(event):
+    name = event.args[0]
+    events.refresh(name)
     event.done = True
 
 def handle_server(event):
@@ -133,6 +149,8 @@ def handle_server(event):
 
 command_handlers = {
     'say': handle_say,
+    'msg': handle_msg,
+    'me': handle_me,
     'echo': handle_echo,
     'query': handle_query,
     'raw': handle_raw,
@@ -140,6 +158,7 @@ command_handlers = {
     'join': handle_join,
     'pyeval': handle_pyeval,
     'pyexec': handle_pyexec,
+    'reload': handle_reload,
     'server': handle_server,
 }
 
@@ -270,7 +289,10 @@ def defJoin(event):
         ui.activate(event.window)
 
 def setupText(event):
-    event.window = ui.get_window(event.target, event, 'Text')
+    if event.target == event.network.me:
+        event.window = ui.get_window(event.source, event, 'Text')
+    else:
+        event.window = ui.get_window(event.target, event, 'Text')
 
 def defCtcp(event):
     if not event.done:
@@ -282,4 +304,7 @@ def defCtcp(event):
         event.done = True
 
 def setupAction(event):
-    event.window = ui.get_window(event.target, event, 'Action')
+    if event.target == event.network.me:
+        event.window = ui.get_window(event.source, event, 'Text')
+    else:
+        event.window = ui.get_window(event.target, event, 'Text')

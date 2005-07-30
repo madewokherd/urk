@@ -20,9 +20,23 @@ ui.IrcWindow.__init__ = newWindowInit
 
 def onText(event):
     if event.network.me == event.source:
-        to_write = "\x02\x04FF00FF<\x04\x02%s\x02\x04FF00FF>\x04\x02 %s" % (event.source, event.text)
+        color = '\x02\x04FF00FF'
     else:
-        to_write = "\x02\x040000CC<\x04\x02%s\x02\x040000CC>\x04\x02 %s" % (event.source, event.text)
+        color = '\x02\x040000CC'
+    if event.window == event.target.window:
+        to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
+    else:
+        to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+    
+def onAction(event):
+    if event.network.me == event.source:
+        color = '\x02\x04FF00FF'
+    else:
+        color = '\x02\x040000CC'
+    to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
