@@ -246,6 +246,27 @@ def defRaw(event):
                 events.trigger('Text', event)
             event.done = True
             event.quiet = True
+        
+        elif event.msg[1] == "005": #RPL_ISUPPORT
+            for arg in event.msg[3:]:
+                if ' ' not in arg: #ignore "are supported by this server"
+                    if '=' in arg:
+                        split = arg.split('=')
+                        name = split[0]
+                        value = '='.join(split[1:])
+                        if value.isdigit():
+                            value = int(value)
+                    else:
+                        name = arg
+                        value = ''
+                    #in theory, we're supposed to replace \xHH with the
+                    # corresponding ascii character, but I don't think anyone
+                    # relies on this
+                    event.network.isupport[name] = value    
+            event.done = True
+
+def setupSocketConnect(event):
+    event.network.isupport = {'NETWORK': event.network.server, 'PREFIX': '(ohv)@%+'}
 
 def defSocketConnect(event):
     if not event.done:
