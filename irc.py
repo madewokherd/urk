@@ -51,7 +51,7 @@ def handle_connect(socket, network, address):
     try:
         socket.connect(address)
         
-        network.connected = True
+        network.initializing = True
         events.trigger('SocketConnect', events.data(network=network, type='socket_connect'))
          
         reply = socket.recv(8192)
@@ -83,7 +83,7 @@ def handle_connect(socket, network, address):
     else:
         error = None
     network.connecting = False
-    network.connected = False
+    network.initializing = False
 
     events.trigger('Disconnect', events.data(network=network, error=error, type='disconnect'))
 
@@ -100,6 +100,7 @@ class Network:
     password = ''
     
     connecting = False
+    initializing = False
     connected = False
     #name = ''
     

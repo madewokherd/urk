@@ -56,3 +56,4 @@ def onJoin(event):
 def onRaw(event):
     if not event.quiet:
         event.window.write("* %s %s" % (event.source, event.text))
+        print event.msg

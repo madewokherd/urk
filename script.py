@@ -10,26 +10,29 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
+def run_command(text, window, network):
+    if text.startswith(COMMAND_PREFIX):
+        text = text[len(COMMAND_PREFIX):]
+    split = text.split()
+    e_data = events.data()
+    e_data.name = split[0]
+    e_data.args = split[1:]
+    e_data.text = text
+    e_data.type = 'command'
+    e_data.window = window
+    e_data.network = network
+    e_data.error_text = 'No such command exists'
+    events.trigger('Command', e_data)
+    if not e_data.done:
+        event.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
+
 def defInput(event):
     if not event.done:
         if event.text.startswith(COMMAND_PREFIX):
             command = event.text[len(COMMAND_PREFIX):]
-            split = command.split()
         else:
             command = 'say '+event.text
-            split = ['say',event.text]
-        e_data = events.data()
-        e_data.name = split[0]
-        e_data.args = split[1:]
-        e_data.text = command
-        e_data.type = 'command'
-        e_data.window = event.window
-        e_data.network = event.network
-        e_data.error_text = 'No such command exists'
-        events.trigger('Command', e_data)
-        if not e_data.done:
-            event.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
-        event.done = True
+        run_command(command, event.window, event.network)
 
 def handle_say(event):
     if event.window.type in ('channel', 'user'):
@@ -68,7 +71,7 @@ def handle_query(event):
     event.done = True
 
 def handle_raw(event):
-    if event.network.connected:
+    if event.network.initializing:
         event.network.raw(' '.join(event.args))
         event.done = True
     else:
@@ -76,7 +79,7 @@ def handle_raw(event):
 
 def handle_join(event):
     if event.args:
-        if event.network.connected:
+        if event.network.initializing:
             event.network.join(event.args[0])
             event.done = True
         else:
@@ -168,7 +171,7 @@ def defCommand(event):
 
 def postCommand(event):
     if not event.done and event.error_text == 'No such command exists' \
-      and event.network.connected:
+      and event.network.initializing:
         event.network.raw(event.text)
         event.done = True
 
@@ -208,15 +211,10 @@ def onConnectArlottOrg(event):
 
 def defRaw(event):
     if not event.done:
-        if event.msg[1] == "PING":
-            event.network.raw("PONG :%s" % event.msg[-1])
-            event.done = True
-            event.quiet = True
-        
         if not event.network.me:
             if event.msg[1] == '001':
                 event.network.me = event.network.entity(event.msg[2])
-                event.network.connected = True
+                event.network.initializing = True
             elif event.msg[1] in ('431','432','433','436','437'):
                 failednick = event.msg[3]
                 nicks = [event.network.nick] + list(event.network.anicks)
@@ -225,7 +223,12 @@ def defRaw(event):
                     event.network.raw('NICK %s' % nicks[index])
                 # else get the user to supply a nick or make one up?
         
-        if event.msg[1] == "JOIN":
+        if event.msg[1] == "PING":
+            event.network.raw("PONG :%s" % event.msg[-1])
+            event.done = True
+            event.quiet = True
+        
+        elif event.msg[1] == "JOIN":
             event.channel = event.target
             event.type = "join"
             events.trigger('Join', event)
@@ -264,6 +267,14 @@ def defRaw(event):
                     # relies on this
                     event.network.isupport[name] = value    
             event.done = True
+        
+        elif event.msg[1] == "376": #RPL_ENDOFMOTD
+            if not event.network.connected:
+                event.network.connected = True
+                e_data = copy.copy(event)
+                e_data.type = 'connect'
+                events.trigger('Connect', e_data)
+            event.done = True
 
 def setupSocketConnect(event):
     event.network.isupport = {'NETWORK': event.network.server, 'PREFIX': '(ohv)@%+'}
@@ -282,6 +293,14 @@ def defSocketConnect(event):
         
         event.network.me = None
         event.done = True
+
+def defConnect(event):
+    if not event.done:
+        if 'NETWORK' in event.network.isupport:
+            perform = conf.get('perform/'+str(event.network.isupport['NETWORK'])) or []
+            for command in perform:
+                run_command(command, event.window, event.network)
+            event.done = True
 
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
