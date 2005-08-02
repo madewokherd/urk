@@ -31,6 +31,7 @@ def urk_about(action):
     
 def get_tab_actions(page_num):
     def close_tab(action):
+        events.trigger("Close", tabs.get_nth_page(page_num))
         tabs.remove_page(page_num)
         
     to_add = (
