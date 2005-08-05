@@ -1,5 +1,6 @@
 import time
 
+import gobject
 import gtk
 import pango
 
@@ -49,7 +50,7 @@ def get_urk_actions(ui):
 
     to_add = (
         ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
             ("Connect", None, "_Connect", None, None, connectToArlottOrg),
         
         ("EditMenu", None, "_Edit"),
@@ -355,12 +356,6 @@ queue = []
 def enqueue(f, *args, **kwargs):
     queue.append((f, args, kwargs))
 
-class Quitting(Exception):
-    pass
-
-def quit():
-    raise Quitting
-
 # UI manager to use throughout   
 ui_manager = gtk.UIManager()
     
@@ -370,6 +365,11 @@ tabs = IrcTabs()
 # build our overall UI
 ui = IrcUI()
 
+def process_queue():
+    while queue:
+        f, args, kwargs = queue.pop(0)
+        f(*args,**kwargs)
+
 def start():
     first_window = IrcWindow("Status Window")
     first_window.type = "first_window"
@@ -377,15 +377,7 @@ def start():
     new_tab(first_window)
     activate(first_window)
     
-    try:
-        while 1:
-            gtk.main_iteration(block=False)
-            #FIXME: We should be using an idle timer for this
-            while queue:
-                f, args, kwargs = queue.pop(0)
-                f(*args,**kwargs)
-            time.sleep(.001)
-    except KeyboardInterrupt:
-        ui.shutdown()
-    except Quitting:
-        pass
+    gobject.idle_add(process_queue)
+    
+    gtk.main()
+    ui.shutdown()
