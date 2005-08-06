@@ -1,4 +1,6 @@
 import time
+import thread
+import traceback
 
 import gobject
 import gtk
@@ -13,6 +15,78 @@ for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
              gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
     MOD_MASK |= m   
 
+
+#this is how we put lots of related ugliness in one place so we don't have to
+#look at it all the time
+
+main_thread = thread.get_ident()
+
+class reference(object):
+    __slots__ = ['value']
+
+class pygtk_lookup_class(object):
+    __slots__ = ['f']
+    
+    def __init__(self, f):
+        self.f = f
+    
+    def __call__(self, *args, **kwargs):
+        if main_thread == thread.get_ident():
+            return self.f(*args, **kwargs)
+        else:
+            result = reference()
+            mutex = thread.allocate_lock()
+            mutex.acquire()
+            def do_in_main_thread():
+                result.value = self.f(*args, **kwargs)
+                mutex.release()
+            enqueue(do_in_main_thread)
+            mutex.acquire()
+            return result.value
+
+class pygtk_procedure_class(object):
+    __slots__ = ['f']
+    
+    def __init__(self, f):
+        self.f = f
+    
+    def __call__(self, *args, **kwargs):
+        if main_thread == thread.get_ident():
+            self.f(*args, **kwargs)
+        else:
+            enqueue(self.f, *args, **kwargs)
+
+class decorated_descriptor(object):
+    __slots__ = ['decorator', 'descriptor']
+    
+    def __init__(self, decorator, descriptor):
+        self.decorator = decorator
+        self.descriptor = descriptor
+    
+    def __get__(self, instance, owner):
+        return self.decorator(self.descriptor.__get__(instance, owner))
+    
+    def __set__(self, instance, owner):
+        self.descriptor.__set__(instance, owner)
+
+    def __decorator__(self, instance, owner):
+        self.descriptor.__decorator__(instance, owner)
+
+#for procedures that must be run in the main thread but return a value
+# (or for when we have to wait for them to complete)
+def pygtk_lookup(f):
+    if hasattr(f, '__get__'):
+        return decorated_descriptor(pygtk_lookup_class, f)
+    else:
+        return pygtk_lookup_class(f)
+
+#for procedures that must be run in the main thread, but not immediately
+def pygtk_procedure(f):
+    if hasattr(f, '__get__'):
+        return decorated_descriptor(pygtk_procedure_class, f)
+    else:
+        return pygtk_procedure_class(f)
+
 # FIXME: get rid of this
 def print_args(*args):
     print args
@@ -21,7 +95,7 @@ def urk_about(action):
     about = gtk.AboutDialog()
     
     about.set_name("Urk")
-    about.set_version("8")
+    about.set_version("0.-1.2")
     about.set_copyright("Yes, 2004")
     about.set_comments("Comments")
     about.set_license("Gee Pee Ell")
@@ -50,7 +124,7 @@ def get_urk_actions(ui):
 
     to_add = (
         ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
             ("Connect", None, "_Connect", None, None, connectToArlottOrg),
         
         ("EditMenu", None, "_Edit"),
@@ -79,46 +153,45 @@ class IrcWindow(gtk.VBox):
     network = None
     
     # the unknowing print weird things to our text window function
-    def write(self, text):   
-        def write_unsafe(view, text, tag_data):
-            buffer = view.get_buffer()
-            end = buffer.get_end_iter()
-            
-            end_rect = view.get_iter_location(end)
-            vis_rect = view.get_visible_rect()
-
-            do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-            
-            char_count = buffer.get_char_count()
-
-            buffer.insert(end, text + "\n")
-            
-            tag_table = buffer.get_tag_table()
-
-            for props, start, end in tag_data:
-                start = buffer.get_iter_at_offset(start + char_count)
-                end = buffer.get_iter_at_offset(end + char_count)
-            
-                tag = gtk.TextTag()
-                
-                for prop, val in props:
-                    if val == parse_mirc.BOLD:
-                        val = pango.WEIGHT_BOLD
-                    elif val == parse_mirc.UNDERLINE:
-                        val = pango.UNDERLINE_SINGLE
-
-                    tag.set_property(prop, val)
-
-                tag_table.add(tag)
-                buffer.apply_tag(tag, start, end)
-
-            if do_scroll:
-                view.scroll_mark_onscreen(buffer.create_mark("", end))
-                
+    @pygtk_procedure
+    def write(self, text):
         tag_data, text = parse_mirc.parse_mirc(text)
         
-        enqueue(write_unsafe, self.view, text, tag_data)
-    
+        view = self.view
+        buffer = view.get_buffer()
+        end = buffer.get_end_iter()
+        
+        end_rect = view.get_iter_location(end)
+        vis_rect = view.get_visible_rect()
+
+        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
+        
+        char_count = buffer.get_char_count()
+
+        buffer.insert(end, text + "\n")
+        
+        tag_table = buffer.get_tag_table()
+
+        for props, start, end in tag_data:
+            start = buffer.get_iter_at_offset(start + char_count)
+            end = buffer.get_iter_at_offset(end + char_count)
+        
+            tag = gtk.TextTag()
+            
+            for prop, val in props:
+                if val == parse_mirc.BOLD:
+                    val = pango.WEIGHT_BOLD
+                elif val == parse_mirc.UNDERLINE:
+                    val = pango.UNDERLINE_SINGLE
+
+                tag.set_property(prop, val)
+
+            tag_table.add(tag)
+            buffer.apply_tag(tag, start, end)
+
+        if do_scroll:
+            view.scroll_mark_onscreen(buffer.create_mark("", end))
+            
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
         lines = entry.get_text().split("\n")
@@ -246,9 +319,8 @@ class IrcUI(gtk.Window):
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
-
-        if gtk.main_level():
-            gtk.main_quit()
+        
+        enqueue(quit)
 
     def __init__(self):
         # threading stuff
@@ -369,7 +441,12 @@ ui = IrcUI()
 def process_queue():
     while queue:
         f, args, kwargs = queue.pop(0)
-        f(*args,**kwargs)
+        try:
+            f(*args,**kwargs)
+        except:
+            traceback.print_exc()
+    time.sleep(0.001)
+    return True
 
 def start():
     first_window = IrcWindow("Status Window")
@@ -380,7 +457,5 @@ def start():
     
     gobject.idle_add(process_queue)
     
-    try:
-        gtk.main()
-    except KeyboardInterrupt:
-        ui.shutdown()
+    gtk.main()
+    ui.shutdown()
