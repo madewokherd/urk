@@ -124,7 +124,7 @@ def get_urk_actions(ui):
 
     to_add = (
         ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
             ("Connect", None, "_Connect", None, None, connectToArlottOrg),
         
         ("EditMenu", None, "_Edit"),
@@ -319,8 +319,9 @@ class IrcUI(gtk.Window):
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
-        
-        enqueue(quit)
+
+        if gtk.main_level():
+            gtk.main_quit()
 
     def __init__(self):
         # threading stuff
@@ -457,5 +458,7 @@ def start():
     
     gobject.idle_add(process_queue)
     
-    gtk.main()
-    ui.shutdown()
+    try:
+        gtk.main()
+    except KeyboardInterrupt:
+        ui.shutdown()
