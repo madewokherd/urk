@@ -3,7 +3,7 @@ import gtk
 
 import ui
 
-oldWindowInit = ui.IrcWindow.__init__
+oldWindowInit = ui.IrcWindowClass.__init__
 
 def newWindowInit(self, title=""):
     oldWindowInit(self, title)
@@ -16,7 +16,7 @@ def newWindowInit(self, title=""):
     self.view.modify_base(gtk.STATE_NORMAL, chatview_bg)
     self.view.modify_font(chatview_font)
     
-ui.IrcWindow.__init__ = newWindowInit
+ui.IrcWindowClass.__init__ = newWindowInit
 
 def onText(event):
     if event.network.me == event.source:

@@ -42,7 +42,18 @@ class pygtk_lookup_class(object):
                 mutex.release()
             enqueue(do_in_main_thread)
             mutex.acquire()
+            print result.value
             return result.value
+
+class pygtk_descriptor_lookup_class(pygtk_lookup_class):
+    def __get__(self, instance, owner):
+        return pygtk_lookup(self.f.__get__(instance, owner))
+    
+    def __set__(self, instance, owner):
+        self.f.__set__(instance, owner)
+
+    def __delete__(self, instance, owner):
+        self.f.__delete__(instance, owner)
 
 class pygtk_procedure_class(object):
     __slots__ = ['f']
@@ -56,34 +67,25 @@ class pygtk_procedure_class(object):
         else:
             enqueue(self.f, *args, **kwargs)
 
-class decorated_descriptor(object):
-    __slots__ = ['decorator', 'descriptor']
-    
-    def __init__(self, decorator, descriptor):
-        self.decorator = decorator
-        self.descriptor = descriptor
-    
+class pygtk_descriptor_procedure_class(pygtk_procedure_class):
     def __get__(self, instance, owner):
-        return self.decorator(self.descriptor.__get__(instance, owner))
+        return pygtk_procedure(self.f.__get__(instance, owner))
     
     def __set__(self, instance, owner):
-        self.descriptor.__set__(instance, owner)
+        self.f.__set__(instance, owner)
 
-    def __decorator__(self, instance, owner):
-        self.descriptor.__decorator__(instance, owner)
+    def __delete__(self, instance, owner):
+        self.f.__delete__(instance, owner)
 
-#for procedures that must be run in the main thread but return a value
-# (or for when we have to wait for them to complete)
 def pygtk_lookup(f):
     if hasattr(f, '__get__'):
-        return decorated_descriptor(pygtk_lookup_class, f)
+        return pygtk_descriptor_lookup_class(f)
     else:
         return pygtk_lookup_class(f)
 
-#for procedures that must be run in the main thread, but not immediately
 def pygtk_procedure(f):
     if hasattr(f, '__get__'):
-        return decorated_descriptor(pygtk_procedure_class, f)
+        return pygtk_descriptor_procedure_class(f)
     else:
         return pygtk_procedure_class(f)
 
@@ -149,7 +151,7 @@ class NickLabel(gtk.EventBox):
         
         #self.connect("button-press-event", lambda *a: None)
 
-class IrcWindow(gtk.VBox):
+class IrcWindowClass(gtk.VBox):
     network = None
     
     # the unknowing print weird things to our text window function
@@ -278,7 +280,7 @@ class IrcWindow(gtk.VBox):
         win.add(self.view)
 
         return win
-
+    
     def __init__(self, title=""):
         gtk.VBox.__init__(self, False)
         
@@ -290,17 +292,21 @@ class IrcWindow(gtk.VBox):
         self.pack_end(eb, expand=False)
   
         self.show_all()
+
+IrcWindow = pygtk_lookup(IrcWindowClass)
         
-class IrcChannelWindow(IrcWindow):
+class IrcChannelWindowClass(IrcWindowClass):
     # channel window and nicklist               
     def chat_view(self):
         self.nicklist = gtk.TreeView()
         
         win = gtk.HPaned()
-        win.pack1(IrcWindow.chat_view(self), resize=True)
+        win.pack1(IrcWindowClass.chat_view(self), resize=True)
         win.pack2(self.nicklist, resize=False)
         
         return win
+        
+IrcChannelWindow = pygtk_lookup(IrcChannelWindowClass)
         
 class IrcTabs(gtk.Notebook):
     def __init__(self):
@@ -380,39 +386,35 @@ def add_tab_label(window):
 
     tabs.set_tab_label(window, label)
 
-# Make a new tab with a window widget, optionally associate it with a network        
+# Make a new tab with a window widget, optionally associate it with a network
+@pygtk_procedure
 def new_tab(window, network=None):
     window.network = network
+    
+    def focus_entry(*args):
+        window.entry.grab_focus()
+    window.connect("focus", focus_entry)
 
-    def new_tab_unsafe():
-        def focus_entry(*args):
-            window.entry.grab_focus()
-        window.connect("focus", focus_entry)
+    pos = tabs.get_n_pages()
     
-        pos = tabs.get_n_pages()
-        
-        if network:
-            for i in reversed(xrange(pos)):
-                if tabs.get_nth_page(i).network == network:
-                    pos = i+1
-                    break
-    
-        tabs.insert_page(window, None, pos)
-        add_tab_label(window)
-    
-    enqueue(new_tab_unsafe)
+    if network:
+        for i in reversed(xrange(pos)):
+            if tabs.get_nth_page(i).network == network:
+                pos = i+1
+                break
+
+    tabs.insert_page(window, None, pos)
+    add_tab_label(window)
 
 # Select the page with the given window or with the given tab position
+@pygtk_procedure
 def activate(window):
-    def to_activate(window):
-        # if this is an actual window, then we want its tab number
-        if not isinstance(window, int):
-            window = tabs.page_num(window)
-    
-        tabs.set_current_page(window)
-        tabs.get_nth_page(window).entry.grab_focus()
+    # if this is an actual window, then we want its tab number
+    if not isinstance(window, int):
+        window = tabs.page_num(window)
 
-    enqueue(to_activate, window)
+    tabs.set_current_page(window)
+    tabs.get_nth_page(window).entry.grab_focus()
 
 def get_window(target, src_event=None, src_name=''):
     if target.window:
