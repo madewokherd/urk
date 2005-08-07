@@ -279,6 +279,7 @@ def defRaw(event):
 
 def setupSocketConnect(event):
     event.network.isupport = {'NETWORK': event.network.server, 'PREFIX': '(ohv)@%+'}
+    event.network.channels.clear()
 
 def defSocketConnect(event):
     if not event.done:
@@ -309,38 +310,42 @@ def setupDisconnect(event):
         
     event.type = "disconnect"
 
-def defNewWindow(event):
-    if not event.done:
-        if event.target.type == 'channel':
-            window = ui.IrcChannelWindow(str(event.target))
-        else:
-            window = ui.IrcWindow(str(event.target))
-        event.target.window = window
-        event.window = window
-        window.type = event.target.type
-        window.target = event.target
-        ui.new_tab(window, event.target.network)
-        event.done = True
-
 def setupJoin(event):
-    event.window = ui.get_window(event.target, event, 'Join')
+    if event.source == event.network.me and not event.target.window:
+        window = ui.IrcChannelWindow(str(event.target))
+        window.type = 'channel'
+        window.target = event.target
+        ui.new_tab(window, event.network)
+        event.target.window = window
+        
+        event.network.channels.add(event.target)
+    
+    event.window = event.target.window or event.window
 
 def defJoin(event):
     if not event.done and event.source == event.network.me:
         ui.activate(event.window)
 
 def setupPart(event):
-    event.window = ui.get_window(event.target, event, 'Part')
+    event.window = event.target.window or event.window
+    
+    if event.source == event.network.me:
+        event.network.channels.remove(event.target)
 
 def setupMode(event):
     if event.target != event.network.me:
-        event.window = ui.get_window(event.target, event, 'Mode')
+        event.window = event.target.window or event.window
 
 def setupText(event):
-    if event.target == event.network.me:
-        event.window = ui.get_window(event.source, event, 'Text')
+    if event.target == event.network.me and not event.target.window:
+        window = ui.IrcWindow(str(event.source))
+        window.type = 'user'
+        window.target = event.source
+        ui.new_tab(window, event.network)
+        event.source.window = window
+        event.window = window
     else:
-        event.window = ui.get_window(event.target, event, 'Text')
+        event.window = event.target.window or event.window
 
 def defCtcp(event):
     if not event.done:
@@ -353,6 +358,15 @@ def defCtcp(event):
 
 def setupAction(event):
     if event.target == event.network.me:
-        event.window = ui.get_window(event.source, event, 'Text')
+        event.window = event.source.window or event.window
     else:
-        event.window = ui.get_window(event.target, event, 'Text')
+        event.window = event.target.window or event.window
+
+def onClose(window):
+    try:
+        if window.target.window == window:
+            window.target.window = None
+        if window.target.type == 'channel':
+            window.target.part()
+    except AttributeError:
+        pass

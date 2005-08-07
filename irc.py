@@ -249,11 +249,24 @@ class Entity:
     def __str__(self):
         return self.name
 
+    def msg(self, message):
+        self.network.msg(self, message)
+    
+    def emote(self, message):
+        self.network.emote(self, message)
+
 class User(Entity):
     type = "user"
-
+    
 class Channel(Entity):#, set):
     type = "channel"
     
     def __nonzero__(self):
         return True
+    
+    def join(self):
+        self.network.join(self)
+    
+    def part(self, msg=""):
+        self.network.part(self, msg)
+    

@@ -416,18 +416,6 @@ def activate(window):
     tabs.set_current_page(window)
     tabs.get_nth_page(window).entry.grab_focus()
 
-def get_window(target, src_event=None, src_name=''):
-    if target.window:
-        return target.window
-    else:
-        e_data = events.data()
-        e_data.src_event = src_event
-        e_data.src_name = src_name
-        e_data.target = target
-        e_data.window = None
-        events.trigger('NewWindow', e_data)
-        return e_data.window
-
 queue = []
 def enqueue(f, *args, **kwargs):
     queue.append((f, args, kwargs))
