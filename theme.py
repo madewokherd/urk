@@ -19,16 +19,19 @@ def newWindowInit(self, title=""):
 ui.IrcWindowClass.__init__ = newWindowInit
 
 def onText(event):
-    if event.network.me == event.source:
-        if event.target.window == event.window:
-            to_write = "\x02\x04FF00FF<\x0F%s\x02\x04FF00FF>\x0F %s" % (event.source, event.text)
+    if event.network.me == event.target:
+        if event.source.window == event.window:
+            to_write = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s" % (event.source, event.text)
         else:
-            to_write = "\x02\x04FF00FF-> *\x0F%s\x02\x04FF00FF*\x0F %s" % (event.target, event.text)
+            to_write = "\x02\x040000CC*\x0F%s\x02\x040000CC*\x0F %s" % (event.target, event.text)
     else:
-        if event.window in (event.source.window, event.target.window):
-            format = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s"
+        if event.window == event.target.window:
+            if event.network.me == event.source:
+                format = "\x02\x04FF00FF<\x0F%s\x02\x04FF00FF>\x0F %s"
+            else:
+                format = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s"
         else:
-            format = "\x02\x040000CC*\x0F%s\x02\x040000CC*\x0F %s"
+            format = "\x02\x04FF00FF-> *\x0F%s\x02\x04FF00FF*\x0F %s"
         to_write = format % (event.source, event.text)
     
     if not event.quiet:

@@ -206,14 +206,14 @@ class IrcWindowClass(gtk.VBox):
         buffer = view.get_buffer()
         end = buffer.get_end_iter()
         
-        end_rect = view.get_iter_location(end)
-        vis_rect = view.get_visible_rect()
+        rect = view.get_visible_rect()
+        y, height = view.get_line_yrange(end)
+    
+        do_scroll = ((y + height) - (rect.y + rect.height)) <= height
 
-        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-        
         char_count = buffer.get_char_count()
 
-        buffer.insert(end, text + "\n")
+        buffer.insert(end, "\n" + text)
         
         tag_table = buffer.get_tag_table()
 
@@ -236,7 +236,7 @@ class IrcWindowClass(gtk.VBox):
 
         if do_scroll:
             view.scroll_mark_onscreen(buffer.create_mark("", end))
-            
+    
     # we entered some text in the entry box
     def entered_text(self, entry, data=None):    
         lines = entry.get_text().split("\n")
@@ -320,7 +320,7 @@ class IrcWindowClass(gtk.VBox):
                 self.entry.set_position(-1)
         
         self.view.connect("key-press-event", transfer_text)
-
+        
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         win.set_border_width(2)
