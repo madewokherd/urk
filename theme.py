@@ -44,6 +44,12 @@ def onAction(event):
     if not event.quiet:
         event.window.write(to_write)
     
+def onOwnNotice(event):
+    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-*\x0F %s" % (event.target, event.text)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+    
 def onJoin(event):
     if event.network.me == event.source:
         to_write = "\x02You\x02 joined %s" % event.target

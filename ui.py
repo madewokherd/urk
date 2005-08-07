@@ -42,7 +42,6 @@ class pygtk_lookup_class(object):
                 mutex.release()
             enqueue(do_in_main_thread)
             mutex.acquire()
-            print result.value
             return result.value
 
 class pygtk_descriptor_lookup_class(pygtk_lookup_class):

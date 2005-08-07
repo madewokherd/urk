@@ -52,6 +52,10 @@ def handle_me(event):
     else:
         event.error_text = "There's no one here to speak to."
 
+def handle_notice(event):
+    event.network.notice(event.args[0], ' '.join(event.args[1:]))
+    event.done = True
+
 def handle_echo(event):
     event.window.write(' '.join(event.args))
     event.done = True
@@ -154,6 +158,7 @@ command_handlers = {
     'say': handle_say,
     'msg': handle_msg,
     'me': handle_me,
+    'notice': handle_notice,
     'echo': handle_echo,
     'query': handle_query,
     'raw': handle_raw,
@@ -337,13 +342,15 @@ def setupMode(event):
         event.window = event.target.window or event.window
 
 def setupText(event):
-    if event.target == event.network.me and not event.target.window:
+    if event.target == event.network.me and not event.source.window:
         window = ui.IrcWindow(str(event.source))
         window.type = 'user'
         window.target = event.source
         ui.new_tab(window, event.network)
         event.source.window = window
         event.window = window
+    elif event.target == event.network.me:
+        event.window = event.source.window or event.window
     else:
         event.window = event.target.window or event.window
 

@@ -213,6 +213,7 @@ class Network:
         e_data.text = msg
         e_data.type = 'text'
         e_data.network = self
+        e_data.window = urk.get_window[self]
         events.trigger('Text', e_data)
 
     def emote(self, target, msg):
@@ -223,7 +224,19 @@ class Network:
         e_data.text = msg
         e_data.type = 'action'
         e_data.network = self
+        e_data.window = urk.get_window[self]
         events.trigger('Action', e_data)
+
+    def notice(self, target, msg):
+        self.raw("NOTICE %s :%s" % (target, msg))
+        e_data = events.data()
+        e_data.source = self.me
+        e_data.target = self.entity(str(target))
+        e_data.text = msg
+        e_data.type = 'ownnotice'
+        e_data.network = self
+        e_data.window = urk.get_window[self]
+        events.trigger('OwnNotice', e_data)
 
 class Entity:
     name = ""
@@ -254,6 +267,9 @@ class Entity:
     
     def emote(self, message):
         self.network.emote(self, message)
+
+    def notice(self, message):
+        self.network.notice(self, message)
 
 class User(Entity):
     type = "user"
