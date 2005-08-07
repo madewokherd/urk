@@ -164,7 +164,7 @@ class NickLabel(gtk.EventBox):
                     if self.edit.get_text():
                         self.label.set_text(self.edit.get_text())
                         
-                        # /nick newnick
+                        self.nick_change(self.edit.get_text())
                 
                         reset_mode()
             
@@ -172,13 +172,15 @@ class NickLabel(gtk.EventBox):
             self.edit.connect("activate", change_nick)
             self.mode = "edit"
 
-    def __init__(self, nick=""):
+    def __init__(self, nick, nick_change):
         self.label = gtk.Label(nick)
         self.label.set_padding(5, 0)
         
         self.edit = gtk.Entry()
         self.edit.set_text(nick)
         self.edit.show()
+        
+        self.nick_change = nick_change
         
         gtk.EventBox.__init__(self)
         self.add(self.label)
@@ -283,7 +285,11 @@ class IrcWindowClass(gtk.VBox):
             
         self.entry.connect("key-press-event", history_explore)
         
-        self.nick_label = NickLabel(conf.get("nick"))
+        # FIXME: please make this, whatever you need to do to change nick
+        def nick_change(newnick):
+            pass
+        
+        self.nick_label = NickLabel(conf.get("nick"), nick_change)
 
         box = gtk.HBox()
         box.pack_start(self.entry)
