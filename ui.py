@@ -152,17 +152,23 @@ class NickLabel(gtk.EventBox):
             
             self.edit.grab_focus()
             
-            def change_nick(*args):
-                if self.edit.get_text():
-                    self.label.set_text(self.edit.get_text())
-                    
-                    # /nick newnick
-            
+            def reset_mode(*args):
+                if self.mode == "edit":
+                    self.mode = "show"
+                
                     self.remove(self.edit)
                     self.add(self.label)
-                    
-                    self.mode = "show"
             
+            def change_nick(*args):
+                if self.mode == "edit":
+                    if self.edit.get_text():
+                        self.label.set_text(self.edit.get_text())
+                        
+                        # /nick newnick
+                
+                        reset_mode()
+            
+            self.edit.connect("focus-out-event", reset_mode)
             self.edit.connect("activate", change_nick)
             self.mode = "edit"
 
@@ -178,11 +184,6 @@ class NickLabel(gtk.EventBox):
         self.add(self.label)
         
         self.connect("button-press-event", self.edit_nick)
-        
-        def print_a(self, event, s):
-            print event.type
-        
-        self.connect("focus-in-event", print_a, "fo")
 
 class IrcWindowClass(gtk.VBox):
     network = None
