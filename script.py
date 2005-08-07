@@ -191,7 +191,7 @@ def onStart(event):
         ui.enqueue(urk.connect, x)
     
         x.connect()
-    
+        
         # FIXME, given a network, might we want to look up servers?, possibly 
         #        this should happen on instantiation of the Network() otherwise
         #        i guess it should be done whenever we need to connect to a
@@ -228,10 +228,11 @@ def defRaw(event):
             event.done = True
             event.quiet = True
         
-        elif event.msg[1] == "JOIN":
+        elif event.msg[1] in ("JOIN", "PART", "MODE"):
             event.channel = event.target
-            event.type = "join"
-            events.trigger('Join', event)
+            event.type = event.msg[1].lower()
+            event.text = ' '.join(event.msg[3:])
+            events.trigger(event.msg[1].capitalize(), event)
             event.done = True
             event.quiet = True
             
@@ -327,6 +328,13 @@ def setupJoin(event):
 def defJoin(event):
     if not event.done and event.source == event.network.me:
         ui.activate(event.window)
+
+def setupPart(event):
+    event.window = ui.get_window(event.target, event, 'Part')
+
+def setupMode(event):
+    if event.target != event.network.me:
+        event.window = ui.get_window(event.target, event, 'Mode')
 
 def setupText(event):
     if event.target == event.network.me:

@@ -65,8 +65,11 @@ def load(s_name, reloading=False):
     if dirname not in sys.path:
         sys.path.append(dirname)
         in_path = False
-
-    imported = __import__(filename.strip(".py"))
+    
+    if filename.endswith(".py"):
+        filename = filename[:-3]
+    
+    imported = __import__(filename)
     
     if reloading:
         reload(imported)

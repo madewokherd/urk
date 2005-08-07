@@ -53,7 +53,24 @@ def onJoin(event):
     if not event.quiet:
         event.window.write(to_write)
         
+def onPart(event):
+    if event.network.me == event.source:
+        to_write = "\x02You\x02 left %s" % event.target
+    else:
+        to_write = "\x02%s\x02 (%s) left %s" % (event.source, event.source.address, event.target)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+        
+def onMode(event):
+    if event.network.me == event.source:
+        to_write = "\x02You\x02 set mode: %s" % event.text
+    else:
+        to_write = "\x02%s\x02 (%s) sets mode: %s" % (event.source, event.source.address, event.text)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+        
 def onRaw(event):
     if not event.quiet:
         event.window.write("* %s %s" % (event.source, event.text))
-        print event.msg
