@@ -141,14 +141,48 @@ def get_urk_actions(ui):
     return urk_actions
 
 class NickLabel(gtk.EventBox):
-    def __init__(self, *args, **kwargs):
-        self.label = gtk.Label(*args, **kwargs)
+    mode = "show"
+
+    def edit_nick(self, *args):
+        if self.mode != "edit":
+            self.edit.set_text(self.label.get_text())
+        
+            self.remove(self.label)
+            self.add(self.edit)
+            
+            self.edit.grab_focus()
+            
+            def change_nick(*args):
+                if self.edit.get_text():
+                    self.label.set_text(self.edit.get_text())
+                    
+                    # /nick newnick
+            
+                    self.remove(self.edit)
+                    self.add(self.label)
+                    
+                    self.mode = "show"
+            
+            self.edit.connect("activate", change_nick)
+            self.mode = "edit"
+
+    def __init__(self, nick=""):
+        self.label = gtk.Label(nick)
         self.label.set_padding(5, 0)
+        
+        self.edit = gtk.Entry()
+        self.edit.set_text(nick)
+        self.edit.show()
         
         gtk.EventBox.__init__(self)
         self.add(self.label)
         
-        #self.connect("button-press-event", lambda *a: None)
+        self.connect("button-press-event", self.edit_nick)
+        
+        def print_a(self, event, s):
+            print event.type
+        
+        self.connect("focus-in-event", print_a, "fo")
 
 class IrcWindowClass(gtk.VBox):
     network = None
@@ -429,14 +463,17 @@ tabs = IrcTabs()
 ui = IrcUI()
 
 def process_queue():
-    while queue:
-        f, args, kwargs = queue.pop(0)
-        try:
-            f(*args,**kwargs)
-        except:
-            traceback.print_exc()
-    time.sleep(0.001)
-    return True
+    try:
+        while queue:
+            f, args, kwargs = queue.pop(0)
+            try:
+                f(*args,**kwargs)
+            except:
+                traceback.print_exc()
+        time.sleep(0.001)
+        return True
+    except KeyboardInterrupt:
+        ui.shutdown()
 
 def start():
     first_window = IrcWindow("Status Window")
@@ -446,8 +483,4 @@ def start():
     activate(first_window)
     
     gobject.idle_add(process_queue)
-    
-    try:
-        gtk.main()
-    except KeyboardInterrupt:
-        ui.shutdown()
+    gtk.main()
