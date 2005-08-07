@@ -142,6 +142,13 @@ def get_urk_actions(ui):
 
 class NickLabel(gtk.EventBox):
     mode = "show"
+    
+    def set_nick(self, nick):
+        self.label.set_text(nick)
+        self.edit.set_text(nick)
+        
+        if self.mode == "edit":
+            self.edit.grab_focus()
 
     def edit_nick(self, *args):
         if self.mode != "edit":
