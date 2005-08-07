@@ -454,15 +454,6 @@ queue = []
 def enqueue(f, *args, **kwargs):
     queue.append((f, args, kwargs))
 
-# UI manager to use throughout   
-ui_manager = gtk.UIManager()
-    
-# build our tab widget
-tabs = IrcTabs()
-
-# build our overall UI
-ui = IrcUI()
-
 def process_queue():
     try:
         while queue:
@@ -475,7 +466,7 @@ def process_queue():
         return True
     except KeyboardInterrupt:
         ui.shutdown()
-
+        
 def start():
     first_window = IrcWindow("Status Window")
     first_window.type = "first_window"
@@ -485,3 +476,13 @@ def start():
     
     gobject.idle_add(process_queue)
     gtk.main()
+
+# UI manager to use throughout   
+ui_manager = gtk.UIManager()
+    
+# build our tab widget
+tabs = IrcTabs()
+
+# build our overall UI
+ui = IrcUI()
+
