@@ -88,10 +88,6 @@ def pygtk_procedure(f):
     else:
         return pygtk_procedure_class(f)
 
-# FIXME: get rid of this
-def print_args(*args):
-    print args
-
 def urk_about(action):
     about = gtk.AboutDialog()
     
@@ -126,10 +122,10 @@ def get_urk_actions(ui):
     to_add = (
         ("FileMenu", None, "_File"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
-            ("Connect", None, "_Connect", None, None, connectToArlottOrg),
+            ("Connect", None, "_Connect", "<control>S", None, connectToArlottOrg),
         
         ("EditMenu", None, "_Edit"),
-            ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", None, None),
+            ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", "<control>P", None),
         
         ("HelpMenu", None, "_Help"),
             ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
@@ -140,6 +136,7 @@ def get_urk_actions(ui):
     
     return urk_actions
 
+# Label used to display/edit your current nick on a network
 class NickLabel(gtk.EventBox):
     mode = "show"
     
@@ -194,6 +191,70 @@ class NickLabel(gtk.EventBox):
         
         self.connect("button-press-event", self.edit_nick)
 
+# The entry which you type in to send messages        
+class EntryBox(gtk.Entry):
+    win = None
+    history = []
+
+    # Generates an input event
+    def entered_text(self, *args):
+        lines = self.get_text().split("\n")
+
+        for line in lines:
+            e_data = events.data()
+            e_data.window = self.win
+            e_data.text = line
+            e_data.network = self.win.network
+            events.trigger('Input', e_data)
+            
+            self.history.insert(1, line)
+            self.history_i = 0
+    
+        self.set_text("")
+    
+    # Explores the history of this entry box
+    #  0 means most recent which is what you're currently typing
+    #  anything greater means things you've typed and sent    
+    def history_explore(self, di): # assume we're going forward in history 
+        if di == 1:
+            # we're going back in history
+            
+            # when we travel back in time, we need to remember
+            # where we were, so we can go back to the future
+            if self.history_i == 0 and self.get_text():
+                self.history.insert(1, self.get_text())
+                self.history_i = 1
+
+        if self.history_i + di in range(len(self.history)):
+            self.history_i += di
+
+        self.set_text(self.history[self.history_i])
+        self.set_position(-1)
+
+    def __init__(self, window):
+        gtk.Entry.__init__(self)
+        
+        self.win = window
+
+        self.connect("activate", self.entered_text)
+   
+        self.history = [""]
+        self.history_i = 0
+        
+        def check_history_explore(widget, event):
+            up = gtk.gdk.keyval_from_name("Up")
+            down = gtk.gdk.keyval_from_name("Down")
+            
+            if event.keyval == up:
+                self.history_explore(1)
+                return True
+                
+            elif event.keyval == down:
+                self.history.explore(-1)
+                return True
+
+        self.connect("key-press-event", check_history_explore)
+
 class IrcWindowClass(gtk.VBox):
     network = None
     
@@ -201,26 +262,21 @@ class IrcWindowClass(gtk.VBox):
     @pygtk_procedure
     def write(self, text):
         tag_data, text = parse_mirc.parse_mirc(text)
-        
-        view = self.view
-        buffer = view.get_buffer()
-        end = buffer.get_end_iter()
-        
-        rect = view.get_visible_rect()
-        y, height = view.get_line_yrange(end)
     
-        do_scroll = ((y + height) - (rect.y + rect.height)) <= height
+        buffer = self.view.get_buffer()
+        
+        old_end = buffer.get_end_iter()
+        
+        end_rect = self.view.get_iter_location(old_end)
+        vis_rect = self.view.get_visible_rect()
+    
+        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
 
         char_count = buffer.get_char_count()
 
-        buffer.insert(end, "\n" + text)
-        
-        tag_table = buffer.get_tag_table()
+        buffer.insert(old_end, text + "\n")
 
-        for props, start, end in tag_data:
-            start = buffer.get_iter_at_offset(start + char_count)
-            end = buffer.get_iter_at_offset(end + char_count)
-        
+        for props, start_i, end_i in tag_data:
             tag = gtk.TextTag()
             
             for prop, val in props:
@@ -231,68 +287,21 @@ class IrcWindowClass(gtk.VBox):
 
                 tag.set_property(prop, val)
 
-            tag_table.add(tag)
-            buffer.apply_tag(tag, start, end)
+            buffer.get_tag_table().add(tag)
+            
+            start_pos = buffer.get_iter_at_offset(start_i + char_count)
+            end_pos = buffer.get_iter_at_offset(end_i + char_count)
+            buffer.apply_tag(tag, start_pos, end_pos)
 
         if do_scroll:
-            view.scroll_mark_onscreen(buffer.create_mark("", end))
-    
-    # we entered some text in the entry box
-    def entered_text(self, entry, data=None):    
-        lines = entry.get_text().split("\n")
-
-        for line in lines:
-            if line:
-                self.entered_line(line)
-                self.entry.history.insert(1, line)
-                self.entry.history_i = 0
-        
-        entry.set_text("")
-    
-    def entered_line(self, text):
-        e_data = events.data()
-        e_data.window = self
-        e_data.text = text
-        e_data.network = self.network
-        events.trigger('Input', e_data)
+            new_end = buffer.get_end_iter()
+            self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
 
     # this is our text entry widget
     def entry_box(self):
-        self.entry = gtk.Entry()
-        self.entry.connect("activate", self.entered_text)
+        self.entry = EntryBox(self)
         
-        self.entry.history = [""]
-        self.entry.history_i = 0
-        
-        def history_explore(widget, event):
-            up = gtk.gdk.keyval_from_name("Up")
-            down = gtk.gdk.keyval_from_name("Down")
-        
-            if event.keyval in (up, down):
-                # we go forward in history
-                di = -1
-                    
-                if event.keyval == up:
-                    # we go back in history
-                    di = 1
-                    
-                    # when we travel back in time, we need to remember
-                    # where we were, so we can go back to the future
-                    if self.entry.history_i == 0 and self.entry.get_text():
-                        self.entry.history.insert(1, self.entry.get_text())
-                        self.entry.history_i = 1
-
-                if self.entry.history_i + di in range(len(self.entry.history)):
-                    self.entry.history_i += di
-
-                self.entry.set_text(self.entry.history[self.entry.history_i])
-                self.entry.set_position(-1)
-                
-                return True # stop other events being triggered
-            
-        self.entry.connect("key-press-event", history_explore)
-        
-        # FIXME: please make this, whatever you need to do to change nick
+        # FIXME: please make this whatever you need to do to change nick
         def nick_change(newnick):
             pass
         
@@ -390,7 +399,7 @@ class IrcUI(gtk.Window):
         self.move(*xy)
         self.set_default_size(*wh)
         
-        #self.add_accel_group(ui_manager.get_accel_group())
+        self.add_accel_group(ui_manager.get_accel_group())
         ui_manager.add_ui_from_file("ui.xml")
         ui_manager.insert_action_group(get_urk_actions(self), 0)
         
@@ -498,4 +507,3 @@ tabs = IrcTabs()
 
 # build our overall UI
 ui = IrcUI()
-
