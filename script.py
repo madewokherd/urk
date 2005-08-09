@@ -24,7 +24,7 @@ def run_command(text, window, network):
     e_data.error_text = 'No such command exists'
     events.trigger('Command', e_data)
     if not e_data.done:
-        event.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
+        e_data.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
 
 def defInput(event):
     if not event.done:

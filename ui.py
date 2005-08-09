@@ -478,13 +478,14 @@ def enqueue(f, *args, **kwargs):
 
 def process_queue():
     try:
-        while queue:
+        if queue:
             f, args, kwargs = queue.pop(0)
             try:
                 f(*args,**kwargs)
             except:
                 traceback.print_exc()
-        time.sleep(0.001)
+        else:
+            time.sleep(0.001)
         return True
     except KeyboardInterrupt:
         ui.shutdown()
