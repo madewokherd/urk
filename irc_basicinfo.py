@@ -104,6 +104,13 @@ def setupMode(event):
                     channel.mode = channel.mode.strip(char)
         #update_nicks(channel)
 
+def setupNick(event):
+    for channel in event.network.channels:
+        if event.source in channel.nicks:
+            channel.nicks[event.newnick] = channel.nicks[event.source]
+            del channel.nicks[event.source]
+        #update_nicks(channel)
+
 def setupRaw(event):
     if event.msg[1] == '353': #names reply
         channel = event.network.channels.get(event.msg[4])
