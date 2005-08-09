@@ -250,7 +250,7 @@ class EntryBox(gtk.Entry):
                 return True
                 
             elif event.keyval == down:
-                self.history.explore(-1)
+                self.history_explore(-1)
                 return True
 
         self.connect("key-press-event", check_history_explore)
