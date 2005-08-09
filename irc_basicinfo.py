@@ -71,7 +71,7 @@ def setupMode(event):
         user_modes = event.network.isupport['PREFIX'].split(')')[0][1:]
         list_modes, always_parm_modes, set_parm_modes, normal_modes = \
             event.network.isupport['CHANMODES'].split(',')
-        nonlist_modes = always_parm_modes + set_parm_modes + normal_modes
+        list_modes += user_modes
         for char in modes:
             if char == '+':
                 mode_on = True
@@ -97,7 +97,7 @@ def setupMode(event):
                     channel.modes[char] = params.pop()
                 else:
                     del channel.modes[char]
-            if char in nonlist_modes:
+            if char not in list_modes:
                 if mode_on:
                     channel.mode += char
                 else:
