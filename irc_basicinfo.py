@@ -87,16 +87,16 @@ def setupMode(event):
             elif char in always_parm_modes:
                 #these always have a parameter
                 if mode_on:
-                    channel.mode[char] = params.pop()
+                    channel.special_mode[char] = params.pop()
                 else:
-                    del channel.modes[char]
+                    del channel.special_mode[char]
                     params.pop()
             elif char in set_parm_modes:
                 #these have a parameter if they're being set
                 if mode_on:
-                    channel.modes[char] = params.pop()
+                    channel.special_mode[char] = params.pop()
                 else:
-                    del channel.modes[char]
+                    del channel.special_mode[char]
             if char not in list_modes:
                 if mode_on:
                     channel.mode += char
@@ -122,6 +122,20 @@ def setupRaw(event):
         if channel:
             channel.getting_names = False
         #update_nicks(channel)
+        
+    elif event.msg[1] == '324': #channel mode is
+        channel = event.network.channels.get(event.msg[3])
+        if channel:
+            mode = event.msg[4]
+            params = event.msg[5::-1]
+            list_modes, always_parm_modes, set_parm_modes, normal_modes = \
+                event.network.isupport['CHANMODES'].split(',')
+            parm_modes = always_parm_modes + set_parm_modes
+            channel.mode = event.msg[4]
+            channel.special_mode.clear()
+            for char in channel.mode:
+                if char in parm_modes:
+                    channel.special_mode[char] = params.pop()
         
     elif event.msg[1] == "005": #RPL_ISUPPORT
         for arg in event.msg[3:]:
