@@ -106,7 +106,3 @@ def onNick(event):
 def onRaw(event):
     if not event.quiet:
         event.window.write("* %s %s" % (event.source, event.text))
-
-def onClose(window):
-    if window.type == 'channel' and window.target in event.network.channels:
-        window.network.part(window.name)

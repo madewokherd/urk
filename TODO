@@ -4,17 +4,33 @@ Server Messages
 make events for them: kicks, modes, parts, quits; we also 
 need to be able to do them; and ctcp/actions
 
+    (MEH thinks only topic remains here)
+
+
+Server Stuff
+
+    /server is very broken because of changes to ui
+
+    we should update the server name when you do /server, possibly 
+even filling in the network name when we get that
+
+
+Scripting system
+
+    we need some nice /commands to handle scripts
+    
+    /reload is broken (doesn't seem to unload things)
+    
+    a way to automatically load a script when another script needs it would be
+good
+
 
 Structures
 
     we need to keep track of things like what channels we're on
 and who else is on those channels; nicklists should be displayed
 
-
-Server Stuff
-
-    we should update the server name when you do /server, possibly 
-even filling in the network name when we get that
+    (MEH thinks only nicklist display remains)
 
 
 Network Prefs and Data

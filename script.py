@@ -270,3 +270,6 @@ def setupMode(event):
     if event.target != event.network.me:
         event.window = ui.get_window(event.network, 'channel', event.target) or event.window
 
+def onClose(window):
+    if window.type == 'channel' and window.name in window.network.channels:
+        window.network.part(window.name)
