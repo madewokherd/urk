@@ -103,8 +103,8 @@ def urk_about(action):
     
 def get_tab_actions(page_num):
     def close_tab(action):
-        events.trigger("Close", tabs.get_nth_page(page_num))
-        tabs.remove_page(page_num)
+        window = tabs.get_nth_page(page_num)
+        close_window(window)
         
     to_add = (
         ("CloseTab", gtk.STOCK_CLOSE, "_Close Tab", None, None, close_tab),
@@ -255,7 +255,7 @@ class EntryBox(gtk.Entry):
 
         self.connect("key-press-event", check_history_explore)
 
-class IrcWindowClass(gtk.VBox):
+class IrcWindow(gtk.VBox):
     network = None
     
     # the unknowing print weird things to our text window function
@@ -337,10 +337,20 @@ class IrcWindowClass(gtk.VBox):
 
         return win
     
-    def __init__(self, title=""):
+    def __setname(self, name):
+        self.__name = name
+    def __getname(self):
+        return self.__name
+    name = property(__getname, __setname)
+    
+    def __init__(self, network, type, name, title=None):
         gtk.VBox.__init__(self, False)
         
-        self.title = title
+        self.network = network
+        self.type = type
+        self.name = name
+        
+        self.title = title or name
         
         cv, eb = self.chat_view(), self.entry_box()
 
@@ -349,20 +359,16 @@ class IrcWindowClass(gtk.VBox):
   
         self.show_all()
 
-IrcWindow = pygtk_lookup(IrcWindowClass)
-        
-class IrcChannelWindowClass(IrcWindowClass):
+class IrcChannelWindow(IrcWindow):
     # channel window and nicklist               
     def chat_view(self):
         self.nicklist = gtk.TreeView()
         
         win = gtk.HPaned()
-        win.pack1(IrcWindowClass.chat_view(self), resize=True)
+        win.pack1(IrcWindow.chat_view(self), resize=True)
         win.pack2(self.nicklist, resize=False)
         
         return win
-        
-IrcChannelWindow = pygtk_lookup(IrcChannelWindowClass)
         
 class IrcTabs(gtk.Notebook):
     def __init__(self):
@@ -472,6 +478,36 @@ def activate(window):
     tabs.set_current_page(window)
     tabs.get_nth_page(window).entry.grab_focus()
 
+
+# I'm hoping to replace the current new_tab etc. code with this
+window_list = {}
+
+# Always make a new window and return it.
+@pygtk_lookup
+def force_make_window(network, type, name, title, nicklist):
+    if nicklist:
+        result = IrcChannelWindow(network, type, name, title=title)
+    else:
+        result = IrcWindow(network, type, name, title=title)
+    window_list[network, type, name] = result
+    new_tab(result, network)
+    return result
+
+# Return this window, or None if it doesn't exist.
+def get_window(*args):
+    return window_list.get(args)
+
+# Make a window for the given network, type, name if it doesn't exist.
+#  Return it.
+def make_window(network, type, name, title=None, nicklist=False):
+    return get_window(network, type, name) or force_make_window(network, type, name, title or name, nicklist)
+
+# Close a window.
+def close_window(window):
+    events.trigger("Close", window)
+    del window_list[window.network, window.type, window.name]
+    tabs.remove_page(tabs.page_num(window))
+
 queue = []
 def enqueue(f, *args, **kwargs):
     queue.append((f, args, kwargs))
@@ -491,7 +527,7 @@ def process_queue():
         ui.shutdown()
         
 def start():
-    first_window = IrcWindow("Status Window")
+    first_window = IrcWindow(None, 'status', "Status Window")
     first_window.type = "first_window"
 
     new_tab(first_window)

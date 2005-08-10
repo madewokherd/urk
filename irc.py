@@ -140,16 +140,17 @@ class Network:
         data.type = "raw"
         
         source = data.msg[0].split('!')
-        data.source = self.entity(source[0])
-        data.source.name = source[0]
+        data.source = source[0]
         
         if len(source) > 1:
-            data.source.address = source[1]
+            data.address = source[1]
+        else:
+            data.address = ''
         
         if len(data.msg) > 2:
-            data.target = self.entity(data.msg[2])
+            data.target = data.msg[2]
         else:
-            data.target = self.entity(data.msg[-1])
+            data.target = data.msg[-1]
         
         events.trigger('Raw', data)
     
@@ -172,24 +173,6 @@ class Network:
     def normalize_case(self, string):
         return string.lower()
     
-    #returns a User or Channel
-    def entity(self, name):
-        normal_name = self.normalize_case(name)
-        result = self._entities.get(normal_name)
-        
-        if not result:
-            if name[0] in self.channel_prefixes:
-                result = Channel()
-            else:
-                result = User()
-
-            result.name = name
-            result.normal_name = normal_name
-            result.network = self
-            self._entities[normal_name] = result
-                
-        return result
-    
     def quit(self,msg="."):
         self.raw("QUIT :%s" % msg)
         
@@ -209,7 +192,7 @@ class Network:
         self.raw("PRIVMSG %s :%s" % (target, msg))
         e_data = events.data()
         e_data.source = self.me
-        e_data.target = self.entity(str(target))
+        e_data.target = str(target)
         e_data.text = msg
         e_data.type = 'text'
         e_data.network = self
@@ -220,7 +203,7 @@ class Network:
         self.raw("PRIVMSG %s :\x01ACTION %s\x01" % (target, msg))
         e_data = events.data()
         e_data.source = self.me
-        e_data.target = self.entity(str(target))
+        e_data.target = str(target)
         e_data.text = msg
         e_data.type = 'action'
         e_data.network = self
@@ -231,58 +214,9 @@ class Network:
         self.raw("NOTICE %s :%s" % (target, msg))
         e_data = events.data()
         e_data.source = self.me
-        e_data.target = self.entity(str(target))
+        e_data.target = str(target)
         e_data.text = msg
         e_data.type = 'ownnotice'
         e_data.network = self
         e_data.window = urk.get_window[self]
         events.trigger('OwnNotice', e_data)
-
-class Entity:
-    name = ""
-    normal_name = ""
-    
-    address = ""
-    network = ""
-    
-    window = None
-    
-    def __eq__(self,oth):
-        if hasattr(oth,'normal_name'):
-            return self.normal_name == oth.normal_name
-        else:
-            return self.normal_name == self.network.normalize_case(str(oth))
-
-    def __hash__(self):
-        return hash(self.normal_name)
-
-    def __repr__(self):
-        return "<%s instance %s>" % (self.__class__.__name__, repr(self.name))
-    
-    def __str__(self):
-        return self.name
-
-    def msg(self, message):
-        self.network.msg(self, message)
-    
-    def emote(self, message):
-        self.network.emote(self, message)
-
-    def notice(self, message):
-        self.network.notice(self, message)
-
-class User(Entity):
-    type = "user"
-    
-class Channel(Entity):#, set):
-    type = "channel"
-    
-    def __nonzero__(self):
-        return True
-    
-    def join(self):
-        self.network.join(self)
-    
-    def part(self, msg=""):
-        self.network.part(self, msg)
-    

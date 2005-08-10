@@ -36,7 +36,7 @@ def defInput(event):
 
 def handle_say(event):
     if event.window.type in ('channel', 'user'):
-        event.network.msg(event.window.target, ' '.join(event.args))
+        event.network.msg(event.window.name, ' '.join(event.args))
         event.done = True
     else:
         event.error_text = "There's no one here to speak to."
@@ -47,7 +47,7 @@ def handle_msg(event):
 
 def handle_me(event):
     if event.window.type in ('channel', 'user'):
-        event.network.emote(event.window.target, ' '.join(event.args))
+        event.network.emote(event.window.name, ' '.join(event.args))
         event.done = True
     else:
         event.error_text = "There's no one here to speak to."
@@ -201,7 +201,7 @@ def onStart(event):
         #        this should happen on instantiation of the Network() otherwise
         #        i guess it should be done whenever we need to connect to a
         #        network, ie. here and some other places
-        
+
 # FIXME: crush, kill, destroy
 def onConnectArlottOrg(event):
     import irc, conf
@@ -213,78 +213,6 @@ def onConnectArlottOrg(event):
     urk.connect(x)
     
     x.connect()
-
-def defRaw(event):
-    if not event.done:
-        if not event.network.me:
-            if event.msg[1] == '001':
-                event.network.me = event.network.entity(event.msg[2])
-                event.network.initializing = True
-            elif event.msg[1] in ('431','432','433','436','437'):
-                failednick = event.msg[3]
-                nicks = [event.network.nick] + list(event.network.anicks)
-                if failednick in nicks[:-1]:
-                    index = nicks.index(failednick)+1
-                    event.network.raw('NICK %s' % nicks[index])
-                # else get the user to supply a nick or make one up?
-        
-        if event.msg[1] == "PING":
-            event.network.raw("PONG :%s" % event.msg[-1])
-            event.done = True
-            event.quiet = True
-        
-        elif event.msg[1] in ("JOIN", "PART", "MODE"):
-            event.channel = event.target
-            event.type = event.msg[1].lower()
-            event.text = ' '.join(event.msg[3:])
-            events.trigger(event.msg[1].capitalize(), event)
-            event.done = True
-            event.quiet = True
-            
-        elif event.msg[1] == "PRIVMSG":
-            if event.text[0] == '\x01' and event.text[-1] == '\x01':
-                e_data = copy.copy(event)
-                e_data.type = 'ctcp'
-                e_data.text = event.text[1:-1]
-                tokens = e_data.text.split(' ')
-                e_data.name = tokens[0]
-                e_data.args = tokens[1:]
-                events.trigger('Ctcp', e_data)
-            else:
-                event.type = "text"
-                events.trigger('Text', event)
-            event.done = True
-            event.quiet = True
-        
-        elif event.msg[1] == "005": #RPL_ISUPPORT
-            for arg in event.msg[3:]:
-                if ' ' not in arg: #ignore "are supported by this server"
-                    if '=' in arg:
-                        split = arg.split('=')
-                        name = split[0]
-                        value = '='.join(split[1:])
-                        if value.isdigit():
-                            value = int(value)
-                    else:
-                        name = arg
-                        value = ''
-                    #in theory, we're supposed to replace \xHH with the
-                    # corresponding ascii character, but I don't think anyone
-                    # relies on this
-                    event.network.isupport[name] = value    
-            event.done = True
-        
-        elif event.msg[1] == "376": #RPL_ENDOFMOTD
-            if not event.network.connected:
-                event.network.connected = True
-                e_data = copy.copy(event)
-                e_data.type = 'connect'
-                events.trigger('Connect', e_data)
-            event.done = True
-
-def setupSocketConnect(event):
-    event.network.isupport = {'NETWORK': event.network.server, 'PREFIX': '(ohv)@%+'}
-    event.network.channels.clear()
 
 def defSocketConnect(event):
     if not event.done:
@@ -302,78 +230,43 @@ def defSocketConnect(event):
         event.done = True
 
 def defConnect(event):
-    if not event.done:
-        if 'NETWORK' in event.network.isupport:
-            perform = conf.get('perform/'+str(event.network.isupport['NETWORK'])) or []
-            for command in perform:
-                run_command(command, event.window, event.network)
-            event.done = True
+    if 'NETWORK' in event.network.isupport:
+        perform = conf.get('perform/'+str(event.network.isupport['NETWORK'])) or []
+        for command in perform:
+            run_command(command, event.window, event.network)
+        event.done = True
 
-def setupDisconnect(event):
-    if not hasattr(event, 'window'):
-        event.window = urk.get_window[event.network]
-        
-    event.type = "disconnect"
+def setupText(event):
+    if event.target == event.network.me:
+        event.window = ui.make_window(event.network, 'query', event.source)
+    else:
+        event.window = \
+            ui.get_window(event.network, 'channel', event.target) or \
+            ui.get_window(event.network, 'query', event.target) or \
+            event.window
+
+setupAction = setupText
 
 def setupJoin(event):
-    if event.source == event.network.me and not event.target.window:
-        window = ui.IrcChannelWindow(str(event.target))
-        window.type = 'channel'
-        window.target = event.target
-        ui.new_tab(window, event.network)
-        event.target.window = window
-        
-        event.network.channels.add(event.target)
-    
-    event.window = event.target.window or event.window
-
-def defJoin(event):
-    if not event.done and event.source == event.network.me:
+    if event.source == event.network.me:
+        event.window = ui.make_window(event.network, 'channel', event.target, nicklist=True)
         ui.activate(event.window)
 
+    event.window = ui.get_window(event.network, 'channel', event.target) or event.window
+
 def setupPart(event):
-    event.window = event.target.window or event.window
-    
+    event.window = ui.get_window(event.network, 'channel', event.target) or event.window
+
+def postPart(event):
     if event.source == event.network.me:
-        event.network.channels.remove(event.target)
+        window = ui.get_window(event.network, 'channel', event.target)
+        if window:
+            ui.close_window(window)
+
+def setupKick(event):
+    event.window = ui.get_window(event.network, 'channel', event.channel) or event.window
 
 def setupMode(event):
     if event.target != event.network.me:
-        event.window = event.target.window or event.window
+        event.window = ui.get_window(event.network, 'channel', event.target) or event.window
 
-def setupText(event):
-    if event.target == event.network.me and not event.source.window:
-        window = ui.IrcWindow(str(event.source))
-        window.type = 'user'
-        window.target = event.source
-        ui.new_tab(window, event.network)
-        event.source.window = window
-        event.window = window
-    elif event.target == event.network.me:
-        event.window = event.source.window or event.window
-    else:
-        event.window = event.target.window or event.window
-
-def defCtcp(event):
-    if not event.done:
-        if event.name == 'ACTION':
-            e_data = copy.copy(event)
-            e_data.type = 'action'
-            e_data.text = ' '.join(event.args)
-            events.trigger('Action', e_data)
-        event.done = True
-
-def setupAction(event):
-    if event.target == event.network.me:
-        event.window = event.source.window or event.window
-    else:
-        event.window = event.target.window or event.window
-
-def onClose(window):
-    try:
-        if window.target.window == window:
-            window.target.window = None
-        if window.target.type == 'channel':
-            window.target.part()
-    except AttributeError:
-        pass

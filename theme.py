@@ -3,10 +3,12 @@ import gtk
 
 import ui
 
-oldWindowInit = ui.IrcWindowClass.__init__
+#FIXME: ui should implement a "nice" interface to this
+# Also, the effect go away when we unload
+oldWindowInit = ui.IrcWindow.__init__
 
-def newWindowInit(self, title=""):
-    oldWindowInit(self, title)
+def newWindowInit(self, *args, **kwargs):
+    oldWindowInit(self, *args, **kwargs)
     
     chatview_bg = gtk.gdk.color_parse("#2E3D49")
     chatview_fg = gtk.gdk.color_parse("#DEDEDE")
@@ -16,23 +18,21 @@ def newWindowInit(self, title=""):
     self.view.modify_base(gtk.STATE_NORMAL, chatview_bg)
     self.view.modify_font(chatview_font)
     
-ui.IrcWindowClass.__init__ = newWindowInit
+ui.IrcWindow.__init__ = newWindowInit
 
 def onText(event):
     if event.network.me == event.target:
-        if event.source.window == event.window:
+        if event.window.name == event.source:
             to_write = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s" % (event.source, event.text)
         else:
             to_write = "\x02\x040000CC*\x0F%s\x02\x040000CC*\x0F %s" % (event.target, event.text)
     else:
-        if event.window == event.target.window:
-            if event.network.me == event.source:
-                format = "\x02\x04FF00FF<\x0F%s\x02\x04FF00FF>\x0F %s"
-            else:
-                format = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s"
+        color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
+        if event.window.name == event.target:
+            format = "%s<\x0F%s%s>\x0F %s"
         else:
-            format = "\x02\x04FF00FF-> *\x0F%s\x02\x04FF00FF*\x0F %s"
-        to_write = format % (event.source, event.text)
+            format = "%s-> *\x0F%s%s*\x0F %s"
+        to_write = format % (color, event.source, color, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
@@ -52,12 +52,12 @@ def onOwnNotice(event):
     
     if not event.quiet:
         event.window.write(to_write)
-    
+
 def onJoin(event):
     if event.network.me == event.source:
         to_write = "\x02You\x02 joined %s" % event.target
     else:
-        to_write = "\x02%s\x02 (%s) joined %s" % (event.source, event.source.address, event.target)
+        to_write = "\x02%s\x02 (%s) joined %s" % (event.source, event.address, event.target)
     
     if not event.quiet:
         event.window.write(to_write)
@@ -66,20 +66,47 @@ def onPart(event):
     if event.network.me == event.source:
         to_write = "\x02You\x02 left %s" % event.target
     else:
-        to_write = "\x02%s\x02 (%s) left %s" % (event.source, event.source.address, event.target)
+        to_write = "\x02%s\x02 (%s) left %s" % (event.source, event.address, event.target)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+
+def onKick(event):
+    to_write = "\x02%s\x02 kicked %s (%s)" % (event.source, event.target, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
         
 def onMode(event):
-    if event.network.me == event.source:
-        to_write = "\x02You\x02 set mode: %s" % event.text
-    else:
-        to_write = "\x02%s\x02 (%s) sets mode: %s" % (event.source, event.source.address, event.text)
+    to_write = "\x02%s\x02 sets mode: %s" % (event.source, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
         
+def onQuit(event):
+    to_write = "\x02%s\x02 (%s) quit (%s)" % (event.source, event.address, event.text)
+    
+    if not event.quiet:
+        for channame in event.network.channels:
+            if event.source in event.network.channels[channame].nicks:
+                window = ui.get_window(event.network, 'channel', channame)
+                if window:
+                    window.write(to_write)
+
+def onNick(event):
+    to_write = "\x02%s\x02 is now known as %s" % (event.source, event.newnick)
+    
+    if not event.quiet:
+        for channame in event.network.channels:
+            if event.source in event.network.channels[channame].nicks:
+                window = ui.get_window(event.network, 'channel', channame)
+                if window:
+                    window.write(to_write)
+
 def onRaw(event):
     if not event.quiet:
         event.window.write("* %s %s" % (event.source, event.text))
+
+def onClose(window):
+    if window.type == 'channel' and window.target in event.network.channels:
+        window.network.part(window.name)

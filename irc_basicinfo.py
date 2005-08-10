@@ -22,7 +22,6 @@ def setupSocketConnect(event):
 def postDisconnect(event):
     networks.remove(event.network)
 
-
 class Channel(object):
     def __init__(self, name):
         self.name = name
@@ -57,7 +56,8 @@ def postKick(event):
 
 def postQuit(event):
     #if paranoid: check if event.source is me
-    for channel in event.network.channels:
+    for channame in event.network.channels:
+        channel = event.network.channels[channame]
         if event.source in channel.nicks:
             del channel.nicks[event.source]
             #update_nicks(channel)
@@ -97,15 +97,16 @@ def setupMode(event):
                     channel.special_mode[char] = params.pop()
                 else:
                     del channel.special_mode[char]
-            if char not in list_modes:
+            if char not in list_modes and char not in '+-':
                 if mode_on:
                     channel.mode += char
                 else:
                     channel.mode = channel.mode.strip(char)
         #update_nicks(channel)
 
-def setupNick(event):
-    for channel in event.network.channels:
+def postNick(event):
+    for channame in event.network.channels:
+        channel = event.network.channels[channame]
         if event.source in channel.nicks:
             channel.nicks[event.newnick] = channel.nicks[event.source]
             del channel.nicks[event.source]
@@ -118,8 +119,8 @@ def setupRaw(event):
             if not channel.getting_names:
                 channel.nicks.clear()
                 channel.getting_names = True
-            for nickname in event.msg[5:]:
-                if not nickname[0].isletter() and nickname[0] in event.network.prefixes:
+            for nickname in event.msg[5].split(' '):
+                if not nickname[0].isalpha() and nickname[0] in event.network.prefixes:
                     channel.nicks[nickname[1:]] = event.network.prefixes[nickname[0]]
                 else:
                     channel.nicks[nickname] = ''
