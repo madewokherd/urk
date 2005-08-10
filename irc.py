@@ -67,14 +67,12 @@ def handle_connect(socket, network, address):
                 
                 if DEBUG:
                     print ">>> %s" % line
-                
-                #gtk.gdk.threads_enter()
+
                 try:
                     network.got_msg(line)
                 except:
                     print "Error processing incoming text: "+line
                     traceback.print_exception(*sys.exc_info())
-                #gtk.gdk.threads_leave()
             
             reply = socket.recv(8192)
             in_buffer += reply
