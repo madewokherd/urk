@@ -138,20 +138,18 @@ def handle_server(event):
     if args:
         port = int(args.pop(0))
     
-    def do_server():
-        if new_window or not event.network:
-            network = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
-            urk.connect(network)
-        else:
-            network = event.network
-        if server:
-            network.server = server
-        if port:
-            network.port = port
-        if connect:
-            network.connect()
-    
-    ui.enqueue(do_server)
+    if new_window or not event.network:
+        network = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
+        urk.connect(network)
+    else:
+        network = event.network
+    if server:
+        network.server = server
+    if port:
+        network.port = port
+    if connect:
+        network.connect()
+
     event.done = True
 
 command_handlers = {
