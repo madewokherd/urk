@@ -201,14 +201,15 @@ class EntryBox(gtk.Entry):
         lines = self.get_text().split("\n")
 
         for line in lines:
-            e_data = events.data()
-            e_data.window = self.win
-            e_data.text = line
-            e_data.network = self.win.network
-            events.trigger('Input', e_data)
-            
-            self.history.insert(1, line)
-            self.history_i = 0
+            if line:
+                e_data = events.data()
+                e_data.window = self.win
+                e_data.text = line
+                e_data.network = self.win.network
+                events.trigger('Input', e_data)
+                
+                self.history.insert(1, line)
+                self.history_i = 0
     
         self.set_text("")
     
