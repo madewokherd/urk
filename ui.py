@@ -316,9 +316,14 @@ class IrcWindow(gtk.VBox):
     # non-channel channel window, no nicklist         
     def chat_view(self):
         self.view = gtk.TextView()
-        self.view.set_wrap_mode(gtk.WRAP_WORD)
+        self.view.set_wrap_mode(gtk.WRAP_CHAR)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
+        
+        self.view.set_property("left-margin", 3)
+        self.view.set_property("right-margin", 3)
+        
+        self.view.set_property("indent", 0)
 
         def transfer_text(widget, event):
             modifiers_on = event.state & MOD_MASK
