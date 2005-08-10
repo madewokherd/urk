@@ -270,7 +270,7 @@ class IrcWindow(gtk.VBox):
         
         end_rect = self.view.get_iter_location(old_end)
         vis_rect = self.view.get_visible_rect()
-    
+
         do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
 
         char_count = buffer.get_char_count()
@@ -294,9 +294,12 @@ class IrcWindow(gtk.VBox):
             end_pos = buffer.get_iter_at_offset(end_i + char_count)
             buffer.apply_tag(tag, start_pos, end_pos)
 
-        if do_scroll:
-            new_end = buffer.get_end_iter()
-            self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
+        if do_scroll:        
+            def scroll():
+                new_end = buffer.get_end_iter()
+                self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
+                
+            enqueue(scroll)
 
     # this is our text entry widget
     def entry_box(self):
