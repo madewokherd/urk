@@ -12,7 +12,7 @@ def newWindowInit(self, *args, **kwargs):
     
     chatview_bg = gtk.gdk.color_parse("#2E3D49")
     chatview_fg = gtk.gdk.color_parse("#DEDEDE")
-    chatview_font = pango.FontDescription("verdana 8")
+    chatview_font = pango.FontDescription("sans 8")
 
     self.view.modify_text(gtk.STATE_NORMAL, chatview_fg)
     self.view.modify_base(gtk.STATE_NORMAL, chatview_bg)
