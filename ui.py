@@ -320,7 +320,7 @@ class IrcWindow(gtk.VBox):
     # non-channel channel window, no nicklist         
     def chat_view(self):
         self.view = gtk.TextView()
-        self.view.set_wrap_mode(gtk.WRAP_CHAR)
+        self.view.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
         

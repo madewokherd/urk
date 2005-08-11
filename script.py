@@ -35,7 +35,7 @@ def defInput(event):
         run_command(command, event.window, event.network)
 
 def handle_say(event):
-    if event.window.type in ('channel', 'user'):
+    if event.window.type in ('channel', 'query'):
         event.network.msg(event.window.name, ' '.join(event.args))
         event.done = True
     else:
@@ -46,7 +46,7 @@ def handle_msg(event):
     event.done = True
 
 def handle_me(event):
-    if event.window.type in ('channel', 'user'):
+    if event.window.type in ('channel', 'query'):
         event.network.emote(event.window.name, ' '.join(event.args))
         event.done = True
     else:
@@ -68,7 +68,7 @@ def handle_query(event):
     else:
         window = ui.IrcWindow(str(target))
            # str so if we say /query byte and we see Byte, we query Byte
-        window.type = 'user'
+        window.type = 'query'
         window.target = target
         target.window = window
         ui.new_tab(target.window, event.network)
