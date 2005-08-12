@@ -21,18 +21,18 @@ def newWindowInit(self, *args, **kwargs):
 ui.IrcWindow.__init__ = newWindowInit
 
 def onText(event):
+    color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
     if event.network.me == event.target:
         if event.window.name == event.source:
-            to_write = "\x02\x040000CC<\x0F%s\x02\x040000CC>\x0F %s" % (event.source, event.text)
+            format = "%s<\x0F%s%s\x0F %s"
         else:
-            to_write = "\x02\x040000CC*\x0F%s\x02\x040000CC*\x0F %s" % (event.target, event.text)
-    else:
-        color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
-        if event.window.name == event.target:
-            format = "%s<\x0F%s%s>\x0F %s"
-        else:
-            format = "%s-> *\x0F%s%s*\x0F %s"
+            format = "%s*\x0F%s%s*\x0F %s"
         to_write = format % (color, event.source, color, event.text)
+    else:
+        if event.window.name == event.target:
+            to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
+        else:
+            to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
