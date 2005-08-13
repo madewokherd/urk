@@ -106,3 +106,9 @@ def onNick(event):
 def onRaw(event):
     if not event.quiet:
         event.window.write("* %s %s" % (event.source, event.text))
+
+
+def onDisconnect(event):
+    for network, type, name in ui.window_list:
+        if network == event.network:
+            ui.window_list[network, type, name].write('* Disconnected')

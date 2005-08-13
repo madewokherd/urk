@@ -9,7 +9,6 @@ def defRaw(event):
         if not event.network.me:
             if event.msg[1] == '001':
                 event.network.me = event.msg[2]
-                event.network.initializing = True
             elif event.msg[1] in ('431','432','433','436','437'):
                 failednick = event.msg[3]
                 nicks = [event.network.nick] + list(event.network.anicks)
@@ -80,7 +79,9 @@ def defRaw(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = urk.get_window[event.network]
-        
+    
+    event.network.connected = False
+    
     event.type = "disconnect"
 
 def defCtcp(event):
