@@ -15,6 +15,9 @@ for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
              gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
     MOD_MASK |= m   
 
+EVENT = 1
+TEXT = 2
+HILIT = 4
 
 #this is an ugly hack that allows us to use threads with pygtk
 # it's better than the official ugly hack, which doesn't even let us use threads
@@ -262,10 +265,11 @@ class EntryBox(gtk.Entry):
 
 class IrcWindow(gtk.VBox):
     network = None
+    activity = 0
     
     # the unknowing print weird things to our text window function
     @pygtk_procedure
-    def write(self, text):
+    def write(self, text, activity_type=EVENT):
         tag_data, text = parse_mirc.parse_mirc(text)
     
         buffer = self.view.get_buffer()
@@ -280,6 +284,10 @@ class IrcWindow(gtk.VBox):
         char_count = buffer.get_char_count()
 
         buffer.insert(old_end, text + "\n")
+                
+        if tabs.get_nth_page(tabs.get_current_page()) != self:
+            self.activity |= activity_type
+            tabs.get_tab_label(self).update_label()
 
         for props, start_i, end_i in tag_data:
             tag = gtk.TextTag()
@@ -398,6 +406,50 @@ class IrcTabs(gtk.Notebook):
     def __iter__(self):
         return iter(self.get_children())
         
+class IrcTabLabel(gtk.EventBox):
+    def update_label(self):
+        activity = self.child_window.activity
+        
+        if activity == HILIT:
+            text = "<span foreground='yellow'>%s</span>" % self.child_window.title
+        elif activity == TEXT:
+            text = "<span foreground='red'>%s</span>" % self.child_window.title
+        elif activity == EVENT:
+            text = "<span foreground='blue'>%s</span>" % self.child_window.title
+        else:
+            text = "<span>%s</span>" % self.child_window.title
+            
+        self.label.set_markup(text)
+
+    def tab_popup(self, widget, event):
+        if event.button == 3: # right click
+            page_num = tabs.page_num(widget.child_window)
+            
+            # add some tab UI                
+            tab_id = ui_manager.add_ui_from_file("tabui.xml")
+            ui_manager.insert_action_group(get_tab_actions(page_num), 0)
+
+            tab_menu = ui_manager.get_widget("/TabPopup")
+            
+            # remove the tab UI, so we can recompute it later
+            def remove_tab_ui(action):
+                ui_manager.remove_ui(tab_id)
+            tab_menu.connect("deactivate", remove_tab_ui)
+
+            tab_menu.popup(None, None, None, event.button, event.time)
+
+    def __init__(self, window):
+        gtk.EventBox.__init__(self)
+
+        self.child_window = window
+        self.connect("button-press-event", self.tab_popup)
+        
+        self.label = gtk.Label()        
+        self.update_label()
+        self.add(self.label)
+        
+        self.show_all()
+
 class IrcUI(gtk.Window):
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
@@ -435,33 +487,6 @@ class IrcUI(gtk.Window):
 
         self.add(box)
         self.show_all()
-        
-# Add a tab label with this window's title
-def add_tab_label(window):
-    def tab_popup(widget, event):
-        if event.button == 3: # right click
-            page_num = tabs.page_num(widget.child_window)
-            
-            # add some tab UI                
-            tab_id = ui_manager.add_ui_from_file("tabui.xml")
-            ui_manager.insert_action_group(get_tab_actions(page_num), 0)
-
-            tab_menu = ui_manager.get_widget("/TabPopup")
-            
-            # remove the tab UI, so we can recompute it later
-            def remove_tab_ui(action):
-                ui_manager.remove_ui(tab_id)
-            tab_menu.connect("deactivate", remove_tab_ui)
-
-            tab_menu.popup(None, None, None, event.button, event.time)
-
-    label = gtk.EventBox()        
-    label.add(gtk.Label(window.title))
-    label.child_window = window
-    label.connect("button-press-event", tab_popup)
-    label.show_all()
-
-    tabs.set_tab_label(window, label)
 
 # Make a new tab with a window widget, optionally associate it with a network
 @pygtk_procedure
@@ -469,7 +494,12 @@ def new_tab(window, network=None):
     window.network = network
     
     def focus_entry(*args):
+        window.activity = 0
+        tabs.get_tab_label(window).update_label()
         window.entry.grab_focus()
+        
+        events.trigger("Active", window)
+
     window.connect("focus", focus_entry)
 
     pos = tabs.get_n_pages()
@@ -481,7 +511,7 @@ def new_tab(window, network=None):
                 break
 
     tabs.insert_page(window, None, pos)
-    add_tab_label(window)
+    tabs.set_tab_label(window, IrcTabLabel(window))
 
 # Select the page with the given window or with the given tab position
 @pygtk_procedure
@@ -492,7 +522,6 @@ def activate(window):
 
     tabs.set_current_page(window)
     tabs.get_nth_page(window).entry.grab_focus()
-
 
 # I'm hoping to replace the current new_tab etc. code with this
 window_list = {}

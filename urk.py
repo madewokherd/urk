@@ -8,7 +8,7 @@ def connect(network):
     for window in ui.tabs:
         if window.type == "first_window":
             window.title = network.server
-            ui.add_tab_label(window)
+            ui.tabs.get_tab_label(window).update_label()
             break
     else:
         window = ui.IrcWindow(network, 'status', "Status Window", network.server)
