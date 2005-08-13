@@ -4,15 +4,17 @@ Server Messages
 make events for them: kicks, modes, parts, quits; we also 
 need to be able to do them; and ctcp/actions
 
-    (MEH thinks only topic remains here)
+    (MEH thinks only topic and notice remains here)
 
 
 Server Stuff
 
-    /server is very broken because of changes to ui
+    /server may be (but doesn't seem to be) very broken
 
     we should update the server name when you do /server, possibly 
 even filling in the network name when we get that
+
+    we need some sort of "server list" that associates them with networks
 
 
 Scripting system
@@ -48,6 +50,14 @@ Preferences UI
 MEH likes closing tabs
 
     we need an event so we can react to the closing of tabs
+    
+    (closing status windows's should work)
+
+
+CTCP
+
+    we should have a script or something for replying to CTCP's..and maybe
+pinging people
 
 
 DCC Stuff
@@ -70,3 +80,11 @@ more channels than tabs can reasonably accomodate
 while 1: suckAtMainLoop()
 
     we should use idle timers or whatever they're called to read the queue
+    
+    (MEH thinks this is done)
+
+
+replacements for stuff
+
+    It'd be cool to have alternative ui's and conf's..maybe we could optionally
+get rid of some dependencies by using built-in python things.

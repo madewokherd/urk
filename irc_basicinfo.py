@@ -38,6 +38,10 @@ def setupJoin(event):
     channel.nicks[event.source] = ''
     #update_nicks(channel)
 
+def onJoin(event):
+    if event.source == event.network.me:
+        event.network.raw('MODE '+event.target)
+
 def postPart(event):
     if event.source == event.network.me:
         del event.network.channels[event.target]
@@ -99,7 +103,7 @@ def setupMode(event):
                     del channel.special_mode[char]
             if char not in list_modes and char not in '+-':
                 if mode_on:
-                    channel.mode += char
+                    channel.mode = channel.mode.strip(char)+char
                 else:
                     channel.mode = channel.mode.strip(char)
         #update_nicks(channel)
@@ -135,7 +139,7 @@ def setupRaw(event):
         channel = event.network.channels.get(event.msg[3])
         if channel:
             mode = event.msg[4]
-            params = event.msg[5::-1]
+            params = event.msg[:4:-1]
             list_modes, always_parm_modes, set_parm_modes, normal_modes = \
                 event.network.isupport['CHANMODES'].split(',')
             parm_modes = always_parm_modes + set_parm_modes
