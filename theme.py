@@ -48,7 +48,7 @@ def onAction(event):
         event.window.write(to_write)
     
 def onOwnNotice(event):
-    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-*\x0F %s" % (event.target, event.text)
+    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (event.target, event.text)
     
     if not event.quiet:
         event.window.write(to_write)
