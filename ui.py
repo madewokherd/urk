@@ -19,8 +19,8 @@ EVENT = 1
 TEXT = 2
 HILIT = 4
 
-#this is an ugly hack that allows us to use threads with pygtk
-# it's better than the official ugly hack, which doesn't even let us use threads
+#this is how we put lots of related ugliness in one place so we don't have to
+#look at it all the time
 
 main_thread = thread.get_ident()
 
@@ -79,16 +79,12 @@ class pygtk_descriptor_procedure_class(pygtk_procedure_class):
     def __delete__(self, instance, owner):
         self.f.__delete__(instance, owner)
 
-#This decorator should be applied to any procedures that might be called from 
-# outside the main thread and have a return value
 def pygtk_lookup(f):
     if hasattr(f, '__get__'):
         return pygtk_descriptor_lookup_class(f)
     else:
         return pygtk_lookup_class(f)
 
-#This decorator should be applied to any procedures that might be called from 
-# outside the main thread but always return None
 def pygtk_procedure(f):
     if hasattr(f, '__get__'):
         return pygtk_descriptor_procedure_class(f)
@@ -399,8 +395,6 @@ class IrcTabs(gtk.Notebook):
         self.set_border_width(10)          
         self.set_scrollable(True)
         self.set_show_border(True)
-        
-        
     
     # FIXME: remove this when pygtk2.8 comes around
     def __iter__(self):
@@ -410,11 +404,11 @@ class IrcTabLabel(gtk.EventBox):
     def update_label(self):
         activity = self.child_window.activity
         
-        if activity == HILIT:
+        if activity & HILIT:
             text = "<span foreground='yellow'>%s</span>" % self.child_window.title
-        elif activity == TEXT:
+        elif activity & TEXT:
             text = "<span foreground='red'>%s</span>" % self.child_window.title
-        elif activity == EVENT:
+        elif activity & EVENT:
             text = "<span foreground='blue'>%s</span>" % self.child_window.title
         else:
             text = "<span>%s</span>" % self.child_window.title
