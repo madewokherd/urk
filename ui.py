@@ -283,24 +283,25 @@ class IrcWindow(gtk.VBox):
                 
         if tabs.get_nth_page(tabs.get_current_page()) != self:
             self.activity |= activity_type
-            tabs.get_tab_label(self).update_label()
+            tabs.get_tab_label(self).update()
 
         for props, start_i, end_i in tag_data:
-            tag = gtk.TextTag()
-            
-            for prop, val in props:
-                if val == parse_mirc.BOLD:
-                    val = pango.WEIGHT_BOLD
-                elif val == parse_mirc.UNDERLINE:
-                    val = pango.UNDERLINE_SINGLE
-
-                tag.set_property(prop, val)
-
-            buffer.get_tag_table().add(tag)
-            
             start_pos = buffer.get_iter_at_offset(start_i + char_count)
             end_pos = buffer.get_iter_at_offset(end_i + char_count)
-            buffer.apply_tag(tag, start_pos, end_pos)
+
+            for i, (prop, val) in enumerate(props):
+                if val == parse_mirc.BOLD:
+                    props[i] = prop, pango.WEIGHT_BOLD
+
+                elif val == parse_mirc.UNDERLINE:
+                   props[i] = prop, pango.UNDERLINE_SINGLE
+                
+            tag_name = str(hash(tuple(props)))
+                 
+            if not tag_table.lookup(tag_name):
+                buffer.create_tag(tag_name, **dict(props))
+                
+            buffer.apply_tag_by_name(tag_name, start_pos, end_pos)
 
         if do_scroll:        
             def scroll():
@@ -327,14 +328,14 @@ class IrcWindow(gtk.VBox):
         
     # non-channel channel window, no nicklist         
     def chat_view(self):
-        self.view = gtk.TextView()
+        self.view = gtk.TextView(gtk.TextBuffer(tag_table))
+        
         self.view.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.view.set_editable(False)
         self.view.set_cursor_visible(False)
         
         self.view.set_property("left-margin", 3)
         self.view.set_property("right-margin", 3)
-        
         self.view.set_property("indent", 0)
 
         def transfer_text(widget, event):
@@ -401,7 +402,7 @@ class IrcTabs(gtk.Notebook):
         return iter(self.get_children())
         
 class IrcTabLabel(gtk.EventBox):
-    def update_label(self):
+    def update(self):
         activity = self.child_window.activity
         
         if activity & HILIT:
@@ -439,7 +440,7 @@ class IrcTabLabel(gtk.EventBox):
         self.connect("button-press-event", self.tab_popup)
         
         self.label = gtk.Label()        
-        self.update_label()
+        self.update()
         self.add(self.label)
         
         self.show_all()
@@ -489,7 +490,7 @@ def new_tab(window, network=None):
     
     def focus_entry(*args):
         window.activity = 0
-        tabs.get_tab_label(window).update_label()
+        tabs.get_tab_label(window).update()
         window.entry.grab_focus()
         
         events.trigger("Active", window)
@@ -573,6 +574,9 @@ def start():
     
     gobject.idle_add(process_queue)
     gtk.main()
+
+# This holds all tags for all windows ever    
+tag_table = gtk.TextTagTable()
 
 # UI manager to use throughout   
 ui_manager = gtk.UIManager()
