@@ -204,7 +204,7 @@ def onStart(event):
 def onConnectArlottOrg(event):
     import irc, conf
     
-    server = get_server("irc.mozilla.org")
+    server = get_server("irc.gimp.org")
 
     x = irc.Network("Urk user", conf.get("nick"), server)
     

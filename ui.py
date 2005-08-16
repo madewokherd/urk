@@ -268,7 +268,7 @@ class IrcTabLabel(gtk.EventBox):
         elif activity & TEXT:
             text = "<span foreground='red'>%s</span>" % self.child_window.title
         elif activity & EVENT:
-            text = "<span foreground='blue'>%s</span>" % self.child_window.title
+            text = "<span foreground='#555'>%s</span>" % self.child_window.title
         else:
             text = "<span>%s</span>" % self.child_window.title
             
@@ -447,10 +447,10 @@ class IrcTabs(gtk.Notebook):
             return self.window_list[item]
             
     def __delitem__(self, item):
-        events.trigger("Close", window)
-    
+        events.trigger("Close", self.window_list[item])
+
+        self.remove_page(self.page_num(self.window_list[item]))
         del self.window_list[item]
-        self.remove_page(self.page_num(window))
     
     # FIXME: remove this when pygtk2.8 comes around
     def __iter__(self):

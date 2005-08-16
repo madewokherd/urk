@@ -109,6 +109,6 @@ def onRaw(event):
 
 
 def onDisconnect(event):
-    for network, type, name in ui.window_list:
+    for (network, type, id), window in ui.window_list.items():
         if network == event.network:
-            ui.window_list[network, type, name].write('* Disconnected')
+            window.write('* Disconnected')
