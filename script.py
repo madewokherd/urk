@@ -36,7 +36,7 @@ def defInput(event):
 
 def handle_say(event):
     if event.window.type in ('channel', 'query'):
-        event.network.msg(event.window.name, ' '.join(event.args))
+        event.network.msg(event.window.id, ' '.join(event.args))
         event.done = True
     else:
         event.error_text = "There's no one here to speak to."
@@ -47,7 +47,7 @@ def handle_msg(event):
 
 def handle_me(event):
     if event.window.type in ('channel', 'query'):
-        event.network.emote(event.window.name, ' '.join(event.args))
+        event.network.emote(event.window.id, ' '.join(event.args))
         event.done = True
     else:
         event.error_text = "There's no one here to speak to."
@@ -250,24 +250,24 @@ def setupJoin(event):
         event.window = ui.make_window(event.network, 'channel', event.target, nicklist=True)
         ui.activate(event.window)
 
-    event.window = ui.get_window(event.network, 'channel', event.target) or event.window
+    event.window = ui.window_list[event.network, 'channel', event.target] or event.window
 
 def setupPart(event):
-    event.window = ui.get_window(event.network, 'channel', event.target) or event.window
+    event.window = ui.window_list[event.network, 'channel', event.target] or event.window
 
 def postPart(event):
     if event.source == event.network.me:
-        window = ui.get_window(event.network, 'channel', event.target)
+        window = ui.window_list[event.network, 'channel', event.target]
         if window:
             ui.close_window(window)
 
 def setupKick(event):
-    event.window = ui.get_window(event.network, 'channel', event.channel) or event.window
+    event.window = ui.window_list[event.network, 'channel', event.channel] or event.window
 
 def setupMode(event):
     if event.target != event.network.me:
-        event.window = ui.get_window(event.network, 'channel', event.target) or event.window
+        event.window = ui.window_list[event.network, 'channel', event.target] or event.window
 
 def onClose(window):
-    if window.type == 'channel' and window.name in window.network.channels:
-        window.network.part(window.name)
+    if window.type == 'channel' and window.id in window.network.channels:
+        window.network.part(window.id)

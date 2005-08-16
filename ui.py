@@ -443,10 +443,12 @@ class IrcTabs(gtk.Notebook):
         self.window_list[item] = value
  
     def __getitem__(self, item):
-        if item in window_list:
-            return window_list[item]
+        if item in self.window_list:
+            return self.window_list[item]
             
     def __delitem__(self, item):
+        events.trigger("Close", window)
+    
         del self.window_list[item]
         self.remove_page(self.page_num(window))
     
@@ -539,11 +541,14 @@ def force_make_window(network, type, id, title, nicklist):
 # Make a window for the given network, type, id if it doesn't exist.
 #  Return it.
 def make_window(network, type, id, title=None, nicklist=False):
-    return window_list[network, type, id] or force_make_window(network, type, id, title or id, nicklist)
+    if window_list[network, type, id]:
+        return window_list[network, type, id]
+        
+    else:
+        return force_make_window(network, type, id, title or id, nicklist)
 
 # Close a window.
 def close_window(window):
-    events.trigger("Close", window)
     del window_list[window.network, window.type, window.id]
 
 queue = []
