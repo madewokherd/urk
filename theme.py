@@ -89,7 +89,7 @@ def onQuit(event):
     if not event.quiet:
         for channame in event.network.channels:
             if event.source in event.network.channels[channame].nicks:
-                window = ui.get_window(event.network, 'channel', channame)
+                window = ui.window_list[event.network, 'channel', channame]
                 if window:
                     window.write(to_write)
 
@@ -99,7 +99,7 @@ def onNick(event):
     if not event.quiet:
         for channame in event.network.channels:
             if event.source in event.network.channels[channame].nicks:
-                window = ui.get_window(event.network, 'channel', channame)
+                window = ui.window_list[event.network, 'channel', channame]
                 if window:
                     window.write(to_write)
 
