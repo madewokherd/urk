@@ -106,7 +106,7 @@ def urk_about(action):
     
 def get_tab_actions(page_num):
     def close_tab(action):
-        window = tabs.get_nth_page(page_num)
+        window = window_list.get_nth_page(page_num)
         close_window(window)
         
     to_add = (
@@ -258,6 +258,50 @@ class EntryBox(gtk.Entry):
                 return True
 
         self.connect("key-press-event", check_history_explore)
+        
+class IrcTabLabel(gtk.EventBox):
+    def update(self):
+        activity = self.child_window.activity
+        
+        if activity & HILIT:
+            text = "<span foreground='yellow'>%s</span>" % self.child_window.title
+        elif activity & TEXT:
+            text = "<span foreground='red'>%s</span>" % self.child_window.title
+        elif activity & EVENT:
+            text = "<span foreground='blue'>%s</span>" % self.child_window.title
+        else:
+            text = "<span>%s</span>" % self.child_window.title
+            
+        self.label.set_markup(text)
+
+    def tab_popup(self, widget, event):
+        if event.button == 3: # right click
+            page_num = window_list.page_num(widget.child_window)
+            
+            # add some tab UI                
+            tab_id = ui_manager.add_ui_from_file("tabui.xml")
+            ui_manager.insert_action_group(get_tab_actions(page_num), 0)
+
+            tab_menu = ui_manager.get_widget("/TabPopup")
+            
+            # remove the tab UI, so we can recompute it later
+            def remove_tab_ui(action):
+                ui_manager.remove_ui(tab_id)
+            tab_menu.connect("deactivate", remove_tab_ui)
+
+            tab_menu.popup(None, None, None, event.button, event.time)
+
+    def __init__(self, window):
+        gtk.EventBox.__init__(self)
+
+        self.child_window = window
+        self.connect("button-press-event", self.tab_popup)
+        
+        self.label = gtk.Label()        
+        self.update()
+        self.add(self.label)
+        
+        self.show_all()
 
 class IrcWindow(gtk.VBox):
     network = None
@@ -281,9 +325,9 @@ class IrcWindow(gtk.VBox):
 
         buffer.insert(old_end, text + "\n")
                 
-        if tabs.get_nth_page(tabs.get_current_page()) != self:
+        if window_list.get_nth_page(window_list.get_current_page()) != self:
             self.activity |= activity_type
-            tabs.get_tab_label(self).update()
+            self.label.update()
 
         for props, start_i, end_i in tag_data:
             start_pos = buffer.get_iter_at_offset(start_i + char_count)
@@ -355,20 +399,16 @@ class IrcWindow(gtk.VBox):
 
         return win
     
-    def __setname(self, name):
-        self.__name = name
-    def __getname(self):
-        return self.__name
-    name = property(__getname, __setname)
-    
-    def __init__(self, network, type, name, title=None):
+    def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
         
         self.network = network
         self.type = type
-        self.name = name
+        self.id = id
         
-        self.title = title or name
+        self.title = title or id
+        
+        self.label = IrcTabLabel(self)
         
         cv, eb = self.chat_view(), self.entry_box()
 
@@ -392,58 +432,27 @@ class IrcTabs(gtk.Notebook):
     def __init__(self):
         gtk.Notebook.__init__(self)
         
+        self.window_list = {}
+        
         self.set_property("tab-pos", gtk.POS_TOP)
         self.set_border_width(10)          
         self.set_scrollable(True)
         self.set_show_border(True)
+        
+    def __setitem__(self, item, value):
+        self.window_list[item] = value
+ 
+    def __getitem__(self, item):
+        if item in window_list:
+            return window_list[item]
+            
+    def __delitem__(self, item):
+        del self.window_list[item]
+        self.remove_page(self.page_num(window))
     
     # FIXME: remove this when pygtk2.8 comes around
     def __iter__(self):
         return iter(self.get_children())
-        
-class IrcTabLabel(gtk.EventBox):
-    def update(self):
-        activity = self.child_window.activity
-        
-        if activity & HILIT:
-            text = "<span foreground='yellow'>%s</span>" % self.child_window.title
-        elif activity & TEXT:
-            text = "<span foreground='red'>%s</span>" % self.child_window.title
-        elif activity & EVENT:
-            text = "<span foreground='blue'>%s</span>" % self.child_window.title
-        else:
-            text = "<span>%s</span>" % self.child_window.title
-            
-        self.label.set_markup(text)
-
-    def tab_popup(self, widget, event):
-        if event.button == 3: # right click
-            page_num = tabs.page_num(widget.child_window)
-            
-            # add some tab UI                
-            tab_id = ui_manager.add_ui_from_file("tabui.xml")
-            ui_manager.insert_action_group(get_tab_actions(page_num), 0)
-
-            tab_menu = ui_manager.get_widget("/TabPopup")
-            
-            # remove the tab UI, so we can recompute it later
-            def remove_tab_ui(action):
-                ui_manager.remove_ui(tab_id)
-            tab_menu.connect("deactivate", remove_tab_ui)
-
-            tab_menu.popup(None, None, None, event.button, event.time)
-
-    def __init__(self, window):
-        gtk.EventBox.__init__(self)
-
-        self.child_window = window
-        self.connect("button-press-event", self.tab_popup)
-        
-        self.label = gtk.Label()        
-        self.update()
-        self.add(self.label)
-        
-        self.show_all()
 
 class IrcUI(gtk.Window):
     def shutdown(self, *args):
@@ -476,76 +485,66 @@ class IrcUI(gtk.Window):
         # widgets
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
-        box.pack_end(tabs)
+        box.pack_end(window_list)
         
         self.connect("delete_event", self.shutdown)
 
         self.add(box)
         self.show_all()
 
-# Make a new tab with a window widget, optionally associate it with a network
+# Select the page with the given window or with the given tab position
 @pygtk_procedure
-def new_tab(window, network=None):
+def activate(window):
+    # if this is an actual window, then we want its tab number
+    if not isinstance(window, int):
+        window = window_list.page_num(window)
+
+    window_list.set_current_page(window)
+    window_list.get_nth_page(window).entry.grab_focus()
+
+# Always make a new window and return it.
+@pygtk_lookup
+def force_make_window(network, type, id, title, nicklist):
+    if nicklist:
+        window = IrcChannelWindow(network, type, id, title=title)
+    else:
+        window = IrcWindow(network, type, id, title=title)
+        
+    window_list[network, type, id] = window
+
     window.network = network
     
     def focus_entry(*args):
         window.activity = 0
-        tabs.get_tab_label(window).update()
+        window.label.update()
         window.entry.grab_focus()
         
         events.trigger("Active", window)
 
     window.connect("focus", focus_entry)
 
-    pos = tabs.get_n_pages()
+    pos = window_list.get_n_pages()
     
     if network:
         for i in reversed(xrange(pos)):
-            if tabs.get_nth_page(i).network == network:
+            if window_list.get_nth_page(i).network == network:
                 pos = i+1
                 break
 
-    tabs.insert_page(window, None, pos)
-    tabs.set_tab_label(window, IrcTabLabel(window))
+    window_list.insert_page(window, None, pos)
+    window_list.set_tab_label(window, window.label)
+    
+    return window
 
-# Select the page with the given window or with the given tab position
-@pygtk_procedure
-def activate(window):
-    # if this is an actual window, then we want its tab number
-    if not isinstance(window, int):
-        window = tabs.page_num(window)
-
-    tabs.set_current_page(window)
-    tabs.get_nth_page(window).entry.grab_focus()
-
-# I'm hoping to replace the current new_tab etc. code with this
-window_list = {}
-
-# Always make a new window and return it.
-@pygtk_lookup
-def force_make_window(network, type, name, title, nicklist):
-    if nicklist:
-        result = IrcChannelWindow(network, type, name, title=title)
-    else:
-        result = IrcWindow(network, type, name, title=title)
-    window_list[network, type, name] = result
-    new_tab(result, network)
-    return result
-
-# Return this window, or None if it doesn't exist.
-def get_window(*args):
-    return window_list.get(args)
-
-# Make a window for the given network, type, name if it doesn't exist.
+# Make a window for the given network, type, id if it doesn't exist.
 #  Return it.
-def make_window(network, type, name, title=None, nicklist=False):
-    return get_window(network, type, name) or force_make_window(network, type, name, title or name, nicklist)
+def make_window(network, type, id, title=None, nicklist=False):
+    return window_list[network, type, id] or force_make_window(network, type, id, title or id, nicklist)
 
 # Close a window.
 def close_window(window):
     events.trigger("Close", window)
-    del window_list[window.network, window.type, window.name]
-    tabs.remove_page(tabs.page_num(window))
+    del window_list[window.network, window.type, window.id]
 
 queue = []
 def enqueue(f, *args, **kwargs):
@@ -566,12 +565,6 @@ def process_queue():
         ui.shutdown()
         
 def start():
-    first_window = IrcWindow(None, 'status', "Status Window")
-    first_window.type = "first_window"
-
-    new_tab(first_window)
-    activate(first_window)
-    
     gobject.idle_add(process_queue)
     gtk.main()
 
@@ -582,7 +575,7 @@ tag_table = gtk.TextTagTable()
 ui_manager = gtk.UIManager()
     
 # build our tab widget
-tabs = IrcTabs()
+window_list = IrcTabs()
 
 # build our overall UI
 ui = IrcUI()

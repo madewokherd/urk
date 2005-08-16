@@ -239,8 +239,8 @@ def setupText(event):
         event.window = ui.make_window(event.network, 'query', event.source)
     else:
         event.window = \
-            ui.get_window(event.network, 'channel', event.target) or \
-            ui.get_window(event.network, 'query', event.target) or \
+            ui.window_list[event.network, 'channel', event.target] or \
+            ui.window_list[event.network, 'query', event.target] or \
             event.window
 
 setupAction = setupText
