@@ -14,7 +14,7 @@ DEBUG = 0
 def parse_irc(message, server):
     result = []
     
-    message = message.rstrip()
+    message = message.rstrip('\r\n')
     
     if message[0] == ":":
         i = message.find(" ")
