@@ -271,3 +271,8 @@ def setupMode(event):
 def onClose(window):
     if window.type == 'channel' and window.id in window.network.channels:
         window.network.part(window.id)
+
+def onNick(event):
+    if event.network.me == event.source:
+        for n, t, i in ui.window_list:
+            ui.window_list[n, t, i].nick_label.set_nick(event.newnick)

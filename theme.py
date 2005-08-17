@@ -94,7 +94,10 @@ def onQuit(event):
                     window.write(to_write)
 
 def onNick(event):
-    to_write = "\x02%s\x02 is now known as %s" % (event.source, event.newnick)
+    if event.source == event.network.me:
+        to_write = "\x02You\x02 are now known as %s" % event.newnick
+    else:
+        to_write = "\x02%s\x02 is now known as %s" % (event.source, event.newnick)
     
     if not event.quiet:
         for channame in event.network.channels:

@@ -298,9 +298,6 @@ class IrcTabLabel(gtk.EventBox):
         self.show_all()
 
 class IrcWindow(gtk.VBox):
-    network = None
-    activity = 0
-    
     # the unknowing print weird things to our text window function
     @pygtk_procedure
     def write(self, text, activity_type=EVENT):
@@ -359,8 +356,13 @@ class IrcWindow(gtk.VBox):
             e_data.text = "/nick %s" % newnick
             e_data.network = self.network
             events.trigger('Input', e_data)
+            
+        if self.network.connected:
+            nick = self.network.me
+        else:
+            nick = self.network.nick
         
-        self.nick_label = NickLabel(conf.get("nick"), nick_change)
+        self.nick_label = NickLabel(nick, nick_change)
 
         box = gtk.HBox()
         box.pack_start(self.entry)
@@ -403,8 +405,9 @@ class IrcWindow(gtk.VBox):
         self.network = network
         self.type = type
         self.id = id
-        
+
         self.title = title or id
+        self.activity = 0
         
         self.label = IrcTabLabel(self)
         
