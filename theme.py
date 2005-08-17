@@ -35,7 +35,7 @@ def onText(event):
             to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
     
     if not event.quiet:
-        event.window.write(to_write)
+        event.window.write(to_write, ui.TEXT)
     
 def onAction(event):
     if event.network.me == event.source:
@@ -45,7 +45,7 @@ def onAction(event):
     to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
     
     if not event.quiet:
-        event.window.write(to_write)
+        event.window.write(to_write, ui.TEXT)
     
 def onOwnNotice(event):
     to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (event.target, event.text)
@@ -103,12 +103,22 @@ def onNick(event):
                 if window:
                     window.write(to_write)
 
+def onTopic(event):
+    to_write = "\x02%s\x02 set topic on %s: %s" % (event.source, event.target, event.text)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+
 def onRaw(event):
     if not event.quiet:
-        event.window.write("* %s %s" % (event.source, event.text))
+        if event.msg[1] == '332':
+            window = ui.window_list[event.network, 'channel', event.msg[3]] or event.window
+            window.write("topic on %s is: %s" % (event.msg[3], event.text))
+        else:
+            event.window.write("* %s %s" % (event.source, event.text))
 
 
 def onDisconnect(event):
-    for (network, type, id), window in ui.window_list.items():
+    for network, type, id in ui.window_list:
         if network == event.network:
-            window.write('* Disconnected')
+            ui.window_list[network, type, id].write('* Disconnected')

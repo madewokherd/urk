@@ -68,6 +68,12 @@ def defRaw(event):
             event.done = True
             event.quiet = True
         
+        elif event.msg[1] == "TOPIC":
+            event.type = "topic"
+            events.trigger('Topic', event)
+            event.done = True
+            event.quiet = True
+        
         elif event.msg[1] == "376": #RPL_ENDOFMOTD
             if not event.network.connected:
                 event.network.connected = True

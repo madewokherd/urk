@@ -29,6 +29,7 @@ class Channel(object):
         self.getting_names = False #are we between lines in a /names reply?
         self.mode = ''
         self.special_mode = {} #for limits, keys, and anything similar
+        self.topic = ''
 
 def setupJoin(event):
     if event.source == event.network.me:
@@ -116,6 +117,11 @@ def postNick(event):
             del channel.nicks[event.source]
         #update_nicks(channel)
 
+def setupTopic(event):
+    if event.target in event.network.channels:
+        channel = event.network.channels[event.target]
+        channel.topic = event.text
+
 def setupRaw(event):
     if event.msg[1] == '353': #names reply
         channel = event.network.channels.get(event.msg[4])
@@ -148,6 +154,16 @@ def setupRaw(event):
             for char in channel.mode:
                 if char in parm_modes:
                     channel.special_mode[char] = params.pop()
+        
+    elif event.msg[1] == '331': #no topic
+        channel = event.network.channels.get(event.msg[3])
+        if channel:
+            channel.topic = ''
+
+    elif event.msg[1] == '332': #channel topic is
+        channel = event.network.channels.get(event.msg[3])
+        if channel:
+            channel.topic = event.text
         
     elif event.msg[1] == "005": #RPL_ISUPPORT
         for arg in event.msg[3:]:

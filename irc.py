@@ -102,7 +102,7 @@ class Network:
     connected = False
     #name = ''
     
-    me = None # me as a user
+    me = '' # my nickname
     channels = None #set of channels I'm on
     
     #network-specific data
