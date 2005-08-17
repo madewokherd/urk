@@ -96,11 +96,9 @@ def urk_about(action):
     
     about.set_name("Urk")
     about.set_version("0.-1.2")
-    about.set_copyright("Yes, 2004")
-    about.set_comments("Comments")
-    about.set_license("Gee Pee Ell")
-    about.set_website("http://urk.sf.net")
-    about.set_authors(__import__("random").sample(["Marc","MadEwokHerd"], 2))
+    about.set_copyright("Copyright \xc2\xa9 2005 Vincent Povirk, Marc Liddell")
+    about.set_website("http://urk.sf.net/")
+    about.set_authors(["Vincent Povirk", "Marc Liddell"])
     
     about.show_all()
     
@@ -146,53 +144,49 @@ class NickLabel(gtk.EventBox):
     def set_nick(self, nick):
         self.label.set_text(nick)
         self.edit.set_text(nick)
-        
+    
+    def show_nick(self, *args):
         if self.mode == "edit":
-            self.edit.grab_focus()
+            self.mode = "show"
+        
+            self.remove(self.edit)
+            self.add(self.label)
 
     def edit_nick(self, *args):
-        if self.mode != "edit":
+        if self.mode == "show":
+            self.mode = "edit"
+            
             self.edit.set_text(self.label.get_text())
         
             self.remove(self.label)
             self.add(self.edit)
             
             self.edit.grab_focus()
-            
-            def reset_mode(*args):
-                if self.mode == "edit":
-                    self.mode = "show"
-                
-                    self.remove(self.edit)
-                    self.add(self.label)
-            
-            def change_nick(*args):
-                if self.mode == "edit":
-                    if self.edit.get_text():
-                        self.label.set_text(self.edit.get_text())
-                        
-                        self.nick_change(self.edit.get_text())
-                
-                        reset_mode()
-            
-            self.edit.connect("focus-out-event", reset_mode)
-            self.edit.connect("activate", change_nick)
-            self.mode = "edit"
 
     def __init__(self, nick, nick_change):
+        gtk.EventBox.__init__(self)
+
         self.label = gtk.Label(nick)
         self.label.set_padding(5, 0)
+        self.add(self.label)
         
         self.edit = gtk.Entry()
         self.edit.set_text(nick)
         self.edit.show()
-        
-        self.nick_change = nick_change
-        
-        gtk.EventBox.__init__(self)
-        self.add(self.label)
-        
+
+        def change_nick(*args):
+            if self.mode == "edit":
+                oldnick, newnick = self.label.get_text(), self.edit.get_text()
+            
+                if newnick and newnick != oldnick:
+                    nick_change(newnick)
+
+                self.show_nick()
+                
+        self.edit.connect("activate", change_nick)
+
         self.connect("button-press-event", self.edit_nick)
+        self.edit.connect("focus-out-event", self.show_nick)
 
 # The entry which you type in to send messages        
 class EntryBox(gtk.Entry):
@@ -324,7 +318,7 @@ class IrcWindow(gtk.VBox):
         char_count = buffer.get_char_count()
 
         buffer.insert(old_end, text + "\n")
-                
+
         if window_list.get_nth_page(window_list.get_current_page()) != self:
             self.activity |= activity_type
             self.label.update()
@@ -360,7 +354,11 @@ class IrcWindow(gtk.VBox):
         
         # FIXME: please make this whatever you need to do to change nick
         def nick_change(newnick):
-            pass
+            e_data = events.data()
+            e_data.window = self
+            e_data.text = "/nick %s" % newnick
+            e_data.network = self.network
+            events.trigger('Input', e_data)
         
         self.nick_label = NickLabel(conf.get("nick"), nick_change)
 
@@ -451,10 +449,9 @@ class IrcTabs(gtk.Notebook):
 
         self.remove_page(self.page_num(self.window_list[item]))
         del self.window_list[item]
-    
-    # FIXME: remove this when pygtk2.8 comes around
+
     def __iter__(self):
-        return iter(self.get_children())
+        return self.window_list
 
 class IrcUI(gtk.Window):
     def shutdown(self, *args):
