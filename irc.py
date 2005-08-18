@@ -7,7 +7,7 @@ import conf
 import events
 import __main__ as urk
 
-DEBUG = 1
+DEBUG = 0
 
 def parse_irc(message, server):
     result = []

@@ -588,11 +588,6 @@ def process_queue():
         ui.shutdown()
         
 def start():
-    import irc
-    
-    make_window(irc.Network(""), 1, 1)
-    make_window(irc.Network(""), 2, 2)
-
     gobject.idle_add(process_queue)
     gtk.main()
 
