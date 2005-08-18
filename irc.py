@@ -21,7 +21,7 @@ def parse_irc(msg, server):
         if token and token[0] == ":":
             msg = msg[:i] + [" ".join([token[1:]] + msg[i+1:])]
             break
-            
+    
     return [m for m in msg[:-1] if m] + msg[-1:]
 
 def handle_connect(network):

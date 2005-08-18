@@ -130,10 +130,11 @@ def setupRaw(event):
                 channel.nicks.clear()
                 channel.getting_names = True
             for nickname in event.msg[5].split(' '):
-                if not nickname[0].isalpha() and nickname[0] in event.network.prefixes:
-                    channel.nicks[nickname[1:]] = event.network.prefixes[nickname[0]]
-                else:
-                    channel.nicks[nickname] = ''
+                if nickname:
+                    if not nickname[0].isalpha() and nickname[0] in event.network.prefixes:
+                        channel.nicks[nickname[1:]] = event.network.prefixes[nickname[0]]
+                    else:
+                        channel.nicks[nickname] = ''
 
     elif event.msg[1] == '366': #end of names reply
         channel = event.network.channels.get(event.msg[3])
