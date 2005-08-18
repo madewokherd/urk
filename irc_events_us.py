@@ -12,7 +12,8 @@ def defRaw(event):
                 
             elif event.msg[1] in ('431','432','433','436','437'):
                 failednick = event.msg[3]
-                nicks = [event.network.nick] + list(event.network.anicks)
+                nicks = list(event.network.nicks)
+                
                 if failednick in nicks[:-1]:
                     index = nicks.index(failednick)+1
                     event.network.raw('NICK %s' % nicks[index])

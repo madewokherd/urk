@@ -1,20 +1,18 @@
 import socket
 import thread
-import weakref
 import sys
 import traceback
 
-import gtk
-
+import conf
 import events
 import __main__ as urk
 
-DEBUG = 0
+DEBUG = 1
 
 def parse_irc(message, server):
     result = []
     
-    message = message.rstrip('\r\n')
+    message = message.rstrip()
     
     if message[0] == ":":
         i = message.find(" ")
@@ -47,12 +45,19 @@ def parse_irc(message, server):
             
     return result
 
-def handle_connect(socket, network, address):
+def handle_connect(network):
+    socket = network.sock
+    address = network.server, network.port
+
     try:
         socket.connect(address)
         
         network.initializing = True
-        events.trigger('SocketConnect', events.data(network=network, type='socket_connect'))
+        
+        e_data = events.data()
+        e_data.network = network
+        e_data.type = "socket_connect"
+        events.trigger('SocketConnect', e_data)
          
         reply = socket.recv(8192)
         in_buffer = reply
@@ -82,16 +87,18 @@ def handle_connect(socket, network, address):
         error = None
     network.connecting = False
     network.initializing = False
-
-    events.trigger('Disconnect', events.data(network=network, error=error, type='disconnect'))
+    
+    e_data = events.data()
+    e_data.network = network
+    e_data.error = error
+    e_data.type = "disconnect"
+    events.trigger('Disconnect', e_data)
 
 class Network:
-    sock = None
+    sock = None                 # this networks socket
     
-    nick = "" # not necessarily my nick, just the one I want
-    anicks = ('MrUrk',) # other nicks I might want
-    fullname = ""
-    email = ""
+    nicks = []                  # desired nicknames
+    fullname = ""               # our full name
     
     server = None
     port = 6667
@@ -100,61 +107,65 @@ class Network:
     connecting = False
     initializing = False
     connected = False
-    #name = ''
+    name = ''
     
-    me = '' # my nickname
-    channels = None #set of channels I'm on
+    me = ''                     # my nickname
+    channels = None             # dictionary of channels we're on on this network
     
-    #network-specific data
-    channel_prefixes = '&#+$' #from rfc2812
+    channel_prefixes = '&#+$'   # from rfc2812
     
-    def __init__(self, fullname, nick, server, port=6667):
-        #self.sock = socket.socket()
-        
-        self.fullname = fullname
-        self.nick = nick
-        
+    def __init__(self, server, port=6667, nicks=[], fullname=""):
         self.server = server
         self.port = port
         
-        self._entities = weakref.WeakValueDictionary()
-        self.channels = set()
+        if conf.get("nick"):
+            def_nicks = [conf.get("nick")]
+        else:
+            def_nicks = ["MrUrk"]
+        
+        self.nicks = nicks or def_nicks
+            
+        self.fullname = fullname or "Urk user"
+
+        self.channels = {}
+        
+        print self.nicks
         
     def raw(self, msg):
-        msg = msg + "\r\n"
-    
         if DEBUG:
-            print ("<<< %s" % msg.replace("\r\n", "\\r\\n"))
-        
-        self.sock.send(msg)
+            print ">>> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
+    
+        self.sock.send(msg + "\r\n")
         
     def got_msg(self, msg):
-        data = events.data()
-        data.rawmsg = msg
-        data.msg = parse_irc(msg, self.server)
-        data.text = data.msg[-1]
-        data.network = self
-        data.window = urk.get_window[self]
-        data.type = "raw"
+        e_data = events.data()
+        e_data.rawmsg = msg
+        e_data.msg = parse_irc(msg, self.server)
+        e_data.text = e_data.msg[-1]
+        e_data.network = self
+        e_data.window = urk.get_window[self]
+        e_data.type = "raw"
         
-        source = data.msg[0].split('!')
-        data.source = source[0]
+        source = e_data.msg[0].split('!')
+        e_data.source = source[0]
         
         if len(source) > 1:
-            data.address = source[1]
+            e_data.address = source[1]
         else:
-            data.address = ''
+            e_data.address = ''
         
-        if len(data.msg) > 2:
-            data.target = data.msg[2]
+        if len(e_data.msg) > 2:
+            e_data.target = e_data.msg[2]
         else:
-            data.target = data.msg[-1]
+            e_data.target = e_data.msg[-1]
         
-        events.trigger('Raw', data)
+        events.trigger('Raw', e_data)
     
     #this is probably not necessary
     #def onDisconnect(self, **kwargs):
-        #this needs to be set before the event in case we autoreconnect on disconnect or something
+        # this needs to be set before the event in case we autoreconnect on 
+        # disconnect or something
+        #
         #self.connecting = False
         #dispatch.DisconnectIrc(self, **kwargs)
     
@@ -163,10 +174,12 @@ class Network:
             self.connecting = True
             self.sock = socket.socket()
             
-            args = self.sock, self, (self.server, self.port)
-            thread.start_new_thread(handle_connect, args)
+            thread.start_new_thread(handle_connect, (self,))
             
-            events.trigger('Connecting', events.data(network=self, type='connecting'))
+            e_data = events.data()
+            e_data.network = self
+            e_data.type = "connecting"            
+            events.trigger('Connecting', e_data)
             
     def normalize_case(self, string):
         return string.lower()

@@ -254,17 +254,23 @@ class EntryBox(gtk.Entry):
         self.connect("key-press-event", check_history_explore)
         
 class IrcTabLabel(gtk.EventBox):
+    COLOR = {
+        HILIT: "yellow",
+        TEXT: "red",
+        EVENT: "#555"
+        }
+
     def update(self):
-        activity = self.child_window.activity
+        activity, title = self.child_window.activity, self.child_window.title
         
         if activity & HILIT:
-            text = "<span foreground='yellow'>%s</span>" % self.child_window.title
+            text = "<span foreground='%s'>%s</span>" % (COLOR[HILIT], title)
         elif activity & TEXT:
-            text = "<span foreground='red'>%s</span>" % self.child_window.title
+            text = "<span foreground='%s'>%s</span>" % (COLOR[TEXT], title)
         elif activity & EVENT:
-            text = "<span foreground='#555'>%s</span>" % self.child_window.title
+            text = "<span foreground='%s'>%s</span>" % (COLOR[EVENT], title)
         else:
-            text = "<span>%s</span>" % self.child_window.title
+            text = "<span>%s</span>" % title
             
         self.label.set_markup(text)
 
@@ -360,7 +366,7 @@ class IrcWindow(gtk.VBox):
         if self.network.connected:
             nick = self.network.me
         else:
-            nick = self.network.nick
+            nick = self.network.nicks[0]
         
         self.nick_label = NickLabel(nick, nick_change)
 

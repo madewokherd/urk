@@ -178,38 +178,36 @@ def postCommand(event):
         event.network.raw(event.text)
         event.done = True
 
-def get_server(network):
-    #FIXME: We should check if network is in a list of networks before falling
-    # back on this.
-    return network
-
 def onStart(event):
     on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
-        server = get_server(network)
-    
-        x = irc.Network("Urk user", conf.get("nick"), server)
-    
-        ui.enqueue(urk.connect, x)
-    
-        x.connect()
+        network_info = conf.get("networks/%s" % network)
         
-        # FIXME, given a network, might we want to look up servers?, possibly 
-        #        this should happen on instantiation of the Network() otherwise
-        #        i guess it should be done whenever we need to connect to a
-        #        network, ie. here and some other places
+        if network_info:
+            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
+            servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
+            port = conf.get("networks/%s/%s" % (network, "port")) or 6667
+            fullname = conf.get("networks/%s/%s" % (network, "port")) or ""
+
+        else:
+            nicks = []
+            servers = [network]
+            port = 6667
+            fullname = ""
+    
+        x = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
+    
+        urk.connect(x)
+        x.connect()
 
 # FIXME: crush, kill, destroy
 def onConnectArlottOrg(event):
     import irc, conf
-    
-    server = get_server("irc.gimp.org")
 
-    x = irc.Network("Urk user", conf.get("nick"), server)
+    x = irc.Network("irc.gimp.org", port=6667, nicks=[], fullname="")
     
     urk.connect(x)
-    
     x.connect()
 
 def defSocketConnect(event):
