@@ -9,48 +9,24 @@ import __main__ as urk
 
 DEBUG = 0
 
-def parse_irc(message, server):
-    result = []
+def parse_irc(msg, server):
+    msg = msg.split(" ")
     
-    message = message.rstrip()
-    
-    if message[0] == ":":
-        i = message.find(" ")
-        if i != -1:
-            result.append(message[1:i])
-            message = message[i+1:]
-        else:
-            result.append(message[1:])
-            return result
+    if msg[0][0] == ":":
+        msg[0] = msg[0][1:]
     else:
-        result.append(server)
-        
-    message = message.lstrip(" ")
-        
-    while message:
-        if message[0] == ":":
-            result.append(message[1:])
-            return result
+        msg.insert(0, server)
+    
+    for i, token in enumerate(msg):
+        if token and token[0] == ":":
+            msg = msg[:i] + [" ".join([token[1:]] + msg[i+1:])]
+            break
             
-        else:
-            i = message.find(" ")
-            if i != -1:
-                result.append(message[0:i])
-                message = message[i+1:]
-            else:
-                result.append(message[0:])
-                return result
-                
-        message = message.lstrip(" ")
-            
-    return result
+    return [m for m in msg[:-1] if m] + msg[-1:]
 
 def handle_connect(network):
-    socket = network.sock
-    address = network.server, network.port
-
     try:
-        socket.connect(address)
+        network.socket.connect((network.server, network.port))
         
         network.initializing = True
         
@@ -59,9 +35,8 @@ def handle_connect(network):
         e_data.type = "socket_connect"
         events.trigger('SocketConnect', e_data)
          
-        reply = socket.recv(8192)
-        in_buffer = reply
-            
+        in_buffer = reply = network.socket.recv(8192)
+
         while reply:
             while 1:
                 pos = in_buffer.find("\r\n")
@@ -73,13 +48,9 @@ def handle_connect(network):
                 if DEBUG:
                     print ">>> %s" % line
 
-                try:
-                    network.got_msg(line)
-                except:
-                    print "Error processing incoming text: "+line
-                    traceback.print_exception(*sys.exc_info())
-            
-            reply = socket.recv(8192)
+                network.got_msg(line)
+
+            reply = network.socket.recv(8192)
             in_buffer += reply
     except:
         error = sys.exc_info()
@@ -133,7 +104,7 @@ class Network:
         if DEBUG:
             print ">>> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
     
-        self.sock.send(msg + "\r\n")
+        self.socket.send(msg + "\r\n")
         
     def got_msg(self, msg):
         e_data = events.data()
@@ -159,18 +130,10 @@ class Network:
         
         events.trigger('Raw', e_data)
     
-    #this is probably not necessary
-    #def onDisconnect(self, **kwargs):
-        # this needs to be set before the event in case we autoreconnect on 
-        # disconnect or something
-        #
-        #self.connecting = False
-        #dispatch.DisconnectIrc(self, **kwargs)
-    
     def connect(self):
         if not self.connecting:
             self.connecting = True
-            self.sock = socket.socket()
+            self.socket = socket.socket()
             
             thread.start_new_thread(handle_connect, (self,))
             
