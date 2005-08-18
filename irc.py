@@ -7,7 +7,7 @@ import conf
 import events
 import __main__ as urk
 
-DEBUG = 1
+DEBUG = 0
 
 def parse_irc(message, server):
     result = []
@@ -128,8 +128,6 @@ class Network:
         self.fullname = fullname or "Urk user"
 
         self.channels = {}
-        
-        print self.nicks
         
     def raw(self, msg):
         if DEBUG:

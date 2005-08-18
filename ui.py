@@ -521,8 +521,6 @@ def force_make_window(network, type, id, title, nicklist):
     else:
         window = IrcWindow(network, type, id, title=title)
         
-    window_list[network, type, id] = window
-
     window.network = network
     
     def focus_entry(*args):
@@ -532,9 +530,9 @@ def force_make_window(network, type, id, title, nicklist):
         
         events.trigger("Active", window)
 
-    window.connect("focus", focus_entry)
+    window.connect("expose-event", focus_entry)
 
-    pos = window_list.get_n_pages()
+    pos = len(window_list)
     
     if network:
         for i in reversed(xrange(pos)):
@@ -542,9 +540,10 @@ def force_make_window(network, type, id, title, nicklist):
                 pos = i+1
                 break
 
+    window_list[network, type, id] = window
     window_list.insert_page(window, None, pos)
     window_list.set_tab_label(window, window.label)
-    
+
     return window
 
 # Make a window for the given network, type, id if it doesn't exist.
@@ -579,6 +578,12 @@ def process_queue():
         ui.shutdown()
         
 def start():
+    import irc
+
+    make_window(irc.Network(""), 0, 0)
+    
+    make_window(irc.Network(""), 0, 1)
+
     gobject.idle_add(process_queue)
     gtk.main()
 
