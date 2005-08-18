@@ -33,7 +33,13 @@ def get(key):
 
 def set(key, value):
     key = "/apps/urk/"+key
-    setfunctions = {int: client.set_int, float: client.set_float, bool: client.set_bool}    
+
+    setfunctions = {
+        int: client.set_int, 
+        float: client.set_float, 
+        bool: client.set_bool
+        }
+
     if type(value) in setfunctions:
         setfunctions[type(value)](key, value)
     elif isinstance(value, str) and not value.startswith("python:"):
