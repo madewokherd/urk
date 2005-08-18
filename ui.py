@@ -15,9 +15,15 @@ for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
              gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
     MOD_MASK |= m   
 
-EVENT = 1
-TEXT = 2
 HILIT = 4
+TEXT = 2
+EVENT = 1
+
+COLOR = {
+    HILIT: "yellow",
+    TEXT: "red",
+    EVENT: "#555"
+    }
 
 #this is how we put lots of related ugliness in one place so we don't have to
 #look at it all the time
@@ -151,6 +157,8 @@ class NickLabel(gtk.EventBox):
         
             self.remove(self.edit)
             self.add(self.label)
+            
+            self.entry.grab_focus()
 
     def edit_nick(self, *args):
         if self.mode == "show":
@@ -163,7 +171,7 @@ class NickLabel(gtk.EventBox):
             
             self.edit.grab_focus()
 
-    def __init__(self, nick, nick_change):
+    def __init__(self, entry, nick, nick_change):
         gtk.EventBox.__init__(self)
 
         self.label = gtk.Label(nick)
@@ -173,6 +181,8 @@ class NickLabel(gtk.EventBox):
         self.edit = gtk.Entry()
         self.edit.set_text(nick)
         self.edit.show()
+        
+        self.entry = entry
 
         def change_nick(*args):
             if self.mode == "edit":
@@ -254,12 +264,6 @@ class EntryBox(gtk.Entry):
         self.connect("key-press-event", check_history_explore)
         
 class IrcTabLabel(gtk.EventBox):
-    COLOR = {
-        HILIT: "yellow",
-        TEXT: "red",
-        EVENT: "#555"
-        }
-
     def update(self):
         activity, title = self.child_window.activity, self.child_window.title
         
@@ -368,7 +372,7 @@ class IrcWindow(gtk.VBox):
         else:
             nick = self.network.nicks[0]
         
-        self.nick_label = NickLabel(nick, nick_change)
+        self.nick_label = NickLabel(self.entry, nick, nick_change)
 
         box = gtk.HBox()
         box.pack_start(self.entry)
@@ -446,6 +450,18 @@ class IrcTabs(gtk.Notebook):
         self.set_scrollable(True)
         self.set_show_border(True)
         
+        def focus_entry(self, window, page_num):
+            window = self.get_nth_page(page_num)
+        
+            window.activity = 0
+            window.label.update()
+            
+            enqueue(window.entry.grab_focus)
+        
+            events.trigger("Active", window)
+        
+        self.connect_after("switch-page", focus_entry)
+        
     def __setitem__(self, item, value):
         self.window_list[item] = value
  
@@ -502,6 +518,10 @@ class IrcUI(gtk.Window):
 
         self.add(box)
         self.show_all()
+        
+def print_args(*args):
+        print args
+        print
 
 # Select the page with the given window or with the given tab position
 @pygtk_procedure
@@ -522,21 +542,11 @@ def force_make_window(network, type, id, title, nicklist):
         window = IrcWindow(network, type, id, title=title)
         
     window.network = network
-    
-    def focus_entry(*args):
-        window.activity = 0
-        window.label.update()
-        window.entry.grab_focus()
-        
-        events.trigger("Active", window)
-
-    window.connect("expose-event", focus_entry)
 
     pos = len(window_list)
-    
     if network:
-        for i in reversed(xrange(pos)):
-            if window_list.get_nth_page(i).network == network:
+        for i in reversed(range(pos)):
+            if window_list.get_nth_page(i).network == window.network:
                 pos = i+1
                 break
 
@@ -579,10 +589,9 @@ def process_queue():
         
 def start():
     import irc
-
-    make_window(irc.Network(""), 0, 0)
     
-    make_window(irc.Network(""), 0, 1)
+    make_window(irc.Network(""), 1, 1)
+    make_window(irc.Network(""), 2, 2)
 
     gobject.idle_add(process_queue)
     gtk.main()
