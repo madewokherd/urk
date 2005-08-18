@@ -219,7 +219,7 @@ def defSocketConnect(event):
         #this needs to be tested--anyone have a server that uses PASS?
         if event.network.password:
             event.network.raw("PASS :%s" % event.network.password)
-        event.network.raw("NICK %s" % event.network.nick)
+        event.network.raw("NICK %s" % event.network.nicks[0])
         event.network.raw("USER %s %s %s :%s" %
               ("urk", "8", "*", event.network.fullname))
               #per rfc2812 these are username, user mode flags, unused, realname

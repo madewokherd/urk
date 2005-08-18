@@ -455,6 +455,9 @@ class IrcTabs(gtk.Notebook):
 
     def __iter__(self):
         return iter(self.window_list)
+        
+    def __len__(self):
+        return len(self.window_list)
 
 class IrcUI(gtk.Window):
     def shutdown(self, *args):
