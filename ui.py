@@ -431,13 +431,26 @@ class IrcWindow(gtk.VBox):
 class IrcChannelWindow(IrcWindow):
     # channel window and nicklist               
     def chat_view(self):
-        self.nicklist = gtk.TreeView()
+        self.nicklist = gtk.ListStore(str)
+        
+        cv = IrcWindow.chat_view(self)
+        
+        tv = gtk.TreeView(self.nicklist)
+        tv.insert_column_with_attributes(
+            0, self.title, gtk.CellRendererText(), text=0
+            )
         
         win = gtk.HPaned()
-        win.pack1(IrcWindow.chat_view(self), resize=True)
-        win.pack2(self.nicklist, resize=False)
-        
+        win.pack1(cv, resize=True)
+        win.pack2(tv, resize=True)
+
         return win
+        
+    def set_nicklist(self, nicks):
+        self.nicklist.clear()
+        
+        for nick in nicks:
+            self.nicklist.append([nick])
         
 class IrcTabs(gtk.Notebook):
     def __init__(self):
