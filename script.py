@@ -259,8 +259,10 @@ def postPart(event):
         if window:
             ui.close_window(window)
 
-setupKick = setupPart
 setupTopic = setupPart
+
+def setupKick(event):
+    event.window = ui.window_list[event.network, 'channel', event.channel] or event.window
 
 def setupMode(event):
     if event.target != event.network.me:
