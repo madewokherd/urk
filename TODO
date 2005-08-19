@@ -1,3 +1,9 @@
+We need a window
+
+    ui needs to check if we have any windows open when we start, and open one
+if we don't
+
+
 Server Messages
 
     we need to process all the normal server messages and 
@@ -13,6 +19,10 @@ Server Stuff
 
     we should update the server name when you do /server, possibly 
 even filling in the network name when we get that
+    
+    it needs to quit if we're connected already and want to connect
+    
+    the file>>connect thing is crazy
 
     we need some sort of "server list" that associates them with networks
 

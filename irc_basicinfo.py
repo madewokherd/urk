@@ -1,16 +1,5 @@
 
-networks = []
-
-#It feels kind of weird now that the network class isn't here. I wonder if it
-# means something.
-
-#To keep a full list of the networks we have, we'd need notification of when
-# they are created and destroyed. So we'll just keep track of the ones we're
-# connected to.
-
 def setupSocketConnect(event):
-    networks.append(event.network)
-    
     event.network.channels = {}
     event.network.isupport = {
         'NETWORK': event.network.server, 
@@ -18,9 +7,6 @@ def setupSocketConnect(event):
         'CHANMODES': 'b,k,l,imnpstr',
     }
     event.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
-
-def postDisconnect(event):
-    networks.remove(event.network)
 
 class Channel(object):
     def __init__(self, name):
