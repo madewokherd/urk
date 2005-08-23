@@ -481,11 +481,21 @@ class IrcTabs(gtk.Notebook):
         self.connect_after("switch-page", focus_entry)
         
     def __setitem__(self, item, value):
-        self.window_list[item] = value
+        network, type, id = item
+        
+        if network:
+            id = network.normalize_case(id)
+    
+        self.window_list[network, type, id] = value
  
     def __getitem__(self, item):
-        if item in self.window_list:
-            return self.window_list[item]
+        network, type, id = item
+        
+        if network:
+            id = network.normalize_case(id)
+
+        if (n, t, id) in self.window_list:
+            return self.window_list[network, t, id]
             
     def __delitem__(self, item):
         events.trigger("Close", self.window_list[item])
@@ -536,10 +546,6 @@ class IrcUI(gtk.Window):
 
         self.add(box)
         self.show_all()
-        
-def print_args(*args):
-        print args
-        print
 
 # Select the page with the given window or with the given tab position
 @pygtk_procedure
