@@ -74,17 +74,8 @@ def handle_echo(event):
     event.done = True
 
 def handle_query(event):
-    target = event.network.entity(event.args[0])
-    if target.window:
-        #FIXME: select the window
-        pass
-    else:
-        window = ui.IrcWindow(str(target))
-           # str so if we say /query byte and we see Byte, we query Byte
-        window.type = 'query'
-        window.target = target
-        target.window = window
-        ui.new_tab(target.window, event.network)
+    window = ui.make_window(event.network, 'query', event.args[0])
+    ui.activate(window)
     event.done = True
 
 def handle_raw(event):
