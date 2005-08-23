@@ -367,10 +367,13 @@ class IrcWindow(gtk.VBox):
             e_data.network = self.network
             events.trigger('Input', e_data)
             
-        if self.network.connected:
-            nick = self.network.me
+        if self.network:
+            if self.network.connected:
+                nick = self.network.me
+            else:
+                nick = self.network.nicks[0]
         else:
-            nick = self.network.nicks[0]
+            nick = conf.get("nick") or "MrUrk"
         
         self.nick_label = NickLabel(self.entry, nick, nick_change)
 
@@ -458,8 +461,8 @@ class IrcTabs(gtk.Notebook):
         
         self.window_list = {}
         
-        self.set_property("tab-pos", gtk.POS_TOP)
-        self.set_border_width(10)          
+        self.set_property("tab-pos", conf.get("ui-gtk/tab-pos") or gtk.POS_TOP)
+        self.set_border_width(conf.get("ui-gtk/tab-margin") or 10)          
         self.set_scrollable(True)
         self.set_show_border(True)
         
