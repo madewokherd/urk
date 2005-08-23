@@ -151,16 +151,18 @@ def handle_server(event):
     if event.args:
         port = int(event.args.pop(0))
 
-    if new_window or not event.network:
-        event.network = irc.Network("irc.mozilla.org")
-        urk.connect(event.network)
+    if new_window:
+        network = irc.Network("irc.mozilla.org")
+        urk.connect(network)
+    else:
+        network = event.network
 
     if server:
-        event.network.server = server
+        network.server = server
     if port:
-        event.network.port = port
+        network.port = port
     if connect:
-        event.network.connect()
+        network.connect()
 
     event.done = True
 
@@ -197,15 +199,15 @@ def onStart(event):
         network_info = conf.get("networks/%s" % network)
         
         if network_info:
+            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
             servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
             port = conf.get("networks/%s/%s" % (network, "port")) or 6667
-            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
-            fullname = conf.get("networks/%s/%s" % (network, "fullname")) or ""
+            fullname = conf.get("networks/%s/%s" % (network, "port")) or ""
 
         else:
+            nicks = []
             servers = [network]
             port = 6667
-            nicks = []
             fullname = ""
     
         x = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
@@ -257,7 +259,7 @@ setupAction = setupText
 
 def setupJoin(event):
     if event.source == event.network.me:
-        event.window = ui.make_window(event.network, 'channel', event.target, nicklist=True)
+        event.window = ui.make_window(event.network, 'channel', event.target, is_chan=True)
         ui.activate(event.window)
 
     event.window = ui.window_list[event.network, 'channel', event.target] or event.window
