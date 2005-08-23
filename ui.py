@@ -328,7 +328,7 @@ class IrcWindow(gtk.VBox):
 
         buffer.insert(old_end, text + "\n")
 
-        if window_list.get_nth_page(window_list.get_current_page()) != self:
+        if get_active() != self:
             self.activity |= activity_type
             self.label.update()
 
@@ -606,7 +606,26 @@ def make_window(network, type, id, title=None, is_chan=False):
 # Close a window.
 def close_window(window):
     del window_list[window.network, window.type, window.id]
-     
+        
+def get_window_for(self, network=None, type=None, id=None):
+    if network:
+        id = network.normalize_case(id)
+
+    for n, t, i in self.window_list:
+        if network and n != network:
+            continue
+        if type and t != type:
+            continue
+        if id and i != id:
+            continue
+            
+        yield self.window_list[n, t, i]
+        
+def get_status_window(self, network):
+    for n, t, i in self.window_list:
+        if n == network and t == "status":
+            return self.window_list[n, t, i]
+        
 def get_active():
     active = window_list.get_current_page()
     return window_list.get_nth_page(active)
