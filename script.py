@@ -1,11 +1,8 @@
 import traceback
-import getopt
-import copy
 
 import events
 import irc
 import conf
-import __main__ as urk
 import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
@@ -184,26 +181,23 @@ def postCommand(event):
       and event.network.initializing:
         event.network.raw(event.text)
         event.done = True
+        
+def get_network_info(network):
+    network_info = conf.get("networks/%s" % network)
+    
+    if network_info:
+        servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
+        port = conf.get("networks/%s/%s" % (network, "port")) or 6667
+        nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
+        fullname = conf.get("networks/%s/%s" % (network, "fullname")) or ""
+
+        return servers[0], 6667, nicks, fullname
 
 def onStart(event):
     on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
-        network_info = conf.get("networks/%s" % network)
-        
-        if network_info:
-            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
-            servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
-            port = conf.get("networks/%s/%s" % (network, "port")) or 6667
-            fullname = conf.get("networks/%s/%s" % (network, "port")) or ""
-
-        else:
-            nicks = []
-            servers = [network]
-            port = 6667
-            fullname = ""
-    
-        nw = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
+        nw = irc.Network(*get_network_info(network) or network)
         
         window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
         ui.activate(window)
