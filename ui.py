@@ -463,8 +463,16 @@ class IrcTabs(gtk.Notebook):
         
         self.window_list = {}
         
-        self.set_property("tab-pos", conf.get("ui-gtk/tab-pos") or gtk.POS_TOP)
-        self.set_border_width(conf.get("ui-gtk/tab-margin") or 10)          
+        if conf.get("ui-gtk/tab-pos") is not None:
+            self.set_property("tab-pos", conf.get("ui-gtk/tab-pos"))
+        else:
+            self.set_property("tab-pos", gtk.POS_TOP)
+
+        if conf.get("ui-gtk/tab-margin") is not None:
+            self.set_border_width(conf.get("ui-gtk/tab-margin"))
+        else:
+            self.set_border_width(10)
+   
         self.set_scrollable(True)
         self.set_show_border(True)
         
