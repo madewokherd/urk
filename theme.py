@@ -23,13 +23,13 @@ ui.IrcWindow.__init__ = newWindowInit
 def onText(event):
     color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
     if event.network.me == event.target:
-        if event.window.id == event.source:
+        if event.window.id == event.network.normalize_case(event.source):
             format = "%s<\x0F%s%s\x0F %s"
         else:
             format = "%s*\x0F%s%s*\x0F %s"
         to_write = format % (color, event.source, color, event.text)
     else:
-        if event.window.id == event.target:
+        if event.window.id == event.network.normalize_case(event.target):
             to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
         else:
             to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
@@ -38,7 +38,7 @@ def onText(event):
         event.window.write(to_write, ui.TEXT)
     
 def onAction(event):
-    if event.network.me == event.source:
+    if event.network.me == event.network.normalize_case(event.source):
         color = '\x02\x04FF00FF'
     else:
         color = '\x02\x040000CC'

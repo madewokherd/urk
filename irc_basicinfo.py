@@ -19,9 +19,9 @@ class Channel(object):
 
 def setupJoin(event):
     if event.source == event.network.me:
-        event.network.channels[event.target] = Channel(event.target)
+        event.network.channels[event.network.normalize_case(event.target)] = Channel(event.target)
     #if we wanted to be paranoid, we'd account for not being on the channel
-    channel = event.network.channels[event.target]
+    channel = event.network.channels[event.network.normalize_case(event.target)]
     channel.nicks[event.source] = ''
     #update_nicks(channel)
 
@@ -31,17 +31,17 @@ def onJoin(event):
 
 def postPart(event):
     if event.source == event.network.me:
-        del event.network.channels[event.target]
+        del event.network.channels[event.network.normalize_case(event.target)]
     else:
-        channel = event.network.channels[event.target]
+        channel = event.network.channels[event.network.normalize_case(event.target)]
         del channel.nicks[event.source]
     #update_nicks(channel)
 
 def postKick(event):
     if event.target == event.network.me:
-        del event.network.channels[event.channel]
+        del event.network.channels[event.network.normalize_case(event.channel)]
     else:
-        channel = event.network.channels[event.channel]
+        channel = event.network.channels[event.network.normalize_case(event.channel)]
         del channel.nicks[event.target]
     #update_nicks(channel)
 
@@ -54,7 +54,7 @@ def postQuit(event):
             #update_nicks(channel)
 
 def setupMode(event):
-    channel = event.network.channels.get(event.channel)
+    channel = event.network.channels.get(event.network.normalize_case(event.channel))
     if channel:
         mode_on = True #are we reading a + section or a - section?
         params = event.text.split(' ')[::-1]
@@ -104,13 +104,13 @@ def postNick(event):
         #update_nicks(channel)
 
 def setupTopic(event):
-    if event.target in event.network.channels:
-        channel = event.network.channels[event.target]
+    if event.network.normalize_case(event.target) in event.network.channels:
+        channel = event.network.channels[event.network.normalize_case(event.target)]
         channel.topic = event.text
 
 def setupRaw(event):
     if event.msg[1] == '353': #names reply
-        channel = event.network.channels.get(event.msg[4])
+        channel = event.network.channels.get(event.network.normalize_case(event.msg[4]))
         if channel:
             if not channel.getting_names:
                 channel.nicks.clear()
@@ -123,13 +123,13 @@ def setupRaw(event):
                         channel.nicks[nickname] = ''
 
     elif event.msg[1] == '366': #end of names reply
-        channel = event.network.channels.get(event.msg[3])
+        channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
         if channel:
             channel.getting_names = False
         #update_nicks(channel)
         
     elif event.msg[1] == '324': #channel mode is
-        channel = event.network.channels.get(event.msg[3])
+        channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
         if channel:
             mode = event.msg[4]
             params = event.msg[:4:-1]
@@ -143,12 +143,12 @@ def setupRaw(event):
                     channel.special_mode[char] = params.pop()
         
     elif event.msg[1] == '331': #no topic
-        channel = event.network.channels.get(event.msg[3])
+        channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
         if channel:
             channel.topic = ''
 
     elif event.msg[1] == '332': #channel topic is
-        channel = event.network.channels.get(event.msg[3])
+        channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
         if channel:
             channel.topic = event.text
         
