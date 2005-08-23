@@ -1,24 +1,26 @@
-Server Messages
+before the first release:
 
-    we need to process all the normal server messages and 
-make events for them: kicks, modes, parts, quits; we also 
-need to be able to do them; and ctcp/actions
+Channel Nicklist
 
-    (MEH thinks only topic and notice remains here)
+    we should display nicks in the channel nicklist, properly sorted and
+prefixed
+    
+    also, we need to do something so it starts with a sane size, and probably
+make conf save our nicklist's size
 
 
 Server Stuff
 
-    /server may be (but doesn't seem to be) very broken
-
     we should update the server name when you do /server, possibly 
-even filling in the network name when we get that
+even filling in the network name when we get that (actually, we should
+probably be updating the status window title any time we connect or disconnect
+so the []'s are useful as an "are we connected?" hint)
     
-    it needs to quit if we're connected already and want to connect
+    it needs to disconnect us if we're connected already and want to connect
     
-    the file>>connect thing is crazy
+    the file>>connect thing should probably have the same effect as /server
 
-    we need some sort of "server list" that associates them with networks
+    we need some sort of "server list" that maps networks to servers
 
 
 Scripting system
@@ -29,15 +31,19 @@ Scripting system
     
     a way to automatically load a script when another script needs it would be
 good
+    
+    we should really have run_command somewhere things that aren't script.py can
+import
 
 
-Structures
+MEH likes closing tabs
 
-    we need to keep track of things like what channels we're on
-and who else is on those channels; nicklists should be displayed
+    closing status windows needs to work (and disconnect us from the network)
 
-    (MEH thinks only nicklist display remains)
 
+
+
+before we can claim it's not beta:
 
 Network Prefs and Data
 
@@ -50,24 +56,24 @@ Preferences UI
     a preferences ui, probably with a separate sort of 
 "connect or edit connection" dialog
 
+    we want a number of "preflets" rather than one gigantic prefs window
+
+
+CTCP
+
+    we should have a script or something for replying to CTCP's..and pinging 
+people (MEH hates /ctcp ping and thinks we should have a separate /ping command
+in this script that adds a proper human-readable timestamp)
+
 
 Hotlinking
 
     url's, nicks, channels, etc. should be clickable
 
 
-MEH likes closing tabs
-
-    we need an event so we can react to the closing of tabs
-    
-    (closing status windows's should work)
 
 
-CTCP
-
-    we should have a script or something for replying to CTCP's..and maybe
-pinging people
-
+some time in the future:
 
 DCC Stuff
 
