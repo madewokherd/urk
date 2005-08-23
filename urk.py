@@ -5,7 +5,7 @@ import ui
 get_window = {}
 
 def connect(network):
-    window = ui.make_window(network, 'status', "Status Window", network.server)
+    window = ui.make_window(network, 'status', "Status Window", "[%s]" % network.server)
     ui.activate(window)
 
     get_window[network] = window
