@@ -494,14 +494,18 @@ class IrcTabs(gtk.Notebook):
         if network:
             id = network.normalize_case(id)
 
-        if (n, t, id) in self.window_list:
-            return self.window_list[network, t, id]
+        if (network, type, id) in self.window_list:
+            return self.window_list[network, type, id]
             
     def __delitem__(self, item):
-        events.trigger("Close", self.window_list[item])
+        network, type, id = item
+        
+        if network:
+            id = network.normalize_case(id)
 
-        self.remove_page(self.page_num(self.window_list[item]))
-        del self.window_list[item]
+        events.trigger("Close", self.window_list[network, type, id])
+        self.remove_page(self.page_num(self.window_list[network, type, id]))
+        del self.window_list[network, type, id]
 
     def __iter__(self):
         return iter(self.window_list)
