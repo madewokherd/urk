@@ -24,7 +24,7 @@ def onText(event):
     color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
     if event.network.me == event.target:
         if event.window.id == event.network.normalize_case(event.source):
-            format = "%s<\x0F%s%s\x0F %s"
+            format = "%s<\x0F%s%s>\x0F %s"
         else:
             format = "%s*\x0F%s%s*\x0F %s"
         to_write = format % (color, event.source, color, event.text)
