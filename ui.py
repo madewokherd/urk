@@ -417,6 +417,9 @@ class IrcWindow(gtk.VBox):
     def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
         
+        if network:
+            id = normalize_case(id)
+        
         self.network = network
         self.type = type
         self.id = id
