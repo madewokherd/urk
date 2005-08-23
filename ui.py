@@ -6,6 +6,8 @@ import gobject
 import gtk
 import pango
 
+import __main__ as urk
+import irc
 import conf
 import events
 import parse_mirc
@@ -604,6 +606,9 @@ def process_queue():
         ui.shutdown()
         
 def start():
+    if not window_list:
+        urk.connect(irc.Network("irc.flugurgle.org"))
+
     gobject.idle_add(process_queue)
     gtk.main()
 

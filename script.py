@@ -11,20 +11,32 @@ import ui
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
 def run_command(text, window, network):
-    if text.startswith(COMMAND_PREFIX):
-        text = text[len(COMMAND_PREFIX):]
+    if not text:
+        return
+
     split = text.split()
-    e_data = events.data()
-    e_data.name = split[0]
-    e_data.args = split[1:]
-    e_data.text = text
-    e_data.type = 'command'
-    e_data.window = window
-    e_data.network = network
-    e_data.error_text = 'No such command exists'
-    events.trigger('Command', e_data)
-    if not e_data.done:
-        e_data.window.write("* /%s: %s" % (e_data.name, e_data.error_text))
+
+    c_data = events.data()
+    c_data.text = text
+    
+    c_data.name = split[0]
+
+    if len(split) > 1 and split[1][0] == "-":
+        c_data.switches = set(split[1][1:])
+        c_data.args = split[2:]
+    else:
+        c_data.switches = set()
+        c_data.args = split[1:]
+
+    c_data.window = window
+    c_data.network = network
+
+    c_data.error_text = 'No such command exists'
+
+    events.trigger('Command', c_data)
+    
+    if not c_data.done:
+        c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
 
 def defInput(event):
     if not event.done:
@@ -32,6 +44,7 @@ def defInput(event):
             command = event.text[len(COMMAND_PREFIX):]
         else:
             command = 'say '+event.text
+
         run_command(command, event.window, event.network)
 
 def handle_say(event):
@@ -115,34 +128,35 @@ def handle_reload(event):
 def handle_server(event):
     new_window = False
     connect = True
-    port = None
+    port = False
+    
     server = None
-    options, args = getopt.gnu_getopt(event.args,"nomp:",['new','noconnect','port='])
-    options = dict(options)
-    if ('-n' in options):
+    port = None
+
+    if 'n' in event.switches:
         new_window, connect = True, False
-    if ('-m' in options) or ('--new' in options):
+
+    if 'm' in event.switches:
         new_window = True
-    if ('-o' in options) or ('--noconnect' in options):
+
+    if 'o' in event.switches:
         connect = False
-    if ('-p' in options):
-        port = options['-p']
-    if ('--port' in options):
-        port = options['--port']
-    if args:
-        server = args.pop(0)
+
+    if event.args:
+        server = event.args.pop(0)
         if ':' in server:
             split = server.split(':')
             server = split[0]
             port = int(split[1])
-    if args:
-        port = int(args.pop(0))
-    
-    if new_window or not event.network:
-        network = irc.Network("Urk user", conf.get("nick"), "irc.mozilla.org")
+    if event.args:
+        port = int(event.args.pop(0))
+
+    if new_window:
+        network = irc.Network("irc.mozilla.org")
         urk.connect(network)
     else:
         network = event.network
+
     if server:
         network.server = server
     if port:
