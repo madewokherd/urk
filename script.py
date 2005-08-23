@@ -151,18 +151,16 @@ def handle_server(event):
     if event.args:
         port = int(event.args.pop(0))
 
-    if new_window:
-        network = irc.Network("irc.mozilla.org")
-        urk.connect(network)
-    else:
-        network = event.network
+    if new_window or not event.network:
+        event.network = irc.Network("irc.mozilla.org")
+        urk.connect(event.network)
 
     if server:
-        network.server = server
+        event.network.server = server
     if port:
-        network.port = port
+        event.network.port = port
     if connect:
-        network.connect()
+        event.network.connect()
 
     event.done = True
 
@@ -199,15 +197,15 @@ def onStart(event):
         network_info = conf.get("networks/%s" % network)
         
         if network_info:
-            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
             servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
             port = conf.get("networks/%s/%s" % (network, "port")) or 6667
-            fullname = conf.get("networks/%s/%s" % (network, "port")) or ""
+            nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
+            fullname = conf.get("networks/%s/%s" % (network, "fullname")) or ""
 
         else:
-            nicks = []
             servers = [network]
             port = 6667
+            nicks = []
             fullname = ""
     
         x = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
