@@ -514,7 +514,6 @@ class IrcTabs(gtk.Notebook):
         if network:
             id = network.normalize_case(id)
 
-        events.trigger("Close", self.window_list[network, type, id])
         self.remove_page(self.page_num(self.window_list[network, type, id]))
         del self.window_list[network, type, id]
 
@@ -605,13 +604,14 @@ def make_window(network, type, id, title=None, is_chan=False):
 
 # Close a window.
 def close_window(window):
+    events.trigger("Close", window_list[window.network, window.type, window.id])
     del window_list[window.network, window.type, window.id]
         
-def get_window_for(self, network=None, type=None, id=None):
+def get_window_for(network=None, type=None, id=None):
     if network:
         id = network.normalize_case(id)
 
-    for n, t, i in self.window_list:
+    for n, t, i in window_list:
         if network and n != network:
             continue
         if type and t != type:
@@ -619,12 +619,12 @@ def get_window_for(self, network=None, type=None, id=None):
         if id and i != id:
             continue
             
-        yield self.window_list[n, t, i]
+        yield window_list[n, t, i]
         
-def get_status_window(self, network):
-    for n, t, i in self.window_list:
+def get_status_window(network):
+    for n, t, i in window_list:
         if n == network and t == "status":
-            return self.window_list[n, t, i]
+            return window_list[n, t, i]
         
 def get_active():
     active = window_list.get_current_page()
