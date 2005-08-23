@@ -538,6 +538,7 @@ class IrcUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("Urk")
+        self.connect("delete_event", self.shutdown)
 
         # layout
         xy = conf.get("xy") or (-1, -1)
@@ -556,8 +557,6 @@ class IrcUI(gtk.Window):
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
         box.pack_end(window_list)
-        
-        self.connect("delete_event", self.shutdown)
 
         self.add(box)
         self.show_all()
@@ -607,6 +606,10 @@ def make_window(network, type, id, title=None, is_chan=False):
 # Close a window.
 def close_window(window):
     del window_list[window.network, window.type, window.id]
+     
+def get_active():
+    active = window_list.get_current_page()
+    return window_list.get_nth_page(active)
 
 queue = []
 def enqueue(f, *args, **kwargs):
