@@ -563,11 +563,11 @@ def activate(window):
 
 # Always make a new window and return it.
 @pygtk_lookup
-def force_make_window(network, type, id, title, nicklist):
-    if nicklist:
-        window = IrcChannelWindow(network, type, id, title=title)
+def force_make_window(network, type, nid, title, is_chan):
+    if is_chan:
+        window = IrcChannelWindow(network, type, nid, title=title)
     else:
-        window = IrcWindow(network, type, id, title=title)
+        window = IrcWindow(network, type, nid, title=title)
         
     window.network = network
 
@@ -578,7 +578,7 @@ def force_make_window(network, type, id, title, nicklist):
                 pos = i+1
                 break
 
-    window_list[network, type, id] = window
+    window_list[network, type, nid] = window
     window_list.insert_page(window, None, pos)
     window_list.set_tab_label(window, window.label)
 
@@ -586,12 +586,12 @@ def force_make_window(network, type, id, title, nicklist):
 
 # Make a window for the given network, type, id if it doesn't exist.
 #  Return it.
-def make_window(network, type, id, title=None, nicklist=False):
+def make_window(network, type, id, title=None, is_chan=False):
     if window_list[network, type, id]:
         return window_list[network, type, id]
         
     else:
-        return force_make_window(network, type, id, title or id, nicklist)
+        return force_make_window(network, type, id, title or id, is_chan)
 
 # Close a window.
 def close_window(window):
