@@ -46,7 +46,16 @@ def onAction(event):
     
     if not event.quiet:
         event.window.write(to_write, ui.TEXT)
+
+def onNotice(event):
+    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (event.source, event.text)
     
+    if not event.quiet:
+        window = ui.get_active()
+        if window.network != event.network:
+            window = ui.get_status_window(event.network)
+        window.write(to_write, ui.TEXT)
+
 def onOwnNotice(event):
     to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (event.target, event.text)
     
@@ -119,7 +128,6 @@ def onRaw(event):
             window.write("topic on %s is: %s" % (event.msg[3], event.text))
         else:
             event.window.write("* %s %s" % (event.source, event.text))
-
 
 def onDisconnect(event):
     for network, type, id in ui.window_list:

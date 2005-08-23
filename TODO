@@ -1,9 +1,3 @@
-We need a window
-
-    ui needs to check if we have any windows open when we start, and open one
-if we don't
-
-
 Server Messages
 
     we need to process all the normal server messages and 

@@ -70,6 +70,21 @@ def defRaw(event):
             event.done = True
             event.quiet = True
         
+        elif event.msg[1] == "NOTICE":
+            if event.text[0] == '\x01' and event.text[-1] == '\x01':
+                e_data = copy.copy(event)
+                e_data.type = 'ctcp_reply'
+                e_data.text = event.text[1:-1]
+                tokens = e_data.text.split(' ')
+                e_data.name = tokens[0]
+                e_data.args = tokens[1:]
+                events.trigger('CtcpReply', e_data)
+            else:
+                event.type = "notice"
+                events.trigger('Notice', event)
+            event.done = True
+            event.quiet = True
+        
         elif event.msg[1] == "TOPIC":
             event.type = "topic"
             events.trigger('Topic', event)
