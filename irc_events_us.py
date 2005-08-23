@@ -101,7 +101,7 @@ def defRaw(event):
 
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
-        event.window = urk.get_window[event.network]
+        event.window = ui.get_status_window(event.network)
     
     event.network.connected = False
     

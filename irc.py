@@ -6,6 +6,7 @@ import traceback
 import conf
 import events
 import __main__ as urk
+import ui
 
 DEBUG = 0
 
@@ -112,7 +113,7 @@ class Network:
         e_data.msg = parse_irc(msg, self.server)
         e_data.text = e_data.msg[-1]
         e_data.network = self
-        e_data.window = urk.get_window[self]
+        e_data.window = ui.get_status_window(self)
         e_data.type = "raw"
         
         source = e_data.msg[0].split('!')
@@ -168,7 +169,7 @@ class Network:
         e_data.text = msg
         e_data.type = 'text'
         e_data.network = self
-        e_data.window = urk.get_window[self]
+        e_data.window = ui.get_status_window(self)
         events.trigger('Text', e_data)
 
     def emote(self, target, msg):
@@ -179,7 +180,7 @@ class Network:
         e_data.text = msg
         e_data.type = 'action'
         e_data.network = self
-        e_data.window = urk.get_window[self]
+        e_data.window = ui.get_status_window(self)
         events.trigger('Action', e_data)
 
     def notice(self, target, msg):
@@ -190,5 +191,5 @@ class Network:
         e_data.text = msg
         e_data.type = 'ownnotice'
         e_data.network = self
-        e_data.window = urk.get_window[self]
+        e_data.window = ui.get_status_window(self)
         events.trigger('OwnNotice', e_data)

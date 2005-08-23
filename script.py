@@ -153,7 +153,9 @@ def handle_server(event):
 
     if new_window:
         network = irc.Network("irc.mozilla.org")
-        urk.connect(network)
+        
+        window = ui.make_window(network, 'status', "Status Window", "[%s]" % network.server)
+        ui.activate(window)
     else:
         network = event.network
 
@@ -210,19 +212,23 @@ def onStart(event):
             port = 6667
             fullname = ""
     
-        x = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
-    
-        urk.connect(x)
-        x.connect()
+        nw = irc.Network(servers[0], port=6667, nicks=nicks, fullname=fullname)
+        
+        window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
+        ui.activate(window)
+
+        nw.connect()
 
 # FIXME: crush, kill, destroy
 def onConnectArlottOrg(event):
     import irc, conf
 
-    x = irc.Network("irc.gimp.org", port=6667, nicks=[], fullname="")
+    nw = irc.Network("irc.gimp.org", port=6667, nicks=[], fullname="")
     
-    urk.connect(x)
-    x.connect()
+    window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
+    ui.activate(window)
+
+    nw.connect()
 
 def defSocketConnect(event):
     if not event.done:

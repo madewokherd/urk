@@ -650,7 +650,8 @@ def process_queue():
         
 def start():
     if not window_list:
-        urk.connect(irc.Network("irc.flugurgle.org"))
+        first_network = irc.Network("irc.flugurgle.org")
+        first_window = make_window(first_network, "status", "Status Window", first_network.server)
 
     gobject.idle_add(process_queue)
     gtk.main()
