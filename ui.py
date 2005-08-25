@@ -442,15 +442,23 @@ class IrcChannelWindow(IrcWindow):
         self.nicklist = gtk.ListStore(str)
         
         cv = IrcWindow.chat_view(self)
+        cv.set_size_request(50, -1)
         
         tv = gtk.TreeView(self.nicklist)
+        tv.set_size_request(0, -1)
+        
         tv.insert_column_with_attributes(
             0, self.title, gtk.CellRendererText(), text=0
             )
         
         win = gtk.HPaned()
-        win.pack1(cv, resize=True)
-        win.pack2(tv, resize=True)
+        win.pack1(cv, resize=True, shrink=False)
+        win.pack2(tv, resize=False, shrink=True)
+        
+        def set_pane_pos():
+            pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
+            win.set_position(pos)
+        enqueue(set_pane_pos)
 
         return win
         
