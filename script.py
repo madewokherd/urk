@@ -181,7 +181,7 @@ def postCommand(event):
 def get_network_info(network, network_info):
     #FIXME: if conf.get("networks/%s" % network):
     
-    for info in ("servers", "port", "nicks", "fullname"):
+    for info in ("server", "port", "nicks", "fullname"):
         if info not in network_info:
             key_info = conf.get("networks/%s/%s" % (network, info))
     
