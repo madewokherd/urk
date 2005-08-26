@@ -122,15 +122,15 @@ def handle_server(event):
             server, port = server.split(':')
             network_info["port"] = int(port)
             
-        network_info["servers"] = server
+        network_info["server"] = server
 
     if len(event.args) > 1:
         port = event.args[1]
         
         network_info["port"] = int(port)
 
-    if "servers" in network_info:    
-        network_info = get_network_info(network_info["servers"], network_info)
+    if "server" in network_info:    
+        network_info = get_network_info(network_info["server"], network_info)
 
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
@@ -140,8 +140,8 @@ def handle_server(event):
     #else if event.network.connected:
     #    event.network.disconnect()
         
-    if "servers" in network_info:
-        event.network.server = network_info["servers"]
+    if "server" in network_info:
+        event.network.server = network_info["server"]
     if "port" in network_info:
         event.network.port = network_info["port"]
 
