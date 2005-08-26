@@ -194,7 +194,7 @@ def onStart(event):
     on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
-        network_info = get_network_info(network, {}) or {"servers": network}
+        network_info = get_network_info(network, {}) or {"server": network}
             
         nw = irc.Network(**network_info)
         
