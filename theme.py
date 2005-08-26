@@ -38,7 +38,7 @@ def onText(event):
         event.window.write(to_write, ui.TEXT)
     
 def onAction(event):
-    if event.network.me == event.network.normalize_case(event.source):
+    if event.network.me == event.source:
         color = '\x02\x04FF00FF'
     else:
         color = '\x02\x040000CC'
