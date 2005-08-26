@@ -203,15 +203,6 @@ def onStart(event):
 
         nw.connect()
 
-# FIXME: crush, kill, destroy
-def onConnectArlottOrg(event):
-    nw = irc.Network("irc.gimp.org", port=6667, nicks=[], fullname="")
-    
-    window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
-    ui.activate(window)
-
-    nw.connect()
-
 def defSocketConnect(event):
     if not event.done:
         #this needs to be tested--anyone have a server that uses PASS?

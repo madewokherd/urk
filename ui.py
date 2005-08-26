@@ -52,16 +52,9 @@ def get_tab_actions(page_num):
     return tab_actions
     
 def get_urk_actions(ui):
-    def connectToArlottOrg(widget):
-        events.trigger("ConnectArlottOrg")
-
     to_add = (
         ("FileMenu", None, "_File"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
-            ("Connect", None, "_Connect", "<control>S", None, connectToArlottOrg),
-        
-        ("EditMenu", None, "_Edit"),
-            ("Preferences", gtk.STOCK_PREFERENCES, "Pr_eferences", "<control>P", None),
         
         ("HelpMenu", None, "_Help"),
             ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
@@ -573,7 +566,10 @@ def start():
         first_network = irc.Network("irc.flugurgle.org")
         first_window = make_window(first_network, "status", "Status Window", first_network.server)
 
-    gtk.main()
+    try:
+        gtk.main()
+    except KeyboardInterrupt:
+        ui.shutdown()
 
 # wrapping io_add_watch for simplicity
 def register_io(f, fd, condition):

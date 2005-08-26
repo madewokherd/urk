@@ -146,7 +146,7 @@ class Network:
                 ui.register_io(self.on_readable,self.socket,ui.IO_IN),
                 ui.register_io(self.on_error,self.socket,ui.IO_ERR),
                 ui.register_io(self.on_disconnect,self.socket,ui.IO_HUP),
-            )
+                )
             
             try:
                 self.socket.connect((self.server, self.port))
