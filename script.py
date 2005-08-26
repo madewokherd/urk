@@ -114,47 +114,43 @@ def handle_reload(event):
     event.done = True
 
 def handle_server(event):
-    new_window = False
-    connect = True
-    port = False
-    
-    server = None
-    port = None
+    network_info = {}
 
-    if 'n' in event.switches:
-        new_window, connect = True, False
-
-    if 'm' in event.switches:
-        new_window = True
-
-    if 'o' in event.switches:
-        connect = False
-
-    if event.args:
-        server = event.args.pop(0)
+    if len(event.args):
+        server = event.args[0]
         if ':' in server:
-            split = server.split(':')
-            server = split[0]
-            port = int(split[1])
-    if event.args:
-        port = int(event.args.pop(0))
+            server, port = server.split(':')
+            network_info["port"] = int(port)
+            
+        network_info["servers"] = server
 
-    if new_window:
-        network = irc.Network("irc.mozilla.org")
+    if len(event.args) > 1:
+        port = event.args[1]
         
-        window = ui.make_window(network, 'status', "Status Window", "[%s]" % network.server)
-        ui.activate(window)
-    else:
-        network = event.network
+        network_info["port"] = int(port)
 
-    if server:
-        network.server = server
-    if port:
-        network.port = port
-    if connect:
-        network.connect()
+    if "servers" in network_info:    
+        network_info = get_network_info(network_info["servers"], network_info)
+
+    new_window = ("n" in event.switches or "m" in event.switches)
+    if new_window or not event.network:    
+        event.network = irc.Network(**network_info)
+        window = ui.make_window(event.network, 'status', "Status Window", "[%s]" % event.network.server)
+        ui.activate(window)
+    #else if event.network.connected:
+    #    event.network.disconnect()
+        
+    if "servers" in network_info:
+        event.network.server = network_info["servers"]
+    if "port" in network_info:
+        event.network.port = network_info["port"]
+
+    if not ("n" in event.switches or "o" in event.switches):
+        event.network.connect()
 
     event.done = True
+    
+    print network_info
 
 command_handlers = {
     'say': handle_say,
@@ -182,22 +178,25 @@ def postCommand(event):
         event.network.raw(event.text)
         event.done = True
         
-def get_network_info(network):
-    network_info = conf.get("networks/%s" % network)
+def get_network_info(network, network_info):
+    #FIXME: if conf.get("networks/%s" % network):
     
-    if network_info:
-        servers = conf.get("networks/%s/%s" % (network, "servers")) or [network]
-        port = conf.get("networks/%s/%s" % (network, "port")) or 6667
-        nicks = conf.get("networks/%s/%s" % (network, "nicks")) or []
-        fullname = conf.get("networks/%s/%s" % (network, "fullname")) or ""
+    for info in ("servers", "port", "nicks", "fullname"):
+        if info not in network_info:
+            key_info = conf.get("networks/%s/%s" % (network, info))
+    
+            if key_info:
+                network_info[info] = key_info
 
-        return servers[0], 6667, nicks, fullname
+    return network_info
 
 def onStart(event):
     on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
-        nw = irc.Network(*get_network_info(network) or (network,))
+        network_info = get_network_info(network, {}) or {"servers": network}
+            
+        nw = irc.Network(**network_info)
         
         window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
         ui.activate(window)
@@ -206,8 +205,6 @@ def onStart(event):
 
 # FIXME: crush, kill, destroy
 def onConnectArlottOrg(event):
-    import irc, conf
-
     nw = irc.Network("irc.gimp.org", port=6667, nicks=[], fullname="")
     
     window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
@@ -217,8 +214,6 @@ def onConnectArlottOrg(event):
 
 def defSocketConnect(event):
     if not event.done:
-        import conf
-        
         #this needs to be tested--anyone have a server that uses PASS?
         if event.network.password:
             event.network.raw("PASS :%s" % event.network.password)
@@ -279,5 +274,5 @@ def onClose(window):
 
 def onNick(event):
     if event.network.me == event.source:
-        for n, t, i in ui.window_list:
-            ui.window_list[n, t, i].nick_label.set_nick(event.newnick)
+        for window in ui.get_window_for(network=event.network):
+            window.nick_label.set_nick(event.newnick)
