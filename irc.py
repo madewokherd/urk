@@ -5,7 +5,6 @@ import traceback
 
 import conf
 import events
-import __main__ as urk
 import ui
 
 DEBUG = 0
