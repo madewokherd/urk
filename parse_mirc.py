@@ -125,8 +125,89 @@ def parse_mirc(string):
             pos += 1
     if start != len(new_string) and props:
         tag_data.append((props.items(), start, len(new_string)))
-    return tag_data, new_string                
+    return tag_data, new_string
     
+def parse_mirc(string):
+    out, looking, tags, pos = "", {}, [], 0
+    
+    while string:
+        c = string[0]
+
+        if c == MIRC_COLOR:
+            g, GET = {"f": "", "b": ""}, "f"
+        
+            next = string[1:]
+ 
+            while next:
+                if next[0] in "0123456789" and len(g[GET]) <= 1:
+                    g[GET] += next[0]
+                    
+                    string = string[1:]
+                    
+                elif next[0] == ",":
+                    if not (g["f"] and next[1:] and next[1] in "0123456789"):
+                        break
+                        
+                    else:
+                        GET = "b"
+                        string = string[1:]
+                else:
+                    break
+
+                next = next[1:]
+                
+            fg, bg = g["f"], g["b"]
+     
+        elif c == BERS_COLOR:
+            next = string[1:]
+            
+            fg, bg = None, None 
+            
+            if ishex(next[0:6]):
+                fg = "#" + next[0:6]
+                
+                string = string[6:]
+                
+                if next[6:] and next[6] == ",":
+                    if ishex(next[7:13]):
+                        bg = "#" + next[7:13]
+                        
+                        string = string[7:]
+
+        elif c in (BOLD, UNDERLINE):
+            if c in looking:
+                tags += [looking[c] + [pos]]
+                del looking[c]
+            else:
+                if c == BOLD:
+                    looking[c] = [[("weight", BOLD)], pos]
+                else:
+                    looking[c] = [[("underline", UNDERLINE)], pos]
+        
+        elif c == RESET:
+            for look in looking:
+                tags += [looking[look] + [pos]]
+            looking = {}
+                
+        else:
+            out += c
+            pos += 1
+            
+        if c in (MIRC_COLOR, BERS_COLOR):
+            if c in looking:
+                tags += [looking[c] + [pos]]
+                del looking[c]
+                
+            if fg:
+                if bg:
+                    looking[c] = [[("foreground", fg), ("background", bg)], pos]
+                else:
+                    looking[c] = [[("foreground", fg)], pos]
+            
+        string = string[1:]
+
+    return tags, out
+        
 if __name__ == "__main__":
     tests = [
         'not\x02bold\x02not',
@@ -139,6 +220,10 @@ if __name__ == "__main__":
         "\x040000CC<\x04nick\x040000CC>\x04 text",
         
         '\x04770077,FFFFFFbersirc color with background! \x04000077setting foreground! \x04reset!',
+        
+        "\x03111Hello",
+        
+        "\x0311,Hello"
         ]
         
     results = [
@@ -154,3 +239,5 @@ if __name__ == "__main__":
         ([([('foreground', '#770077'), ('background', '#FFFFFF')], 0, 31), ([('foreground', '#000077'), ('background', '#FFFFFF')], 31, 51)], 'bersirc color with background! setting foreground! reset!'),
         ]   
     
+    for test in tests:
+        parse_mirc(test)
