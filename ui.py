@@ -6,7 +6,6 @@ import gobject
 import gtk
 import pango
 
-import __main__ as urk
 import irc
 import conf
 import events

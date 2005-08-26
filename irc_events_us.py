@@ -2,7 +2,6 @@ import copy
 
 import events
 import ui
-import __main__ as urk
 
 def defRaw(event):
     if not event.done:

@@ -36,12 +36,6 @@ def trigger(e_name, e_data=None):
                     except:
                         traceback.print_exc()
 
-def dir_and_file(filename):
-    d = os.path.dirname(filename)
-    f = os.path.basename(filename)
-    
-    return d, f
-
 # Registers a specific function with an event at the given sequence stage.
 def register(e_name, e_stage, f_ref, s_name=""):
     if e_name in events:
@@ -56,7 +50,8 @@ def register(e_name, e_stage, f_ref, s_name=""):
 # the functions defined in it for events.
 def load(s_name, reloading=False):
     # split the directory and filename
-    dirname, filename = dir_and_file(s_name)
+    dirname = os.path.dirname(filename)
+    filename = os.path.basename(filename)
     
     # FIXME: how do we import without adding evil paths to our sys.path?
     # add our path if it's not there

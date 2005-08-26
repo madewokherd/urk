@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import gconf
 
 client = gconf.client_get_default()
@@ -26,11 +24,6 @@ def valueToPython(value):
 def get(key):
     return valueToPython(client.get("/apps/urk/"+key))
 
-#def onCommandGetconfig(args,window,output,**kwargs):
-#    if 'auto' in output:
-#        output.remove('auto')
-#        window.write(repr(get(args[0])))
-
 def set(key, value):
     key = "/apps/urk/"+key
 
@@ -46,11 +39,6 @@ def set(key, value):
         client.set_string(key, value)
     else:
         client.set_string(key, "python:"+repr(value))
-
-#def onCommandSetconfig(args,window,output,**kwargs):
-#    if 'auto' in output:
-#        output.remove('auto')
-#        set(args[0], eval(' '.join(args[1:])))
 
 class notify:
     def __init__(self, key, function):
