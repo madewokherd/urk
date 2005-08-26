@@ -5,6 +5,7 @@ import traceback
 
 import conf
 import events
+import __main__ as urk
 import ui
 
 DEBUG = 0
@@ -118,20 +119,24 @@ class Network:
     
     #called when we can read from the socket
     def on_readable(self):
+        reply = self.socket.recv(8192)
         
-        self.buffer = self.buffer + self.socket.recv(8192)
-        
-        while 1:
-            pos = self.buffer.find("\r\n")
-            if pos == -1:
-                break
-            line = self.buffer[0:pos]
-            self.buffer = self.buffer[pos+2:]
+        if reply:
+            self.buffer = self.buffer + reply
             
-            if DEBUG:
-                print ">>> %s" % line
+            while 1:
+                pos = self.buffer.find("\r\n")
+                if pos == -1:
+                    break
+                line = self.buffer[0:pos]
+                self.buffer = self.buffer[pos+2:]
+                
+                if DEBUG:
+                    print ">>> %s" % line
 
-            self.got_msg(line)
+                self.got_msg(line)
+        else:
+            self.disconnect(error="sock.recv() returned an empty string (this shouldn't happen!)")
         
     #called when there's a socket error
     def on_error(self):

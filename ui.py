@@ -406,12 +406,12 @@ class IrcWindow(gtk.VBox):
         
         self.view.connect("key-press-event", transfer_text)
         
-        swin = gtk.ScrolledWindow()
-        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        swin.set_border_width(2)
-        swin.add(self.view)
+        win = gtk.ScrolledWindow()
+        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        win.set_border_width(2)
+        win.add(self.view)
 
-        return swin
+        return win
     
     def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
@@ -449,14 +449,10 @@ class IrcChannelWindow(IrcWindow):
         tv.insert_column_with_attributes(
             0, self.title, gtk.CellRendererText(), text=0
             )
-            
-        swin = gtk.ScrolledWindow()
-        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        swin.add(tv)
         
         win = gtk.HPaned()
         win.pack1(cv, resize=True, shrink=False)
-        win.pack2(swin, resize=False, shrink=True)
+        win.pack2(tv, resize=False, shrink=True)
         
         def set_pane_pos():
             pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
@@ -672,7 +668,6 @@ def register_io(f, fd, condition):
     #ignore the arguments pygtk gives us because THEY ARE USELESS AND WE WANT
     # A SIMPLE INTERFACE
     def callback(source, cb_condition):
-        print f
         f()
         return True
     return gobject.io_add_watch(fd, condition, callback)

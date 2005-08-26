@@ -130,6 +130,10 @@ def onRaw(event):
             event.window.write("* %s %s" % (event.source, event.text))
 
 def onDisconnect(event):
+    if event.error:
+        to_write = '* Disconnected (%s)' % event.error
+    else:
+        to_write = '* Disconnected'
     for network, type, id in ui.window_list:
         if network == event.network:
-            ui.window_list[network, type, id].write('* Disconnected')
+            ui.window_list[network, type, id].write(to_write, (type == 'status' and ui.TEXT) or ui.EVENT)
