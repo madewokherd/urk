@@ -50,8 +50,8 @@ def register(e_name, e_stage, f_ref, s_name=""):
 # the functions defined in it for events.
 def load(s_name, reloading=False):
     # split the directory and filename
-    dirname = os.path.dirname(filename)
-    filename = os.path.basename(filename)
+    dirname = os.path.dirname(s_name)
+    filename = os.path.basename(s_name)
     
     # FIXME: how do we import without adding evil paths to our sys.path?
     # add our path if it's not there
