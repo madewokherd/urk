@@ -369,10 +369,14 @@ class IrcChannelWindow(IrcWindow):
         tv.insert_column_with_attributes(
             0, self.title, gtk.CellRendererText(), text=0
             )
+            
+        swin = gtk.ScrolledWindow()
+        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        swin.add(tv)
         
         win = gtk.HPaned()
         win.pack1(cv, resize=True, shrink=False)
-        win.pack2(tv, resize=False, shrink=True)
+        win.pack2(swin, resize=False, shrink=True)
         
         def set_pane_pos():
             pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
