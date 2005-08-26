@@ -41,6 +41,13 @@ MEH likes closing tabs
     closing status windows needs to work (and disconnect us from the network)
 
 
+Documentation
+
+    If not complete documentation, there should be enough there that someone
+can get it running quickly and do some basic scripting (maybe a complete
+description of onText and we can assume theme.py will have to be the
+documentation for other events for now).
+
 
 
 before we can claim it's not beta:
@@ -69,7 +76,6 @@ in this script that adds a proper human-readable timestamp)
 Hotlinking
 
     url's, nicks, channels, etc. should be clickable
-
 
 
 

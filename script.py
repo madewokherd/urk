@@ -197,7 +197,7 @@ def onStart(event):
     on_start_networks = conf.get("start_networks") or []
 
     for network in on_start_networks:
-        nw = irc.Network(*get_network_info(network) or network)
+        nw = irc.Network(*get_network_info(network) or (network,))
         
         window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
         ui.activate(window)

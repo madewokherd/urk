@@ -67,7 +67,11 @@ def handle_connect(network):
     events.trigger('Disconnect', e_data)
 
 class Network:
-    sock = None                 # this networks socket
+    socket = None               # this network's socket
+    socket_id = None            # the list of id's used to disable our callbacks
+    writeable_id = None         # the id used to disable the on_writeable cb
+    
+    in_buffer = ''              # data we've received but not processed yet
     
     nicks = []                  # desired nicknames
     fullname = ""               # our full name
@@ -100,6 +104,42 @@ class Network:
         self.fullname = fullname or "Urk user"
 
         self.channels = {}
+    
+    def on_writeable(self):
+        network.initializing = True
+        
+        ui.unregister_io(self.writeable_id)
+        self.writeable_id = None
+    
+        e_data = events.data()
+        e_data.network = network
+        e_data.type = "socket_connect"
+        events.trigger('SocketConnect', e_data)
+        
+    def on_readable(self):
+        in_buffer = self.in_buffer + network.socket.recv(8192)
+        
+        while 1:
+            pos = in_buffer.find("\r\n")
+            if pos == -1:
+                break
+            line = in_buffer[0:pos]
+            in_buffer = in_buffer[pos+2:]
+            
+            if DEBUG:
+                print ">>> %s" % line
+
+            self.got_msg(line)
+        
+        self.in_buffer = in_buffer
+        
+    def on_error(self):
+        #we should get the error from the socket so we can report it, but I
+        # don't know how!
+        self.disconnect(error="Network error!")
+        
+    def on_disconnected(self):
+        self.disconnect()
         
     def raw(self, msg):
         if DEBUG:
@@ -135,6 +175,26 @@ class Network:
         if not self.connecting:
             self.connecting = True
             self.socket = socket.socket()
+            self.socket.settimeout(0)
+            
+            self.writeable_id = ui.register_io(self.on_writeable,self.socket,ui.IO_OUT)
+            self.socket_id = (
+                ui.register_io(self.on_readable,self.socket,ui.IO_IN),
+                ui.register_io(self.on_error,self.socket,ui.IO_ERR),
+                ui.register_io(self.on_disconnect,self.socket,ui.IO_HUP),
+            )
+            
+            self.socket.connect((self.server, self.port))
+            
+            e_data = events.data()
+            e_data.network = self
+            e_data.type = "connecting"            
+            events.trigger('Connecting', e_data)
+    
+    def connect(self):
+        if not self.connecting:
+            self.connecting = True
+            self.socket = socket.socket()
             
             thread.start_new_thread(handle_connect, (self,))
             
@@ -142,15 +202,32 @@ class Network:
             e_data.network = self
             e_data.type = "connecting"            
             events.trigger('Connecting', e_data)
-            
+    
     def normalize_case(self, string):
         return string.lower()
     
     def quit(self,msg="."):
         self.raw("QUIT :%s" % msg)
+        self.disconnect()
         
-    def disconnect(self,msg="."):
-        self.raw("QUIT :%s" % msg)
+    def disconnect(self, error=None):
+        if self.writeable_id:
+            ui.unregister_io(self.writeable_id)
+            self.writeable_id = None
+        if self.socket_id:
+            for socket_id in self.socket_id:
+                ui.unregister_io(socket_id)
+                self.socket_id = None
+        
+        network.connecting = False
+        network.initializing = False
+        
+        #note: connecting from onDisconnect is probably a Bad Thing
+        e_data = events.data()
+        e_data.network = network
+        e_data.error = error
+        e_data.type = "disconnect"
+        events.trigger('Disconnect', e_data)
         
     def join(self, name):        
         self.raw("JOIN %s" % name)
