@@ -1,7 +1,5 @@
 import socket
-import thread
 import sys
-import traceback
 
 import conf
 import events
@@ -24,47 +22,6 @@ def parse_irc(msg, server):
             break
     
     return [m for m in msg[:-1] if m] + msg[-1:]
-
-def handle_connect(network):
-    try:
-        network.socket.connect((network.server, network.port))
-        
-        network.initializing = True
-        
-        e_data = events.data()
-        e_data.network = network
-        e_data.type = "socket_connect"
-        events.trigger('SocketConnect', e_data)
-         
-        in_buffer = reply = network.socket.recv(8192)
-
-        while reply:
-            while 1:
-                pos = in_buffer.find("\r\n")
-                if pos == -1:
-                    break
-                line = in_buffer[0:pos]
-                in_buffer = in_buffer[pos+2:]
-                
-                if DEBUG:
-                    print ">>> %s" % line
-
-                network.got_msg(line)
-
-            reply = network.socket.recv(8192)
-            in_buffer += reply
-    except:
-        error = sys.exc_info()
-    else:
-        error = None
-    network.connecting = False
-    network.initializing = False
-    
-    e_data = events.data()
-    e_data.network = network
-    e_data.error = error
-    e_data.type = "disconnect"
-    events.trigger('Disconnect', e_data)
 
 class Network:
     socket = None               # this network's socket
@@ -201,18 +158,6 @@ class Network:
             e_data.network = self
             e_data.type = "connecting"            
             events.trigger('Connecting', e_data)
-    
-    #def connect(self):
-    #    if not self.connecting:
-    #        self.connecting = True
-    #        self.socket = socket.socket()
-    #        
-    #        thread.start_new_thread(handle_connect, (self,))
-    #        
-    #        e_data = events.data()
-    #        e_data.network = self
-    #        e_data.type = "connecting"            
-    #        events.trigger('Connecting', e_data)
     
     def disconnect(self, error=None):
         if self.writeable_id:

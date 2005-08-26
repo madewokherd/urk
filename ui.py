@@ -26,78 +26,6 @@ COLOR = {
     EVENT: "#555"
     }
 
-#this is how we put lots of related ugliness in one place so we don't have to
-#look at it all the time
-
-main_thread = thread.get_ident()
-
-class reference(object):
-    __slots__ = ['value']
-
-class pygtk_lookup_class(object):
-    __slots__ = ['f']
-    
-    def __init__(self, f):
-        self.f = f
-    
-    def __call__(self, *args, **kwargs):
-        if main_thread == thread.get_ident():
-            return self.f(*args, **kwargs)
-        else:
-            result = reference()
-            mutex = thread.allocate_lock()
-            mutex.acquire()
-            def do_in_main_thread():
-                result.value = self.f(*args, **kwargs)
-                mutex.release()
-            enqueue(do_in_main_thread)
-            mutex.acquire()
-            return result.value
-
-class pygtk_descriptor_lookup_class(pygtk_lookup_class):
-    def __get__(self, instance, owner):
-        return pygtk_lookup(self.f.__get__(instance, owner))
-    
-    def __set__(self, instance, owner):
-        self.f.__set__(instance, owner)
-
-    def __delete__(self, instance, owner):
-        self.f.__delete__(instance, owner)
-
-class pygtk_procedure_class(object):
-    __slots__ = ['f']
-    
-    def __init__(self, f):
-        self.f = f
-    
-    def __call__(self, *args, **kwargs):
-        if main_thread == thread.get_ident():
-            self.f(*args, **kwargs)
-        else:
-            enqueue(self.f, *args, **kwargs)
-
-class pygtk_descriptor_procedure_class(pygtk_procedure_class):
-    def __get__(self, instance, owner):
-        return pygtk_procedure(self.f.__get__(instance, owner))
-    
-    def __set__(self, instance, owner):
-        self.f.__set__(instance, owner)
-
-    def __delete__(self, instance, owner):
-        self.f.__delete__(instance, owner)
-
-def pygtk_lookup(f):
-    if hasattr(f, '__get__'):
-        return pygtk_descriptor_lookup_class(f)
-    else:
-        return pygtk_lookup_class(f)
-
-def pygtk_procedure(f):
-    if hasattr(f, '__get__'):
-        return pygtk_descriptor_procedure_class(f)
-    else:
-        return pygtk_procedure_class(f)
-
 def urk_about(action):
     about = gtk.AboutDialog()
     
@@ -310,7 +238,6 @@ class IrcTabLabel(gtk.EventBox):
 
 class IrcWindow(gtk.VBox):
     # the unknowing print weird things to our text window function
-    @pygtk_procedure
     def write(self, text, activity_type=EVENT):
         tag_data, text = parse_mirc.parse_mirc(text)
     
@@ -568,7 +495,6 @@ class IrcUI(gtk.Window):
         self.show_all()
 
 # Select the page with the given window or with the given tab position
-@pygtk_procedure
 def activate(window):
     # if this is an actual window, then we want its tab number
     if not isinstance(window, int):
@@ -578,7 +504,6 @@ def activate(window):
     window_list.get_nth_page(window).entry.grab_focus()
 
 # Always make a new window and return it.
-@pygtk_lookup
 def force_make_window(network, type, nid, title, is_chan):
     if is_chan:
         window = IrcChannelWindow(network, type, nid, title=title)
@@ -637,30 +562,17 @@ def get_active():
     active = window_list.get_current_page()
     return window_list.get_nth_page(active)
 
-queue = []
 def enqueue(f, *args, **kwargs):
-    queue.append((f, args, kwargs))
+    def callback():
+        f(*args, **kwargs)
+        return False
+    gobject.idle_add(callback)
 
-def process_queue():
-    try:
-        if queue:
-            f, args, kwargs = queue.pop(0)
-            try:
-                f(*args,**kwargs)
-            except:
-                traceback.print_exc()
-        else:
-            time.sleep(0.001)
-        return True
-    except KeyboardInterrupt:
-        ui.shutdown()
-        
 def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
         first_window = make_window(first_network, "status", "Status Window", first_network.server)
 
-    gobject.idle_add(process_queue)
     gtk.main()
 
 # wrapping io_add_watch for simplicity
