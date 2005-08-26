@@ -668,6 +668,25 @@ def start():
     gobject.idle_add(process_queue)
     gtk.main()
 
+# wrapping io_add_watch for simplicity
+def register_io(f, fd, condition):
+    #ignore the arguments pygtk gives us because THEY ARE USELESS AND WE WANT
+    # A SIMPLE INTERFACE
+    def callback(source, cb_condition):
+        print f
+        f()
+        return True
+    return gobject.io_add_watch(fd, condition, callback)
+
+def unregister_io(tag):
+    gobject.source_remove(tag)
+
+IO_IN = gobject.IO_IN
+IO_OUT = gobject.IO_OUT
+IO_PRI = gobject.IO_PRI
+IO_ERR = gobject.IO_ERR
+IO_HUP = gobject.IO_HUP
+
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
 
