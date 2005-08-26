@@ -274,7 +274,7 @@ class IrcWindow(gtk.VBox):
                 new_end = buffer.get_end_iter()
                 self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
                 
-            enqueue(scroll)
+            register_idle(scroll)
 
     # this is our text entry widget
     def entry_box(self):
@@ -377,7 +377,7 @@ class IrcChannelWindow(IrcWindow):
         def set_pane_pos():
             pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
             win.set_position(pos)
-        enqueue(set_pane_pos)
+        register_idle(set_pane_pos)
 
         return win
         
@@ -412,7 +412,7 @@ class IrcTabs(gtk.Notebook):
             window.activity = 0
             window.label.update()
             
-            enqueue(window.entry.grab_focus)
+            register_idle(window.entry.grab_focus)
         
             events.trigger("Active", window)
         
@@ -555,12 +555,6 @@ def get_active():
     active = window_list.get_current_page()
     return window_list.get_nth_page(active)
 
-def enqueue(f, *args, **kwargs):
-    def callback():
-        f(*args, **kwargs)
-        return False
-    gobject.idle_add(callback)
-
 def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
@@ -571,23 +565,37 @@ def start():
     except KeyboardInterrupt:
         ui.shutdown()
 
-# wrapping io_add_watch for simplicity
-def register_io(f, fd, condition):
-    #ignore the arguments pygtk gives us because THEY ARE USELESS AND WE WANT
-    # A SIMPLE INTERFACE
-    def callback(source, cb_condition):
-        f()
-        return True
-    return gobject.io_add_watch(fd, condition, callback)
-
-def unregister_io(tag):
-    gobject.source_remove(tag)
-
+# IO Type Constants
 IO_IN = gobject.IO_IN
 IO_OUT = gobject.IO_OUT
 IO_PRI = gobject.IO_PRI
 IO_ERR = gobject.IO_ERR
 IO_HUP = gobject.IO_HUP
+
+# Priority constants
+PRIORITY_HIGH = gobject.PRIORITY_HIGH
+PRIORITY_DEFAULT = gobject.PRIORITY_DEFAULT
+PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
+PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
+PRIORITY_LOW = gobject.PRIORITY_LOW
+
+def register_io(f, fd, condition, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback(source, cb_condition):
+        return f(*args, **kwargs)
+    return gobject.io_add_watch(fd, condition, callback, priority=priority)
+
+def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback():
+        return f(*args, **kwargs)
+    return gobject.idle_add(callback, priority=priority)
+
+def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback():
+        return f(*args, **kwargs)
+    return gobject.timeout_add(time, callback, priority=priority)
+
+def unregister(tag):
+    gobject.source_remove(tag)
 
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()

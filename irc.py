@@ -66,13 +66,15 @@ class Network:
     def on_writeable(self):
         self.initializing = True
         
-        ui.unregister_io(self.writeable_id)
+        ui.unregister(self.writeable_id)
         self.writeable_id = None
     
         e_data = events.data()
         e_data.network = self
         e_data.type = "socket_connect"
         events.trigger('SocketConnect', e_data)
+        
+        return True
     
     #called when we can read from the socket
     def on_readable(self):
@@ -95,15 +97,21 @@ class Network:
         else:
             self.disconnect(error="sock.recv() returned an empty string (this shouldn't happen!)")
         
+        return True
+        
     #called when there's a socket error
     def on_error(self):
         #we should get the error from the socket so we can report it, but I
         # don't know how!
         self.disconnect(error="Network error!")
         
+        return True
+        
     #called when the socket is disconnected
     def on_disconnect(self):
         self.disconnect()
+        
+        return True
         
     def raw(self, msg):
         if DEBUG:
@@ -161,11 +169,11 @@ class Network:
     
     def disconnect(self, error=None):
         if self.writeable_id:
-            ui.unregister_io(self.writeable_id)
+            ui.unregister(self.writeable_id)
             self.writeable_id = None
         if self.socket_id:
             for socket_id in self.socket_id:
-                ui.unregister_io(socket_id)
+                ui.unregister(socket_id)
                 self.socket_id = None
         
         self.socket = None
