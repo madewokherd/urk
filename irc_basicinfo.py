@@ -51,7 +51,7 @@ def setupJoin(event):
     channel = event.network.channels[event.network.normalize_case(event.target)]
     channel.nicks[event.source] = ''
     
-    update_nicks(network, channel)
+    update_nicks(event.network, channel)
 
 def onJoin(event):
     if event.source == event.network.me:
@@ -64,7 +64,7 @@ def postPart(event):
         channel = event.network.channels[event.network.normalize_case(event.target)]
         del channel.nicks[event.source]
         
-    update_nicks(network, channel)
+    update_nicks(event.network, channel)
 
 def postKick(event):
     if event.target == event.network.me:
@@ -73,7 +73,7 @@ def postKick(event):
         channel = event.network.channels[event.network.normalize_case(event.channel)]
         del channel.nicks[event.target]
         
-    update_nicks(network, channel)
+    update_nicks(event.network, channel)
 
 def postQuit(event):
     #if paranoid: check if event.source is me
@@ -82,7 +82,7 @@ def postQuit(event):
         if event.source in channel.nicks:
             del channel.nicks[event.source]
             
-            update_nicks(network, channel)
+            update_nicks(event.network, channel)
 
 def setupMode(event):
     channel = event.network.channels.get(event.network.normalize_case(event.channel))
@@ -125,7 +125,7 @@ def setupMode(event):
                 else:
                     channel.mode = channel.mode.strip(char)
 
-        update_nicks(network, channel)
+        update_nicks(event.network, channel)
 
 def postNick(event):
     for channame in event.network.channels:
@@ -134,7 +134,7 @@ def postNick(event):
             channel.nicks[event.newnick] = channel.nicks[event.source]
             del channel.nicks[event.source]
 
-        update_nicks(network, channel)
+        update_nicks(event.network, channel)
 
 def setupTopic(event):
     if event.network.normalize_case(event.target) in event.network.channels:
@@ -160,7 +160,7 @@ def setupRaw(event):
         if channel:
             channel.getting_names = False
  
-        update_nicks(network, channel)
+        update_nicks(event.network, channel)
         
     elif event.msg[1] == '324': #channel mode is
         channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
