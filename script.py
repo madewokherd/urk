@@ -40,7 +40,7 @@ def defInput(event):
         if event.text.startswith(COMMAND_PREFIX):
             command = event.text[len(COMMAND_PREFIX):]
         else:
-            command = 'say '+event.text
+            command = 'say - '+event.text
 
         run_command(command, event.window, event.network)
 
