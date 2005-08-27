@@ -191,7 +191,11 @@ class Network:
     def normalize_case(self, string):
         return string.lower()
     
-    def quit(self,msg="."):
+    def quit(self,msg=None):
+        if msg == None:
+            msg = conf.get('quitmsg')
+            if msg == None:
+                msg = "%s - %s" % (urk.long_version, urk.website)
         self.raw("QUIT :%s" % msg)
         self.disconnect()
         

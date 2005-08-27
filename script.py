@@ -146,6 +146,8 @@ def handle_server(event):
         event.network.port = network_info["port"]
 
     if not ("n" in event.switches or "o" in event.switches):
+        if event.network.connecting:
+            event.network.quit()
         event.network.connect()
 
     event.done = True

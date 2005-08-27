@@ -27,13 +27,15 @@ COLOR = {
     }
 
 def urk_about(action):
+    import __main__ as urk
+    
     about = gtk.AboutDialog()
     
-    about.set_name("Urk")
-    about.set_version("0.-1.2")
-    about.set_copyright("Copyright \xc2\xa9 2005 Vincent Povirk, Marc Liddell")
-    about.set_website("http://urk.sf.net/")
-    about.set_authors(["Vincent Povirk", "Marc Liddell"])
+    about.set_name(urk.name+" (GTK+ Frontend)")
+    about.set_version(urk.version)
+    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
+    about.set_website(urk.website)
+    about.set_authors(urk.authors)
     
     about.show_all()
     
