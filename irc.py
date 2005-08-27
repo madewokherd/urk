@@ -86,13 +86,9 @@ class Network:
         if reply:
             self.buffer = self.buffer + reply
             
-            while 1:
-                pos = self.buffer.find("\r\n")
-                if pos == -1:
-                    break
-                line = self.buffer[0:pos]
-                self.buffer = self.buffer[pos+2:]
-                
+            lines, self.buffer = self.buffer.rsplit("\r\n",1)
+            
+            for line in lines.split('\r\n'):
                 if DEBUG:
                     print ">>> %s" % line
 

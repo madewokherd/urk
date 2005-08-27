@@ -2,9 +2,6 @@ before the first release:
 
 Channel Nicklist
 
-    we should display nicks in the channel nicklist, properly sorted and
-prefixed
-    
     also, we need to do something so it starts with a sane size, and probably
 make conf save our nicklist's size
 
