@@ -64,7 +64,7 @@ def postPart(event):
         channel = event.network.channels[event.network.normalize_case(event.target)]
         del channel.nicks[event.source]
         
-    update_nicks(event.network, channel)
+        update_nicks(event.network, channel)
 
 def postKick(event):
     if event.target == event.network.me:
@@ -73,7 +73,7 @@ def postKick(event):
         channel = event.network.channels[event.network.normalize_case(event.channel)]
         del channel.nicks[event.target]
         
-    update_nicks(event.network, channel)
+        update_nicks(event.network, channel)
 
 def postQuit(event):
     #if paranoid: check if event.source is me
@@ -160,7 +160,7 @@ def setupRaw(event):
         if channel:
             channel.getting_names = False
  
-        update_nicks(event.network, channel)
+            update_nicks(event.network, channel)
         
     elif event.msg[1] == '324': #channel mode is
         channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))

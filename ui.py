@@ -328,7 +328,6 @@ class IrcWindow(gtk.VBox):
         
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        win.set_border_width(2)
         win.add(self.view)
 
         return win
@@ -354,29 +353,41 @@ class IrcWindow(gtk.VBox):
         self.pack_end(eb, expand=False)
   
         self.show_all()
+        
+class Nicklist(gtk.VBox):
+    def __init__(self, title):
+        gtk.VBox.__init__(self)
+        
+        self.userlist = gtk.ListStore(str)
+
+        self.view  = gtk.TreeView(self.userlist)
+        self.view.set_size_request(0, -1)
+        self.view.set_headers_visible(False)
+
+        self.view.insert_column_with_attributes(
+            0, "", gtk.CellRendererText(), text=0
+            )
+            
+        self.view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        self.view.set_property("fixed-height-mode", True)
+        
+        win = gtk.ScrolledWindow()
+        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
+        win.add(self.view)
+
+        self.pack_end(win)
 
 class IrcChannelWindow(IrcWindow):
     # channel window and nicklist               
     def chat_view(self):
-        self.nicklist = gtk.ListStore(str)
-        
         cv = IrcWindow.chat_view(self)
         cv.set_size_request(50, -1)
         
-        tv = gtk.TreeView(self.nicklist)
-        tv.set_size_request(0, -1)
-        
-        tv.insert_column_with_attributes(
-            0, self.title, gtk.CellRendererText(), text=0
-            )
-            
-        swin = gtk.ScrolledWindow()
-        swin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        swin.add(tv)
+        self.nicklist = Nicklist(self.title)
         
         win = gtk.HPaned()
         win.pack1(cv, resize=True, shrink=False)
-        win.pack2(swin, resize=False, shrink=True)
+        win.pack2(self.nicklist, resize=False, shrink=True)
         
         def set_pane_pos():
             pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
@@ -386,10 +397,10 @@ class IrcChannelWindow(IrcWindow):
         return win
         
     def set_nicklist(self, nicks):
-        self.nicklist.clear()
+        self.nicklist.userlist.clear()
         
         for nick in nicks:
-            self.nicklist.append([nick])
+            self.nicklist.userlist.append([nick])
         
 class IrcTabs(gtk.Notebook):
     def __init__(self):
@@ -562,7 +573,9 @@ def get_active():
 def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
-        first_window = make_window(first_network, "status", "Status Window", first_network.server)
+        first_window = make_window(first_network, "status", "Status Window", first_network.server, is_chan=True)
+        
+        first_window.set_nicklist(str(x) for x in range(100))
 
     try:
         gtk.main()
