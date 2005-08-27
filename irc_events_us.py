@@ -2,6 +2,7 @@ import copy
 
 import events
 import ui
+import irc
 
 def defRaw(event):
     if not event.done:
