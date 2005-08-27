@@ -291,7 +291,7 @@ class IrcWindow(gtk.VBox):
             events.trigger('Input', e_data)
             
         if self.network:
-            if self.network.connected:
+            if self.network.status == irc.CONNECTED:
                 nick = self.network.me
             else:
                 nick = self.network.nicks[0]

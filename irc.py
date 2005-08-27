@@ -8,6 +8,11 @@ import ui
 
 DEBUG = 0
 
+DISCONNECTED = 0
+CONNECTING = 1
+INITIALIZING = 2
+CONNECTED = 3
+
 def parse_irc(msg, server):
     msg = msg.split(" ")
     
@@ -37,9 +42,7 @@ class Network:
     port = 6667
     password = ''
     
-    connecting = False
-    initializing = False
-    connected = False
+    status = DISCONNECTED
     name = ''
     
     me = ''                     # my nickname
@@ -64,7 +67,7 @@ class Network:
     
     #called when we can write to the socket
     def on_writeable(self):
-        self.initializing = True
+        self.status = INITIALIZING
         
         ui.unregister(self.writeable_id)
         self.writeable_id = None
@@ -144,8 +147,8 @@ class Network:
         events.trigger('Raw', e_data)
     
     def connect(self):
-        if not self.connecting:
-            self.connecting = True
+        if not self.status:
+            self.status = CONNECTING
             self.socket = socket.socket()
             self.socket.settimeout(0)
             
@@ -178,8 +181,7 @@ class Network:
         
         self.socket = None
         
-        self.connecting = False
-        self.initializing = False
+        self.status = DISCONNECTED
         
         #note: connecting from onDisconnect is probably a Bad Thing
         e_data = events.data()

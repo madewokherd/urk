@@ -91,8 +91,8 @@ def defRaw(event):
             event.quiet = True
         
         elif event.msg[1] == "376": #RPL_ENDOFMOTD
-            if not event.network.connected:
-                event.network.connected = True
+            if event.network.status == irc.INITIALIZING:
+                event.network.status = irc.CONNECTED
                 e_data = copy.copy(event)
                 e_data.type = 'connect'
                 events.trigger('Connect', e_data)
@@ -101,8 +101,6 @@ def defRaw(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = ui.get_status_window(event.network)
-    
-    event.network.connected = False
     
     event.type = "disconnect"
 

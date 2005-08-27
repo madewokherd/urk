@@ -76,7 +76,7 @@ def handle_query(event):
     event.done = True
 
 def handle_raw(event):
-    if event.network.initializing:
+    if event.network.status >= irc.INITIALIZING:
         event.network.raw(' '.join(event.args))
         event.done = True
     else:
@@ -84,7 +84,7 @@ def handle_raw(event):
 
 def handle_join(event):
     if event.args:
-        if event.network.initializing:
+        if event.network.status >= irc.INITIALIZING:
             event.network.join(event.args[0])
             event.done = True
         else:
@@ -137,8 +137,6 @@ def handle_server(event):
         event.network = irc.Network(**network_info)
         window = ui.make_window(event.network, 'status', "Status Window", "[%s]" % event.network.server)
         ui.activate(window)
-    #else if event.network.connected:
-    #    event.network.disconnect()
         
     if "server" in network_info:
         event.network.server = network_info["server"]
@@ -146,7 +144,7 @@ def handle_server(event):
         event.network.port = network_info["port"]
 
     if not ("n" in event.switches or "o" in event.switches):
-        if event.network.connecting:
+        if event.network.status:
             event.network.quit()
         event.network.connect()
 
@@ -176,7 +174,7 @@ def defCommand(event):
 
 def postCommand(event):
     if not event.done and event.error_text == 'No such command exists' \
-      and event.network.initializing:
+      and event.network.status >= irc.INITIALIZING:
         event.network.raw(event.text)
         event.done = True
         
