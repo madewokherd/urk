@@ -2,7 +2,7 @@ before the first release:
 
 Channel Nicklist
 
-    also, we need to do something so it starts with a sane size, and probably
+    we need to do something so it starts with a sane size, and probably
 make conf save our nicklist's size
 
 
@@ -13,16 +13,8 @@ Server Stuff
 
 Scripting system
 
-    theme.py doesn't like being reloaded (seems to be something to do with
-hooking IrcWindow.__init__)
-    
     I think for the script-manipulation to feel "complete" we need a command
 to list currently loaded scripts
-
-
-MEH likes closing tabs
-
-    closing status windows needs to work (and disconnect us from the network)
 
 
 Documentation

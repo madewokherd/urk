@@ -108,8 +108,6 @@ def handle_server(event):
         event.network.connect()
     
     event.done = True
-    
-    print network_info
 
 command_handlers = {
     'say': handle_say,
@@ -229,6 +227,13 @@ def setupMode(event):
 def onClose(window):
     if window.type == 'channel' and window.id in window.network.channels:
         window.network.part(window.id)
+    elif window.type == 'status':
+        if window.network.status:
+            window.network.quit()
+        
+        for w in list(ui.get_window_for(network=window.network)):
+            if not (w is window):
+                ui.close_window(w)
 
 def onNick(event):
     if event.network.me == event.source:

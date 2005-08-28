@@ -564,7 +564,7 @@ def close_window(window):
     del window_list[window.network, window.type, window.id]
         
 def get_window_for(network=None, type=None, id=None):
-    if network:
+    if network and id:
         id = network.normalize_case(id)
 
     for n, t, i in window_list:

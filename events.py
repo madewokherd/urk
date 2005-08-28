@@ -190,12 +190,19 @@ def handle_reload(event):
         traceback.print_exc()
         event.error_text = "Error loading the script"
 
+def handle_scripts(event):
+    event.window.write("Loaded scripts:")
+    for name in loaded:
+        event.window.write("* %s" % name)
+    event.done = True
+
 command_handlers = {
     'pyeval': handle_pyeval,
     'pyexec': handle_pyexec,
     'load': handle_load,
     'unload': handle_unload,
     'reload': handle_reload,
+    'scripts': handle_scripts,
     }
 
 def defCommand(event):

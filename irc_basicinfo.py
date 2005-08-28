@@ -38,6 +38,9 @@ def setupSocketConnect(event):
     }
     event.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
 
+def postDisconnect(event):
+    event.network.channels = {}
+
 class Channel(object):
     def __init__(self, name):
         self.name = name
