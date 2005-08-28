@@ -14,14 +14,10 @@ colors = (
 def get_mirc_color(number):
     return colors[int(number) % len(colors)]
     
-DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789ABCDEF')
+DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
 
 def ishex(string):
-    for char in string.upper():
-        if char not in HEX_DIGITS:
-            return False
-    
-    return bool(string)
+    return set(string) < HEX_DIGITS
 
 def parse_mirc1(string):
     start = 0
@@ -345,7 +341,7 @@ if __name__ == "__main__":
         #3: parse_mirc3,
         }
     
-    r = range(1000)    
+    r = range(5000)    
     for i, f in to_test.items():
         print "parse_mirc%s" % i 
            
