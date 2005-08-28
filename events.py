@@ -13,6 +13,7 @@ class data:
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
 events = {}
+loaded = {} # FIXME: dict for when we need some info on it
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
@@ -40,6 +41,8 @@ def register(e_name, e_stage, f_ref, s_name=""):
 # Load a python script and register
 # the functions defined in it for events.
 def load(s_name, reloading=False):
+    loaded[s_name] = None
+
     # split the directory and filename
     dirname = os.path.dirname(s_name)
     filename = os.path.basename(s_name)
@@ -83,6 +86,8 @@ def load(s_name, reloading=False):
                     
 # Remove any function which was defined in the given script
 def unload(s_name):
+    del loaded[s_name]
+
     for e_name in events:
         for t in events[e_name]:
             to_check = events[e_name][t]
