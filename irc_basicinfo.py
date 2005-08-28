@@ -1,3 +1,6 @@
+import events
+events.load('irc_events_us')
+
 # FIXME:
 def update_nicks(network, channel):
     import ui

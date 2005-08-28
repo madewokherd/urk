@@ -2,23 +2,17 @@ import pango
 import gtk
 
 import ui
+import events
 
-#FIXME: ui should implement a "nice" interface to this
-# Also, the effect go away when we unload
-oldWindowInit = ui.IrcWindow.__init__
+events.load('irc_basicinfo')
 
-def newWindowInit(self, *args, **kwargs):
-    oldWindowInit(self, *args, **kwargs)
-    
-    chatview_bg = gtk.gdk.color_parse("#2E3D49")
-    chatview_fg = gtk.gdk.color_parse("#DEDEDE")
-    chatview_font = pango.FontDescription("sans 8")
+viewstyle = {
+    'bg': '#2E3D49',
+    'fg': '#DEDEDE',
+    'font': 'sans 8',
+    }
 
-    self.view.modify_text(gtk.STATE_NORMAL, chatview_fg)
-    self.view.modify_base(gtk.STATE_NORMAL, chatview_bg)
-    self.view.modify_font(chatview_font)
-    
-ui.IrcWindow.__init__ = newWindowInit
+ui.set_viewstyle(viewstyle)
 
 def onText(event):
     color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"

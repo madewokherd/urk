@@ -329,6 +329,8 @@ class IrcWindow(gtk.VBox):
         self.view.set_property("left-margin", 3)
         self.view.set_property("right-margin", 3)
         self.view.set_property("indent", 0)
+        
+        apply_style(self.view, style['view'])
 
         def transfer_text(widget, event):
             modifiers_on = event.state & MOD_MASK
@@ -595,6 +597,46 @@ def start():
         gtk.main()
     except KeyboardInterrupt:
         ui.shutdown()
+
+# Font/color settings
+
+def apply_style_fg(window, value):
+    window.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+def apply_style_bg(window, value):
+    window.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+def apply_style_font(window, value):
+    window.modify_font(pango.FontDescription(value))
+
+style_functions = {
+    'fg': apply_style_fg,
+    'bg': apply_style_bg,
+    'font': apply_style_font,
+    }
+
+#using a dictionary because we can't set module attributes from functions
+#I don't like this
+style = {
+    'view': (),
+    }
+
+def apply_style(window, style):
+    if style == None:
+        window.set_style(None)
+    else:
+        #I don't like this, but it seems to be the only way I can reset settings
+        dummy = gtk.Label()
+        dummy.set_style(None)
+        for name in style:
+            style_functions[name](dummy, style[name])
+        window.set_style(dummy.rc_get_style())
+
+def set_viewstyle(s):
+    style['view'] = s
+    for window_index in window_list:
+        window = window_list[window_index]
+        apply_style(window.view, s)
 
 # IO Type Constants
 IO_IN = gobject.IO_IN

@@ -8,25 +8,16 @@ make conf save our nicklist's size
 
 Server Stuff
 
-    we should update the server name when you do /server, possibly 
-even filling in the network name when we get that (actually, we should
-probably be updating the status window title any time we connect or disconnect
-so the []'s are useful as an "are we connected?" hint)
-    
     we need some sort of "server list" that maps networks to servers
 
 
 Scripting system
 
-    we need some nice /commands to handle scripts
+    theme.py doesn't like being reloaded (seems to be something to do with
+hooking IrcWindow.__init__)
     
-    /reload is broken (doesn't seem to unload things)
-    
-    a way to automatically load a script when another script needs it would be
-good
-    
-    we should really have run_command somewhere things that aren't script.py can
-import
+    I think for the script-manipulation to feel "complete" we need a command
+to list currently loaded scripts
 
 
 MEH likes closing tabs

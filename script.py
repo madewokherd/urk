@@ -7,6 +7,8 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
+events.load('irc_basicinfo')
+
 def defInput(event):
     if not event.done:
         if event.text.startswith(COMMAND_PREFIX):
