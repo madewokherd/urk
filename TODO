@@ -13,10 +13,6 @@ even filling in the network name when we get that (actually, we should
 probably be updating the status window title any time we connect or disconnect
 so the []'s are useful as an "are we connected?" hint)
     
-    it needs to disconnect us if we're connected already and want to connect
-    
-    the file>>connect thing should probably have the same effect as /server
-
     we need some sort of "server list" that maps networks to servers
 
 

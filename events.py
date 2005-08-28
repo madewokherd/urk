@@ -10,15 +10,6 @@ class data:
         for attr in kwargs.items():
             setattr(self, *attr)
 
-class getdict(object):
-    __slots__ = ['__weakref__', 'target']
-    
-    def __init__(self, target):
-        self.target = target
-    
-    def __getitem__(self, name):
-        return getattr(self.target, name)
-
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
 events = {}
