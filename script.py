@@ -7,34 +7,6 @@ import ui
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
-def run_command(text, window, network):
-    if not text:
-        return
-
-    split = text.split()
-
-    c_data = events.data()
-    c_data.text = text
-    
-    c_data.name = split[0]
-
-    if len(split) > 1 and split[1][0] == "-":
-        c_data.switches = set(split[1][1:])
-        c_data.args = split[2:]
-    else:
-        c_data.switches = set()
-        c_data.args = split[1:]
-
-    c_data.window = window
-    c_data.network = network
-
-    c_data.error_text = 'No such command exists'
-
-    events.trigger('Command', c_data)
-    
-    if not c_data.done:
-        c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
-
 def defInput(event):
     if not event.done:
         if event.text.startswith(COMMAND_PREFIX):
@@ -42,7 +14,9 @@ def defInput(event):
         else:
             command = 'say - '+event.text
 
-        run_command(command, event.window, event.network)
+        events.run_command(command, event.window, event.network)
+        
+        event.done = True
 
 def handle_say(event):
     if event.window.type in ('channel', 'query'):
@@ -91,27 +65,6 @@ def handle_join(event):
             event.error_text = "We're not connected."
     else:
         event.error_text = "You must supply a channel."
-
-def handle_pyeval(event):
-    try:
-        event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
-    except:
-        for line in traceback.format_exc().split('\n'):
-            event.window.write(line)
-    event.done = True
-
-def handle_pyexec(event):
-    try:
-        exec ' '.join(event.args) in globals(), event.__dict__
-    except:
-        for line in traceback.format_exc().split('\n'):
-            event.window.write(line)
-    event.done = True
-
-def handle_reload(event):
-    name = event.args[0]
-    events.refresh(name)
-    event.done = True
 
 def handle_server(event):
     network_info = {}
@@ -166,9 +119,6 @@ command_handlers = {
     'raw': handle_raw,
     'quote': handle_raw,
     'join': handle_join,
-    'pyeval': handle_pyeval,
-    'pyexec': handle_pyexec,
-    'reload': handle_reload,
     'server': handle_server,
     }
 
@@ -224,7 +174,7 @@ def onConnect(event):
     if 'NETWORK' in event.network.isupport:
         perform = conf.get('perform/'+str(event.network.isupport['NETWORK'])) or []
         for command in perform:
-            run_command(command, event.window, event.network)
+            events.run_command(command, event.window, event.network)
     window = ui.get_status_window(event.network)
     if window:
         #window.title = event.network.isupport['NETWORK']

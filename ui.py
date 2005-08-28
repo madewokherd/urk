@@ -139,9 +139,12 @@ class EntryBox(gtk.Entry):
                 e_data.network = self.win.network
                 events.trigger('Input', e_data)
                 
+                if not e_data.done:
+                    events.run_command(line, self.win, self.win.network)
+                
                 self.history.insert(1, line)
                 self.history_i = 0
-    
+        
         self.set_text("")
     
     # Explores the history of this entry box
