@@ -140,6 +140,10 @@ def handle_server(event):
         
     if "server" in network_info:
         event.network.server = network_info["server"]
+        if not event.network.status:
+            window = ui.get_status_window(event.network)
+            if window:
+                window.title = "[%s]" % event.network.server
     if "port" in network_info:
         event.network.port = network_info["port"]
 
@@ -147,7 +151,7 @@ def handle_server(event):
         if event.network.status:
             event.network.quit()
         event.network.connect()
-
+    
     event.done = True
     
     print network_info
@@ -166,7 +170,7 @@ command_handlers = {
     'pyexec': handle_pyexec,
     'reload': handle_reload,
     'server': handle_server,
-}
+    }
 
 def defCommand(event):
     if not event.done and event.name in command_handlers:
@@ -216,12 +220,23 @@ def defSocketConnect(event):
         event.network.me = None
         event.done = True
 
-def defConnect(event):
+def onConnect(event):
     if 'NETWORK' in event.network.isupport:
         perform = conf.get('perform/'+str(event.network.isupport['NETWORK'])) or []
         for command in perform:
             run_command(command, event.window, event.network)
-        event.done = True
+    window = ui.get_status_window(event.network)
+    if window:
+        #window.title = event.network.isupport['NETWORK']
+        # If we use the network name, it can make it harder to tell which
+        # windows are status windows. We need a better solution, but this is
+        # disabled for now.
+        window.title = event.network.server
+
+def onDisconnect(event):
+    window = ui.get_status_window(event.network)
+    if window:
+        window.title = "[%s]" % event.network.server
 
 def setupText(event):
     if event.target == event.network.me:

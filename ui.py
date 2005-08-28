@@ -277,7 +277,16 @@ class IrcWindow(gtk.VBox):
                 self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
                 
             register_idle(scroll)
-
+    
+    def get_title(self):
+        return self.__title
+    
+    def set_title(self, value):
+        self.__title = value
+        self.label.update()
+    
+    title = property(get_title, set_title)
+    
     # this is our text entry widget
     def entry_box(self):
         self.entry = EntryBox(self)
@@ -343,8 +352,8 @@ class IrcWindow(gtk.VBox):
         self.network = network
         self.type = type
         self.id = id
-
-        self.title = title or id
+        
+        self.__title = title or id
         self.activity = 0
         
         self.label = IrcTabLabel(self)
