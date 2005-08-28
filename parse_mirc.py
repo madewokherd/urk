@@ -14,11 +14,11 @@ colors = (
 def get_mirc_color(number):
     return colors[int(number) % len(colors)]
     
-hexdigits = set('0123456789ABCDEF')
+DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789ABCDEF')
 
 def ishex(string):
     for char in string.upper():
-        if char not in hexdigits:
+        if char not in HEX_DIGITS:
             return False
     
     return bool(string)
@@ -134,71 +134,64 @@ def parse_mirc2(string):
     out, looking, tags, pos = "", {}, [], 0
     
     string += RESET
-    
+
     while string:
         c = string[0]
 
         if c == MIRC_COLOR:
             if c in looking:
-                tags += [looking[c] + [pos]]
+                tags.append(looking[c] + (pos,))
                 del looking[c]
-
-            next = string[1:]
             
-            if next[0:1] in "0123456789":
-                if next[1:2] in "0123456789":
-                    fg, next, string = get_mirc_color(next[0:2]), next[2:], string[2:]
+            if string[1:2] in DEC_DIGITS:
+                if string[2:3] in DEC_DIGITS:
+                    fg, string = get_mirc_color(string[1:3]), string[2:]
 
                 else:
-                    fg, next, string = get_mirc_color(next[0:1]), next[1:], string[1:]
+                    fg, string = get_mirc_color(string[1:2]), string[1:]
                     
-                if next[0:1] == "," and next[1:2] in "0123456789":
-                    if next[2:3] in "0123456789":
-                        bg, string = get_mirc_color(next[1:3]), string[3:]
+                if string[1:2] == "," and string[2:3] in DEC_DIGITS:
+                    if string[3:4] in DEC_DIGITS:
+                        bg, string = get_mirc_color(string[2:4]), string[3:]
 
                     else:
-                        bg, string = get_mirc_color(next[1:2]), string[2:]
+                        bg, string = get_mirc_color(string[2:3]), string[2:]
                         
-                    looking[c] = [[("foreground", fg), ("background", bg)], pos]
+                    looking[c] = [("foreground", fg), ("background", bg)], pos
                         
                 else:
-                    looking[c] = [[("foreground", fg)], pos]  
+                    looking[c] = [("foreground", fg)], pos 
 
         elif c == BERS_COLOR:
             if c in looking:
-                tags += [looking[c] + [pos]]
+                tags.append(looking[c] + (pos,))
                 del looking[c]
-        
-            next = string[1:]
-            
-            if ishex(next[0:6]):
-                fg = "#" + next[0:6]
-                
-                string = string[6:]
 
-                if next[12:] and next[6] == "," and ishex(next[7:13]):
-                    bg = "#" + next[7:13]
-                    
-                    string = string[7:]
+            if ishex(string[1:7]):
+                fg, string = "#" + string[1:7], string[6:]
 
-                    looking[c] = [[("foreground", fg), ("background", bg)], pos]
+                if string[1:2] == "," and ishex(string[2:8]):
+                    bg, string = "#" + string[2:8], string[7:]
+
+                    looking[c] = [("foreground", fg), ("background", bg)], pos
                     
                 else:
-                    looking[c] = [[("foreground", fg)], pos]
-
+                    looking[c] = [("foreground", fg)], pos
+                    
         elif c in (BOLD, UNDERLINE):
             if c in looking:
-                tags += [looking[c] + [pos]]
+                tags.append(looking[c] + (pos,))
                 del looking[c]
+        
             else:
                 if c == BOLD:
-                    looking[c] = [[("weight", BOLD)], pos]
+                    looking[c] = [("weight", BOLD)], pos
                 else:
-                    looking[c] = [[("underline", UNDERLINE)], pos]
+                    looking[c] = [("underline", UNDERLINE)], pos
         
         elif c == RESET:
             for look in looking:
-                tags += [looking[look] + [pos]]
+                tags.append(looking[look] + (pos,))
             looking = {}
                 
         else:
@@ -238,11 +231,11 @@ def parse_mirc3(string):
         g, GET = {"f": "", "b": ""}, "f"
 
         while next:
-            if next[0] in "0123456789" and len(g[GET]) <= 1:
+            if next[0] in DEC_DIGITS and len(g[GET]) <= 1:
                 g[GET] += next[0]
                 
             elif next[0] == ",":
-                if not (g["f"] and next[1:] and next[1] in "0123456789"):
+                if not (g["f"] and next[1:] and next[1] in DEC_DIGITS):
                     break
                     
                 else:
@@ -270,10 +263,10 @@ def parse_mirc3(string):
     for p1, p2 in zip(tags[BERS_COLOR], tags[BERS_COLOR][1:]):
         next = string[p1+1:p1+14]
 
-        if next[5:] and ishex(next[0:6]):
+        if ishex(next[0:6]):
             fg, bg = "#" + next[0:6], ""
             
-            if next[6:] and next[6] == ",":
+            if next[6:7] == ",":
                 if next[12:] and ishex(next[7:13]):
                     bg = "#" + next[7:13]
 
@@ -339,7 +332,7 @@ if __name__ == "__main__":
         ([([('foreground', '#770077'), ('background', '#FFFFFF')], 0, 31), ([('foreground', '#000077'), ('background', '#FFFFFF')], 31, 51)], 'bersirc color with background! setting foreground! reset!'),
         ]
         
-    #"""
+    """
         
     for test in tests:
         print parse_mirc2(test)
@@ -352,7 +345,7 @@ if __name__ == "__main__":
         #3: parse_mirc3,
         }
     
-    r = range(10000)    
+    r = range(1000)    
     for i, f in to_test.items():
         print "parse_mirc%s" % i 
            
