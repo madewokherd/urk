@@ -11,12 +11,6 @@ Server Stuff
     we need some sort of "server list" that maps networks to servers
 
 
-Scripting system
-
-    I think for the script-manipulation to feel "complete" we need a command
-to list currently loaded scripts
-
-
 Documentation
 
     If not complete documentation, there should be enough there that someone
