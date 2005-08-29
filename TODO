@@ -1,16 +1,5 @@
 before the first release:
 
-Channel Nicklist
-
-    we need to do something so it starts with a sane size, and probably
-make conf save our nicklist's size
-
-
-Server Stuff
-
-    we need some sort of "server list" that maps networks to servers
-
-
 Documentation
 
     If not complete documentation, there should be enough there that someone
@@ -21,6 +10,11 @@ documentation for other events for now).
 
 
 before we can claim it's not beta:
+
+Channel Nicklist
+
+    we should automatically save our nicklist size somehow
+
 
 Network Prefs and Data
 
