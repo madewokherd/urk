@@ -108,6 +108,10 @@ def onNick(event):
                 window = ui.window_list[event.network, 'channel', channame]
                 if window:
                     window.write(to_write)
+        if event.source == event.network.me:
+            window = ui.get_status_window(event.network)
+            if window:
+                window.write(to_write)
 
 def onTopic(event):
     to_write = "\x02%s\x02 set topic on %s: %s" % (event.source, event.target, event.text)

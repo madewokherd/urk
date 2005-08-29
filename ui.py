@@ -294,19 +294,11 @@ class IrcWindow(gtk.VBox):
     def entry_box(self):
         self.entry = EntryBox(self)
         
-        # FIXME: please make this whatever you need to do to change nick
         def nick_change(newnick):
-            e_data = events.data()
-            e_data.window = self
-            e_data.text = "/nick %s" % newnick
-            e_data.network = self.network
-            events.trigger('Input', e_data)
+            events.run_command('nick %s' % newnick, self, self.network)
             
         if self.network:
-            if self.network.status == irc.CONNECTED:
-                nick = self.network.me
-            else:
-                nick = self.network.nicks[0]
+            nick = self.network.me
         else:
             nick = conf.get("nick") or "MrUrk"
         

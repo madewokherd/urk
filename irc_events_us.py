@@ -6,11 +6,8 @@ import irc
 
 def defRaw(event):
     if not event.done:
-        if not event.network.me:
-            if event.msg[1] == '001':
-                event.network.me = event.msg[2]
-                
-            elif event.msg[1] in ('431','432','433','436','437'):
+        if not event.network.got_nick:
+            if event.msg[1] in ('431','432','433','436','437'):
                 failednick = event.msg[3]
                 nicks = list(event.network.nicks)
                 
@@ -19,6 +16,17 @@ def defRaw(event):
                     event.network.raw('NICK %s' % nicks[index])
                 # else get the user to supply a nick or make one up?
         
+            elif event.msg[1] == '001':
+                if event.network.me != event.msg[2]:
+                    e_data = events.data()
+                    e_data.network = event.network
+                    e_data.window = event.window
+                    e_data.source = event.network.me
+                    e_data.newnick = event.msg[2]
+                    e_data.type = 'nick'
+                    events.trigger('Nick', e_data)
+                    event.network.me = event.msg[2]
+                
         if event.msg[1] == "PING":
             event.network.raw("PONG :%s" % event.msg[-1])
             event.done = True
@@ -98,6 +106,9 @@ def defRaw(event):
                 e_data.type = 'connect'
                 events.trigger('Connect', e_data)
             event.done = True
+
+def setupSocketConnect(event):
+    event.network.got_nick = False
 
 def setupDisconnect(event):
     if not hasattr(event, 'window'):

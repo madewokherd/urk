@@ -60,6 +60,7 @@ class Network:
             def_nicks = ["MrUrk"]
         
         self.nicks = nicks or def_nicks
+        self.me = self.nicks[0]
             
         self.fullname = fullname or "Urk user"
 
@@ -67,6 +68,16 @@ class Network:
     
     #called when we can write to the socket
     def on_writeable(self):
+        #test the socket for writeability--we might be disconnected
+        try:
+            self.socket.send('')
+        except socket.error, (number, detail):
+            self.disconnect(error=detail)
+            return True
+        except:
+            self.disconnect(error="Network error!")
+            return True
+            
         self.status = INITIALIZING
         
         ui.unregister(self.writeable_id)
@@ -94,7 +105,12 @@ class Network:
 
                 self.got_msg(line)
         else:
-            self.disconnect(error="sock.recv() returned an empty string (this shouldn't happen!)")
+            try:
+                self.socket.send('')
+            except socket.error, (number, detail):
+                self.disconnect(error=detail)
+            except:
+                self.disconnect(error="Network error!")
         
         return True
         
@@ -102,7 +118,12 @@ class Network:
     def on_error(self):
         #we should get the error from the socket so we can report it, but I
         # don't know how!
-        self.disconnect(error="Network error!")
+        try:
+            self.socket.send('')
+        except socket.error, (number, detail):
+            self.disconnect(error=detail)
+        except:
+            self.disconnect(error="Network error!")
         
         return True
         
@@ -186,15 +207,30 @@ class Network:
         e_data.type = "disconnect"
         events.trigger('Disconnect', e_data)
         
+        #trigger a nick change if the nick we want is different from the one we
+        # had.
+        if self.me != self.nicks[0]:
+            e_data = events.data()
+            e_data.network = self
+            e_data.window = ui.get_status_window(self)
+            e_data.source = self.me
+            e_data.newnick = self.nicks[0]
+            e_data.type = 'nick'
+            events.trigger('Nick', e_data)
+            self.me = self.nicks[0]
+        
     def normalize_case(self, string):
         return string.lower()
     
     def quit(self,msg=None):
-        if msg == None:
-            msg = conf.get('quitmsg')
+        try:
             if msg == None:
-                msg = "%s - %s" % (urk.long_version, urk.website)
-        self.raw("QUIT :%s" % msg)
+                msg = conf.get('quitmsg')
+                if msg == None:
+                    msg = "%s - %s" % (urk.long_version, urk.website)
+            self.raw("QUIT :%s" % msg)
+        except:
+            pass
         self.disconnect()
         
     def join(self, name):        

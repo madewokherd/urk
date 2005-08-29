@@ -51,6 +51,28 @@ def handle_query(event):
     ui.activate(window)
     event.done = True
 
+# make /nick work offline
+def handle_nick(event):
+    if not event.network.status:
+        e_data = events.data()
+        e_data.network = event.network
+        e_data.window = ui.get_status_window(event.network)
+        e_data.source = event.network.me
+        e_data.newnick = event.args[0]
+        e_data.type = 'nick'
+        events.trigger('Nick', e_data)
+        event.network.nicks[0] = event.args[0]
+        event.network.me = event.args[0]
+        event.done = True
+
+# make /quit always disconnect us
+def handle_quit(event):
+    if event.network.status:
+        event.network.quit(' '.join(event.args))
+        event.done = True
+    else:
+        event.error_text = "We're not connected to a network."
+
 def handle_raw(event):
     if event.network.status >= irc.INITIALIZING:
         event.network.raw(' '.join(event.args))
@@ -106,6 +128,8 @@ def handle_server(event):
         if event.network.status:
             event.network.quit()
         event.network.connect()
+        ui.get_status_window(event.network).write(
+            "* Connecting to %s on port %s" % (event.network.server, event.network.port))
     
     event.done = True
 
@@ -116,6 +140,8 @@ command_handlers = {
     'notice': handle_notice,
     'echo': handle_echo,
     'query': handle_query,
+    'nick': handle_nick,
+    'quit': handle_quit,
     'raw': handle_raw,
     'quote': handle_raw,
     'join': handle_join,
