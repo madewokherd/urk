@@ -1,0 +1,147 @@
+Urk 0.-1.2
+http://urk.sourceforge.net/
+
+
+Overview:
+
+Urk is an IRC client written purely in python for linux/gnome. It has a built-in
+scripting system (also python), which is used to implement much of the client.
+
+
+Requirements/User installation:
+
+Urk requires the following packages (and should run on any os that can provide 
+them):
+-python version 2.4 or greater (www.python.org)
+-pygtk 2.6 or greater (www.pygtk.org)
+-gnome-python 2.10 or greater (www.pygtk.org)
+
+It's possible to make things work without gnome-python, but any changes urk 
+makes to your settings will not be preserved across sessions. See conf_dummy.py 
+for instructions to do this.
+
+Because urk is pure python, no compilation of urk is required. Just extract the 
+source to somewhere and run 'python urk.py'.
+
+
+Getting started:
+
+Make sure you have all the requirements, go to the directory where you have
+extracted the source, and type 'python urk.py'.
+
+We don't have any preferences windows yet. You can change your nickname by
+typing '/nick nickname' (replacing nickname with the nick you want to use)
+or typing a new nick in the nick field on the lower right corner and pressing 
+enter.
+
+To connect, type '/server irc.gamesurge.net' (replacing irc.gamesurge.net with 
+the server you want to connect to).
+
+If you want to connect to another server (without disconnecting the current
+one), use the -m switch as in '/server -m irc.gamesurge.net'.
+
+To join a channel when you're connected to a server, type '/join #channelname',
+replacing #channelname with the channel you want to join.
+
+Urk currently only supports the bare minimum commands and features you should
+need to connect and chat normally. On channels, you can send messages by
+typing them (if you want to send a message that starts with a /, use /say to
+send your message). You can send actions to channels with /me and send messages
+to arbitrary targets with /msg. If urk does not recognize a command, it will
+send it to the server. This works to implement most commands you would expect
+on an irc client.
+
+
+Configuration:
+
+Most configuration has to be done manually. This can be done using gconf-editor,
+but we recommend using python in interactive mode with conf.py:
+
+$ python -i conf.py
+
+Python will give you a '>>>' prompt. Press ctrl+d to exit. To set a value, use
+
+>>> set('setting', value)
+
+To see the current value, use
+
+>>> get('setting')
+
+Setting:            Description:
+
+'scripts_to_load'   A list of scripts urk should load on startup. Defaults to
+    ['script.py', 'theme.py', 'irc_basicinfo.py', 'irc_events_us.py']
+
+'nick'              The nickname urk should use. Defaults to 'MrUrk'
+
+'start_networks'    The networks/servers urk should connect to at startup. 
+    Defaults to []
+
+'perform/NETWORK'   A list of commands to perform on connecting to NETWORK.
+    Defaults to []
+
+'ui-gtk/tab-pos'    The side of the window where the tabs will reside
+    2 for top (default)
+    0 for left
+    1 for right
+    3 for bottom
+
+'ui-gtk/tab-margin' The number of pixels of empty space around the edges of the
+    window. Defaults to 10
+
+'command_prefix'    The prefix used to signal a command. Defaults to '/'
+
+
+System-wide installation:
+
+Not yet implemented.
+
+
+About scripting:
+
+Urk scripts are python programs that contain definitions of functions with 
+certain "magic" names, like onText (for when someone sends a channel or private 
+message). See www.python.org for help on writing python code. The format for 
+onText is:
+
+def onText(event):
+    code
+
+event is an object used to pass on the various information relating to the
+event that triggered the function.
+
+event.source is the nickname of the person who sent the message.
+
+event.target is the nickname or channel that received the message.
+
+event.text is the text of the message.
+
+event.network is an object representing the network where the message was sent.
+
+event.window is a window that seems to be related to the event and some 
+unspecified reason. It could be the status window, a channel, window, a query,
+anything.
+
+Complete documentation doesn't exist yet. You'll have to use the actual source
+files. Sorry. theme.py is good for finding event names.
+
+Alternatively, you can bug the authors for help if no documentation exists. This
+will motivate us to create it.
+
+
+Bugs/Feedback:
+
+Naturally, feedback of any sort is welcome. Of course we want to know about
+bugs. In particular, we'd also like to hear about any features you want or
+expect in an irc client that urk doesn't have. While we'd like to limit the
+things that go in the default client (a notify list, for example, is something
+we'd want to see as an external script, not as part of the default setup, and
+something we're not likely to implement soon), there are probably a lot of 
+little things that we may have skipped over because we don't use them or have 
+become used to not having them.
+
+
+License:
+
+GPL. Some legal stuff should probably go here. and I guess we need a LICENSE
+file.
