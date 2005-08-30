@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Urk IRC Client
+Exec=urk
+Icon=stock_help-chat
+Type=Application
+Categories=Application;Network;IRCClient
+GenericName=Irc Client
+Comment=Irc Client
