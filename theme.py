@@ -6,13 +6,14 @@ import events
 
 events.load('irc_basicinfo')
 
-viewstyle = {
+textareas = {
     'bg': '#2E3D49',
     'fg': '#DEDEDE',
     'font': 'sans 8',
     }
 
-ui.set_viewstyle(viewstyle)
+ui.set_style("view", textareas)
+ui.set_style("nicklist", textareas)
 
 def onText(event):
     color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"

@@ -10,38 +10,32 @@ import irc
 import conf
 import events
 import parse_mirc
-          
-MOD_MASK = 0
-for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
-             gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
-    MOD_MASK |= m   
 
 HILIT = 4
 TEXT = 2
 EVENT = 1
 
-COLOR = {
-    HILIT: "yellow",
-    TEXT: "red",
-    EVENT: "#555"
+ACTIVITY_INDICATOR = {
+    HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+    TEXT: "<span foreground='red'>%s</span>",
+    EVENT: "<span foreground='#363'>%s</span>",
     }
 
 def urk_about(action):
-    import __main__ as urk
+    import __main__
     
     about = gtk.AboutDialog()
     
-    about.set_name(urk.name+" (GTK+ Frontend)")
-    about.set_version(urk.version)
-    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
-    about.set_website(urk.website)
-    about.set_authors(urk.authors)
+    about.set_name(__main__.name+" (GTK+ Frontend)")
+    about.set_version(__main__.version)
+    about.set_copyright("Copyright \xc2\xa9 %s" % __main__.copyright)
+    about.set_website(__main__.website)
+    about.set_authors(__main__.authors)
     
     about.show_all()
     
-def get_tab_actions(page_num):
+def get_tab_actions(window):
     def close_tab(action):
-        window = window_list.get_nth_page(page_num)
         close_window(window)
         
     to_add = (
@@ -82,7 +76,7 @@ class NickLabel(gtk.EventBox):
             self.remove(self.edit)
             self.add(self.label)
             
-            self.entry.grab_focus()
+            self.win.entry.grab_focus()
 
     def edit_nick(self, *args):
         if self.mode == "show":
@@ -95,8 +89,15 @@ class NickLabel(gtk.EventBox):
             
             self.edit.grab_focus()
 
-    def __init__(self, entry, nick, nick_change):
+    def __init__(self, window):#entry, nick, nick_change):
         gtk.EventBox.__init__(self)
+        
+        self.win = window
+            
+        if self.win.network:
+            nick = self.win.network.me
+        else:
+            nick = conf.get("nick") or "MrUrk"
 
         self.label = gtk.Label(nick)
         self.label.set_padding(5, 0)
@@ -105,19 +106,17 @@ class NickLabel(gtk.EventBox):
         self.edit = gtk.Entry()
         self.edit.set_text(nick)
         self.edit.show()
-        
-        self.entry = entry
 
-        def change_nick(*args):
+        def nick_change(*args):
             if self.mode == "edit":
                 oldnick, newnick = self.label.get_text(), self.edit.get_text()
             
                 if newnick and newnick != oldnick:
-                    nick_change(newnick)
+                    events.run_command('nick %s' % newnick, self.win, self.win.network)
 
                 self.show_nick()
                 
-        self.edit.connect("activate", change_nick)
+        self.edit.connect("activate", nick_change)
 
         self.connect("button-press-event", self.edit_nick)
         self.edit.connect("focus-out-event", self.show_nick)
@@ -125,7 +124,6 @@ class NickLabel(gtk.EventBox):
 # The entry which you type in to send messages        
 class EntryBox(gtk.Entry):
     win = None
-    history = []
 
     # Generates an input event
     def entered_text(self, *args):
@@ -192,26 +190,20 @@ class EntryBox(gtk.Entry):
         
 class IrcTabLabel(gtk.EventBox):
     def update(self):
-        activity, title = self.child_window.activity, self.child_window.title
-        
-        if activity & HILIT:
-            text = "<span foreground='%s'>%s</span>" % (COLOR[HILIT], title)
-        elif activity & TEXT:
-            text = "<span foreground='%s'>%s</span>" % (COLOR[TEXT], title)
-        elif activity & EVENT:
-            text = "<span foreground='%s'>%s</span>" % (COLOR[EVENT], title)
+        for a in (HILIT, TEXT, EVENT):
+            if self.win.activity & a:
+                title = ACTIVITY_INDICATOR[a] % self.win.title
+                break
         else:
-            text = "<span>%s</span>" % title
+            title = self.win.title
             
-        self.label.set_markup(text)
+        self.label.set_markup(title)
 
     def tab_popup(self, widget, event):
         if event.button == 3: # right click
-            page_num = window_list.page_num(widget.child_window)
-            
             # add some tab UI                
             tab_id = ui_manager.add_ui_from_file("tabui.xml")
-            ui_manager.insert_action_group(get_tab_actions(page_num), 0)
+            ui_manager.insert_action_group(get_tab_actions(self.win), 0)
 
             tab_menu = ui_manager.get_widget("/TabPopup")
             
@@ -225,7 +217,7 @@ class IrcTabLabel(gtk.EventBox):
     def __init__(self, window):
         gtk.EventBox.__init__(self)
 
-        self.child_window = window
+        self.win = window
         self.connect("button-press-event", self.tab_popup)
         
         self.label = gtk.Label()        
@@ -254,12 +246,8 @@ class IrcWindow(gtk.VBox):
 
         if get_active() != self:
             self.activity |= activity_type
-            self.label.update()
 
         for props, start_i, end_i in tag_data:
-            start_pos = buffer.get_iter_at_offset(start_i + char_count)
-            end_pos = buffer.get_iter_at_offset(end_i + char_count)
-
             for i, (prop, val) in enumerate(props):
                 if val == parse_mirc.BOLD:
                     props[i] = prop, pango.WEIGHT_BOLD
@@ -271,6 +259,9 @@ class IrcWindow(gtk.VBox):
                  
             if not tag_table.lookup(tag_name):
                 buffer.create_tag(tag_name, **dict(props))
+                
+            start_pos = buffer.get_iter_at_offset(start_i + char_count)
+            end_pos = buffer.get_iter_at_offset(end_i + char_count)
                 
             buffer.apply_tag_by_name(tag_name, start_pos, end_pos)
 
@@ -290,19 +281,19 @@ class IrcWindow(gtk.VBox):
     
     title = property(get_title, set_title)
     
-    # this is our text entry widget
+    def get_activity(self):
+        return self.__activity
+    
+    def set_activity(self, value):
+        self.__activity = value
+        self.label.update()
+        
+    activity = property(get_activity, set_activity)
+    
+    # this is our text entry and nick widget
     def entry_box(self):
         self.entry = EntryBox(self)
-        
-        def nick_change(newnick):
-            events.run_command('nick %s' % newnick, self, self.network)
-            
-        if self.network:
-            nick = self.network.me
-        else:
-            nick = conf.get("nick") or "MrUrk"
-        
-        self.nick_label = NickLabel(self.entry, nick, nick_change)
+        self.nick_label = NickLabel(self)
 
         box = gtk.HBox()
         box.pack_start(self.entry)
@@ -322,7 +313,12 @@ class IrcWindow(gtk.VBox):
         self.view.set_property("right-margin", 3)
         self.view.set_property("indent", 0)
         
-        self.view.set_style(style['view'])
+        self.view.set_style(get_style("view"))
+        
+        MOD_MASK = 0
+        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
+                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
+            MOD_MASK |= m   
 
         def transfer_text(widget, event):
             modifiers_on = event.state & MOD_MASK
@@ -351,37 +347,38 @@ class IrcWindow(gtk.VBox):
         self.id = id
         
         self.__title = title or id
-        self.activity = 0
+        self.__activity = 0
         
         self.label = IrcTabLabel(self)
-        
-        cv, eb = self.chat_view(), self.entry_box()
 
-        self.pack_start(cv)
-        self.pack_end(eb, expand=False)
+        self.pack_start(self.chat_view())
+      
+        self.pack_end(self.entry_box(), expand=False)
   
         self.show_all()
         
 class Nicklist(gtk.VBox):
-    def __init__(self, title):
+    def __init__(self, window):
         gtk.VBox.__init__(self)
         
         self.userlist = gtk.ListStore(str)
+        
+        view = gtk.TreeView(self.userlist)
+        view.set_size_request(0, -1)
+        view.set_headers_visible(False)
 
-        self.view  = gtk.TreeView(self.userlist)
-        self.view.set_size_request(0, -1)
-        self.view.set_headers_visible(False)
-
-        self.view.insert_column_with_attributes(
+        view.insert_column_with_attributes(
             0, "", gtk.CellRendererText(), text=0
             )
             
-        self.view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-        self.view.set_property("fixed-height-mode", True)
+        view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        view.set_property("fixed-height-mode", True)
+        
+        view.set_style(get_style("nicklist"))
         
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
-        win.add(self.view)
+        win.add(view)
 
         self.pack_end(win)
 
@@ -391,7 +388,7 @@ class IrcChannelWindow(IrcWindow):
         cv = IrcWindow.chat_view(self)
         cv.set_size_request(50, -1)
         
-        self.nicklist = Nicklist(self.title)
+        self.nicklist = Nicklist(self)
         
         win = gtk.HPaned()
         win.pack1(cv, resize=True, shrink=False)
@@ -590,44 +587,39 @@ def start():
     except KeyboardInterrupt:
         ui.shutdown()
 
-# Font/color settings
+#FIXME: MEH hates dictionaries, they remind him of the bad words
+styles = {}
+    
+def get_style(widget):
+    if widget in styles:
+        return styles[widget]
 
-def apply_style_fg(window, value):
-    window.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+def set_style(widget, style):
+    def apply_style_fg(wdg, value):
+        wdg.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
 
-def apply_style_bg(window, value):
-    window.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+    def apply_style_bg(wdg, value):
+        wdg.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
 
-def apply_style_font(window, value):
-    window.modify_font(pango.FontDescription(value))
+    def apply_style_font(wdg, value):
+        wdg.modify_font(pango.FontDescription(value))
 
-style_functions = {
-    'fg': apply_style_fg,
-    'bg': apply_style_bg,
-    'font': apply_style_font,
-    }
+    style_functions = {
+        'fg': apply_style_fg,
+        'bg': apply_style_bg,
+        'font': apply_style_font,
+        }
 
-#using a dictionary because we can't set module attributes from functions
-#I don't like this
-style = {
-    'view': None,
-    }
-
-def set_viewstyle(s):
-    style['view'] = s
-    if s == None:
-        gtkstyle = None
-    else:
-        #I don't like this, but it seems to be the only way I can reset settings
+    if style:
+        # FIXME: find a better way...
         dummy = gtk.Label()
         dummy.set_style(None)
-        for name in s:
-            style_functions[name](dummy, s[name])
-        gtkstyle = dummy.rc_get_style()
-    style['view'] = gtkstyle
-    for window_index in window_list:
-        window = window_list[window_index]
-        window.view.set_style(gtkstyle)
+    
+        for name in style:
+            style_functions[name](dummy, style[name])
+        styles[widget] = dummy.rc_get_style()
+    else:
+        styles[widget] = None
 
 # IO Type Constants
 IO_IN = gobject.IO_IN
