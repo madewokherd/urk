@@ -76,11 +76,12 @@ def load(s_name, reloading = False):
     
     loaded[filename] = None
     
-    # we look through everything defined in the file    
-    for f in dir(imported):
+    # for each bit of the event sequence
+    for e_stage in trigger_sequence:
     
-        # for each bit of the event sequence
-        for e_stage in trigger_sequence:
+        # we look through everything defined in the file    
+        for f in dir(imported):
+
             # if the function is for this bit
             if f.startswith(e_stage):
             
