@@ -60,26 +60,48 @@ def get_urk_actions(ui):
     urk_actions.add_actions(to_add)
     
     return urk_actions
+    
+class Nicklist(gtk.VBox):
+    def __init__(self, window):
+        gtk.VBox.__init__(self)
+        
+        self.userlist = gtk.ListStore(str)
+        
+        view = gtk.TreeView(self.userlist)
+        view.set_size_request(0, -1)
+        view.set_headers_visible(False)
+
+        view.insert_column_with_attributes(
+            0, "", gtk.CellRendererText(), text=0
+            )
+            
+        view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        view.set_property("fixed-height-mode", True)
+        
+        view.set_style(get_style("nicklist"))
+        
+        win = gtk.ScrolledWindow()
+        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
+        win.add(view)
+
+        self.pack_end(win)
 
 # Label used to display/edit your current nick on a network
-class NickLabel(gtk.EventBox):
-    mode = "show"
+class NickEdit(gtk.EventBox):
+    def update(self):
+        self.label.set_text(self.win.network.me)
+        self.edit.set_text(self.win.network.me)
     
-    def set_nick(self, nick):
-        self.label.set_text(nick)
-        self.edit.set_text(nick)
-    
-    def show_nick(self, *args):
+    def toggle(self, *args):
         if self.mode == "edit":
             self.mode = "show"
         
             self.remove(self.edit)
             self.add(self.label)
             
-            self.win.entry.grab_focus()
+            self.win.input.grab_focus()
 
-    def edit_nick(self, *args):
-        if self.mode == "show":
+        else:
             self.mode = "edit"
             
             self.edit.set_text(self.label.get_text())
@@ -89,42 +111,36 @@ class NickLabel(gtk.EventBox):
             
             self.edit.grab_focus()
 
-    def __init__(self, window):#entry, nick, nick_change):
+    def __init__(self, window):
         gtk.EventBox.__init__(self)
         
+        self.mode = "show"
         self.win = window
-            
-        if self.win.network:
-            nick = self.win.network.me
-        else:
-            nick = conf.get("nick") or "MrUrk"
 
-        self.label = gtk.Label(nick)
+        self.label = gtk.Label()
         self.label.set_padding(5, 0)
         self.add(self.label)
         
         self.edit = gtk.Entry()
-        self.edit.set_text(nick)
         self.edit.show()
 
         def nick_change(*args):
-            if self.mode == "edit":
-                oldnick, newnick = self.label.get_text(), self.edit.get_text()
-            
-                if newnick and newnick != oldnick:
-                    events.run_command('nick %s' % newnick, self.win, self.win.network)
+            oldnick, newnick = self.label.get_text(), self.edit.get_text()
+        
+            if newnick and newnick != oldnick:
+                events.run_command('nick %s' % newnick, self.win, self.win.network)
 
-                self.show_nick()
+            self.win.input.grab_focus()
                 
         self.edit.connect("activate", nick_change)
 
-        self.connect("button-press-event", self.edit_nick)
-        self.edit.connect("focus-out-event", self.show_nick)
+        self.connect("button-press-event", self.toggle)
+        self.edit.connect("focus-out-event", self.toggle)
+        
+        self.update()
 
 # The entry which you type in to send messages        
-class EntryBox(gtk.Entry):
-    win = None
-
+class TextInput(gtk.Entry):
     # Generates an input event
     def entered_text(self, *args):
         lines = self.get_text().split("\n")
@@ -188,7 +204,83 @@ class EntryBox(gtk.Entry):
 
         self.connect("key-press-event", check_history_explore)
         
-class IrcTabLabel(gtk.EventBox):
+class TextOutput(gtk.TextView):
+    # the unknowing print weird things to our text widget function
+    def write(self, text, activity_type=EVENT):
+        tag_data, text = parse_mirc.parse_mirc(text)
+    
+        buffer = self.get_buffer()
+        
+        old_end = buffer.get_end_iter()
+        
+        end_rect = self.get_iter_location(old_end)
+        vis_rect = self.get_visible_rect()
+
+        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
+
+        char_count = buffer.get_char_count()
+
+        buffer.insert(old_end, text + "\n")
+
+        if get_active() != self.win:
+            self.win.activity |= activity_type
+
+        for props, start_i, end_i in tag_data:
+            for i, (prop, val) in enumerate(props):
+                if val == parse_mirc.BOLD:
+                    props[i] = prop, pango.WEIGHT_BOLD
+
+                elif val == parse_mirc.UNDERLINE:
+                   props[i] = prop, pango.UNDERLINE_SINGLE
+                
+            tag_name = str(hash(tuple(props)))
+                 
+            if not tag_table.lookup(tag_name):
+                buffer.create_tag(tag_name, **dict(props))
+                
+            start_pos = buffer.get_iter_at_offset(start_i + char_count)
+            end_pos = buffer.get_iter_at_offset(end_i + char_count)
+                
+            buffer.apply_tag_by_name(tag_name, start_pos, end_pos)
+
+        if do_scroll:        
+            def scroll():
+                new_end = buffer.get_end_iter()
+                self.scroll_mark_onscreen(buffer.create_mark("", new_end))
+                
+            register_idle(scroll)
+
+    def __init__(self, window):
+        gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
+        
+        self.win = window
+        
+        self.set_wrap_mode(gtk.WRAP_WORD_CHAR)
+        self.set_editable(False)
+        self.set_cursor_visible(False)
+        
+        self.set_property("left-margin", 3)
+        self.set_property("right-margin", 3)
+        self.set_property("indent", 0)
+        
+        self.set_style(get_style("view"))
+        
+        MOD_MASK = 0
+        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
+                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
+            MOD_MASK |= m   
+
+        def transfer_text(widget, event):
+            modifiers_on = event.state & MOD_MASK
+
+            if event.string and not modifiers_on:
+                self.win.input.grab_focus()
+                self.win.input.insert_text(event.string, -1)
+                self.win.input.set_position(-1)
+        
+        self.connect("key-press-event", transfer_text)
+        
+class WindowLabel(gtk.EventBox):
     def update(self):
         for a in (HILIT, TEXT, EVENT):
             if self.win.activity & a:
@@ -221,57 +313,12 @@ class IrcTabLabel(gtk.EventBox):
         self.connect("button-press-event", self.tab_popup)
         
         self.label = gtk.Label()        
-        self.update()
         self.add(self.label)
         
+        self.update()        
         self.show_all()
-
-class IrcWindow(gtk.VBox):
-    # the unknowing print weird things to our text window function
-    def write(self, text, activity_type=EVENT):
-        tag_data, text = parse_mirc.parse_mirc(text)
-    
-        buffer = self.view.get_buffer()
         
-        old_end = buffer.get_end_iter()
-        
-        end_rect = self.view.get_iter_location(old_end)
-        vis_rect = self.view.get_visible_rect()
-
-        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-
-        char_count = buffer.get_char_count()
-
-        buffer.insert(old_end, text + "\n")
-
-        if get_active() != self:
-            self.activity |= activity_type
-
-        for props, start_i, end_i in tag_data:
-            for i, (prop, val) in enumerate(props):
-                if val == parse_mirc.BOLD:
-                    props[i] = prop, pango.WEIGHT_BOLD
-
-                elif val == parse_mirc.UNDERLINE:
-                   props[i] = prop, pango.UNDERLINE_SINGLE
-                
-            tag_name = str(hash(tuple(props)))
-                 
-            if not tag_table.lookup(tag_name):
-                buffer.create_tag(tag_name, **dict(props))
-                
-            start_pos = buffer.get_iter_at_offset(start_i + char_count)
-            end_pos = buffer.get_iter_at_offset(end_i + char_count)
-                
-            buffer.apply_tag_by_name(tag_name, start_pos, end_pos)
-
-        if do_scroll:        
-            def scroll():
-                new_end = buffer.get_end_iter()
-                self.view.scroll_mark_onscreen(buffer.create_mark("", new_end))
-                
-            register_idle(scroll)
-    
+class Window(gtk.VBox):
     def get_title(self):
         return self.__title
     
@@ -290,52 +337,6 @@ class IrcWindow(gtk.VBox):
         
     activity = property(get_activity, set_activity)
     
-    # this is our text entry and nick widget
-    def entry_box(self):
-        self.entry = EntryBox(self)
-        self.nick_label = NickLabel(self)
-
-        box = gtk.HBox()
-        box.pack_start(self.entry)
-        box.pack_end(self.nick_label, expand=False)
-
-        return box
-        
-    # non-channel channel window, no nicklist         
-    def chat_view(self):
-        self.view = gtk.TextView(gtk.TextBuffer(tag_table))
-        
-        self.view.set_wrap_mode(gtk.WRAP_WORD_CHAR)
-        self.view.set_editable(False)
-        self.view.set_cursor_visible(False)
-        
-        self.view.set_property("left-margin", 3)
-        self.view.set_property("right-margin", 3)
-        self.view.set_property("indent", 0)
-        
-        self.view.set_style(get_style("view"))
-        
-        MOD_MASK = 0
-        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
-                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
-            MOD_MASK |= m   
-
-        def transfer_text(widget, event):
-            modifiers_on = event.state & MOD_MASK
-
-            if event.string and not modifiers_on:
-                self.entry.grab_focus()
-                self.entry.insert_text(event.string, -1)
-                self.entry.set_position(-1)
-        
-        self.view.connect("key-press-event", transfer_text)
-        
-        win = gtk.ScrolledWindow()
-        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        win.add(self.view)
-
-        return win
-    
     def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
         
@@ -349,65 +350,78 @@ class IrcWindow(gtk.VBox):
         self.__title = title or id
         self.__activity = 0
         
-        self.label = IrcTabLabel(self)
+        self.label = WindowLabel(self)
 
-        self.pack_start(self.chat_view())
-      
-        self.pack_end(self.entry_box(), expand=False)
+class ServerWindow(Window):   
+    def write(self, *args):
+        self.output.write(*args)
+
+    def __init__(self, network, type, id, title=None):
+        Window.__init__(self, network, type, id, title)
+
+        self.output = TextOutput(self)
+        self.input = TextInput(self)
+        
+        self.nick_label = NickEdit(self)
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+        
+        self.pack_start(topbox)
+        
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+        
+        self.pack_end(botbox, expand=False)
   
         self.show_all()
-        
-class Nicklist(gtk.VBox):
-    def __init__(self, window):
-        gtk.VBox.__init__(self)
-        
-        self.userlist = gtk.ListStore(str)
-        
-        view = gtk.TreeView(self.userlist)
-        view.set_size_request(0, -1)
-        view.set_headers_visible(False)
 
-        view.insert_column_with_attributes(
-            0, "", gtk.CellRendererText(), text=0
-            )
-            
-        view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-        view.set_property("fixed-height-mode", True)
-        
-        view.set_style(get_style("nicklist"))
-        
-        win = gtk.ScrolledWindow()
-        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
-        win.add(view)
+class ChannelWindow(Window):
+    def write(self, *args):
+        self.output.write(*args)
 
-        self.pack_end(win)
-
-class IrcChannelWindow(IrcWindow):
-    # channel window and nicklist               
-    def chat_view(self):
-        cv = IrcWindow.chat_view(self)
-        cv.set_size_request(50, -1)
-        
-        self.nicklist = Nicklist(self)
-        
-        win = gtk.HPaned()
-        win.pack1(cv, resize=True, shrink=False)
-        win.pack2(self.nicklist, resize=False, shrink=True)
-        
-        def set_pane_pos():
-            pos = conf.get("ui-gtk/chatview-width") or win.get_property("max-position") 
-            win.set_position(pos)
-        register_idle(set_pane_pos)
-
-        return win
-        
     def set_nicklist(self, nicks):
         self.nicklist.userlist.clear()
         
         for nick in nicks:
             self.nicklist.userlist.append([nick])
+
+    def __init__(self, network, type, id, title=None):
+        Window.__init__(self, network, type, id, title)
+
+        self.output = TextOutput(self)
+        self.input = TextInput(self)
         
-class IrcTabs(gtk.Notebook):
+        self.nicklist = Nicklist(self)
+        
+        self.nick_label = NickEdit(self)
+
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+        
+        pane = gtk.HPaned()
+        pane.pack1(topbox, resize=True, shrink=False)
+        pane.pack2(self.nicklist, resize=False, shrink=True)
+        
+        def set_pane_pos():
+            pos = conf.get("ui-gtk/chatview-width") or pane.get_property("max-position") 
+            pane.set_position(pos)
+        register_idle(set_pane_pos)
+        
+        self.pack_start(pane)
+
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+        
+        self.pack_end(botbox, expand=False)
+  
+        self.show_all()
+  
+class Tabs(gtk.Notebook):
     def __init__(self):
         gtk.Notebook.__init__(self)
         
@@ -432,7 +446,7 @@ class IrcTabs(gtk.Notebook):
             window.activity = 0
             window.label.update()
             
-            register_idle(window.entry.grab_focus)
+            register_idle(window.input.grab_focus)
         
             events.trigger("Active", window)
         
@@ -470,7 +484,7 @@ class IrcTabs(gtk.Notebook):
     def __len__(self):
         return len(self.window_list)
 
-class IrcUI(gtk.Window):
+class UrkUI(gtk.Window):
     def shutdown(self, *args):
         conf.set("xy", self.get_position())
         conf.set("wh", self.get_size())
@@ -514,14 +528,14 @@ def activate(window):
         window = window_list.page_num(window)
 
     window_list.set_current_page(window)
-    window_list.get_nth_page(window).entry.grab_focus()
+    window_list.get_nth_page(window).input.grab_focus()
 
 # Always make a new window and return it.
 def force_make_window(network, type, nid, title, is_chan):
     if is_chan:
-        window = IrcChannelWindow(network, type, nid, title=title)
+        window = ChannelWindow(network, type, nid, title=title)
     else:
-        window = IrcWindow(network, type, nid, title=title)
+        window = ServerWindow(network, type, nid, title=title)
         
     window.network = network
 
@@ -578,11 +592,12 @@ def get_active():
 def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
-        first_window = make_window(first_network, "status", "Status Window", first_network.server, is_chan=True)
+        first_window = make_window(first_network, "status", "Status Window", "[%s]" % first_network.server)
         
-        first_window.set_nicklist(str(x) for x in range(100))
+        #first_window.set_nicklist(str(x) for x in range(100))
 
     try:
+        #register_idle(ui.shutdown)
         gtk.main()
     except KeyboardInterrupt:
         ui.shutdown()
@@ -660,7 +675,7 @@ tag_table = gtk.TextTagTable()
 ui_manager = gtk.UIManager()
     
 # build our tab widget
-window_list = IrcTabs()
+window_list = Tabs()
 
 # build our overall UI
-ui = IrcUI()
+ui = UrkUI()

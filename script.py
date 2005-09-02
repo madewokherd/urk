@@ -260,8 +260,3 @@ def onClose(window):
         for w in list(ui.get_window_for(network=window.network)):
             if not (w is window):
                 ui.close_window(w)
-
-def onNick(event):
-    if event.network.me == event.source:
-        for window in ui.get_window_for(network=event.network):
-            window.nick_label.set_nick(event.newnick)

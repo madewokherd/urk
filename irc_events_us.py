@@ -60,6 +60,8 @@ def defRaw(event):
             events.trigger('Nick', event)
             if event.network.me == event.source:
                 event.network.me = event.newnick
+                ui.window.nick_label.update()
+
             event.done = True
             event.quiet = True
             
