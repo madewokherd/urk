@@ -22,11 +22,9 @@ loaded = {} # FIXME: dict for when we need some info on it
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
     if e_name in events:
-        event_f = events[e_name]
-    
-        for t in trigger_sequence:
-            if t in event_f:
-                for f_ref, s_name in event_f[t]:
+        for e_stage in trigger_sequence:
+            if e_stage in events[e_name]:
+                for f_ref, s_name in events[e_name][e_stage]:
                     try:
                         f_ref(e_data)
                     except:
@@ -34,13 +32,13 @@ def trigger(e_name, e_data=None):
 
 # Registers a specific function with an event at the given sequence stage.
 def register(e_name, e_stage, f_ref, s_name=""):
-    if e_name in events:
-        if e_stage in events[e_name]:
-            events[e_name][e_stage] += [(f_ref, s_name)]
-        else:
-            events[e_name][e_stage] = [(f_ref, s_name)]
-    else:
-        events[e_name] = {e_stage: [(f_ref, s_name)]}
+    if e_name not in events:
+        events[e_name] = {}
+        
+    if e_stage not in events[e_name]:
+        events[e_name][e_stage] = []
+        
+    events[e_name][e_stage] += [(f_ref, s_name)]
 
 #take a given script name and turn it into a tuple for use with load_module
 def find_script(s_name):
@@ -83,7 +81,6 @@ def load(s_name, reloading = False):
     
         # for each bit of the event sequence
         for e_stage in trigger_sequence:
-        
             # if the function is for this bit
             if f.startswith(e_stage):
             
@@ -95,6 +92,8 @@ def load(s_name, reloading = False):
                 
                 # add our function to the right event section
                 register(e_name, e_stage, f_ref, filename)
+                
+                break
     
     return True
 
@@ -113,10 +112,10 @@ def unload(s_name):
     del loaded[filename]
 
     for e_name in events:
-        for t in events[e_name]:
-            to_check = events[e_name][t]
+        for e_stage in events[e_name]:
+            to_check = events[e_name][e_stage]
         
-            events[e_name][t] = [(f, m) for f, m in to_check if m != filename]
+            events[e_name][e_stage] = [(f, m) for f, m in to_check if m != filename]
 
 def run_command(text, window, network):
     if not text:
