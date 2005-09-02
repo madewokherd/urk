@@ -1,7 +1,3 @@
-import time
-import thread
-import traceback
-
 import gobject
 import gtk
 import pango
@@ -190,10 +186,9 @@ class TextInput(gtk.Entry):
         self.history = [""]
         self.history_i = 0
         
+        up = gtk.gdk.keyval_from_name("Up")
+        down = gtk.gdk.keyval_from_name("Down")        
         def check_history_explore(widget, event):
-            up = gtk.gdk.keyval_from_name("Up")
-            down = gtk.gdk.keyval_from_name("Down")
-            
             if event.keyval == up:
                 self.history_explore(1)
                 return True
@@ -211,47 +206,47 @@ class TextOutput(gtk.TextView):
     
         buffer = self.get_buffer()
         
-        old_end = buffer.get_end_iter()
+        cc = buffer.get_char_count()
+        end = buffer.get_end_iter()
         
-        end_rect = self.get_iter_location(old_end)
+        end_rect = self.get_iter_location(end)
         vis_rect = self.get_visible_rect()
-
-        do_scroll = end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height
-
-        char_count = buffer.get_char_count()
-
-        buffer.insert(old_end, text + "\n")
-
-        if get_active() != self.win:
-            self.win.activity |= activity_type
-
-        for props, start_i, end_i in tag_data:
-            for i, (prop, val) in enumerate(props):
-                if val == parse_mirc.BOLD:
-                    props[i] = prop, pango.WEIGHT_BOLD
-
-                elif val == parse_mirc.UNDERLINE:
-                   props[i] = prop, pango.UNDERLINE_SINGLE
-                
-            tag_name = str(hash(tuple(props)))
-                 
-            if not tag_table.lookup(tag_name):
-                buffer.create_tag(tag_name, **dict(props))
-                
-            start_pos = buffer.get_iter_at_offset(start_i + char_count)
-            end_pos = buffer.get_iter_at_offset(end_i + char_count)
-                
-            buffer.apply_tag_by_name(tag_name, start_pos, end_pos)
-
-        if do_scroll:        
+        
+        # this means we're scrolled down right to the bottom
+        # we interpret this to mean we should scroll down after we've
+        # inserted more text into the buffer
+        if end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height:
             def scroll():
-                new_end = buffer.get_end_iter()
-                self.scroll_mark_onscreen(buffer.create_mark("", new_end))
+                self.scroll_mark_onscreen(buffer.get_mark("end"))
                 
             register_idle(scroll)
 
+        buffer.insert(end, text + "\n")
+
+        for tag_props, start_i, end_i in tag_data:
+            for i, (prop, val) in enumerate(tag_props):
+                if val == parse_mirc.BOLD:
+                    tag_props[i] = prop, pango.WEIGHT_BOLD
+
+                elif val == parse_mirc.UNDERLINE:
+                    tag_props[i] = prop, pango.UNDERLINE_SINGLE
+                
+            tag_name = str(hash(tuple(tag_props)))
+                 
+            if not tag_table.lookup(tag_name):
+                buffer.create_tag(tag_name, **dict(tag_props))
+                
+            buffer.apply_tag_by_name(
+                tag_name, 
+                buffer.get_iter_at_offset(start_i + cc),
+                buffer.get_iter_at_offset(end_i + cc)
+                )
+
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
+        
+        buffer = self.get_buffer()        
+        buffer.create_mark("end", buffer.get_end_iter(), False)
         
         self.win = window
         
@@ -264,21 +259,6 @@ class TextOutput(gtk.TextView):
         self.set_property("indent", 0)
         
         self.set_style(get_style("view"))
-        
-        MOD_MASK = 0
-        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
-                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
-            MOD_MASK |= m   
-
-        def transfer_text(widget, event):
-            modifiers_on = event.state & MOD_MASK
-
-            if event.string and not modifiers_on:
-                self.win.input.grab_focus()
-                self.win.input.insert_text(event.string, -1)
-                self.win.input.set_position(-1)
-        
-        self.connect("key-press-event", transfer_text)
         
 class WindowLabel(gtk.EventBox):
     def update(self):
@@ -315,8 +295,7 @@ class WindowLabel(gtk.EventBox):
         self.label = gtk.Label()        
         self.add(self.label)
         
-        self.update()        
-        self.show_all()
+        self.update()
         
 class Window(gtk.VBox):
     def get_title(self):
@@ -351,9 +330,28 @@ class Window(gtk.VBox):
         self.__activity = 0
         
         self.label = WindowLabel(self)
+        self.label.show_all()
+        
+        MOD_MASK = 0
+        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
+                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
+            MOD_MASK |= m   
+
+        def transfer_text(widget, event):
+            modifiers_on = event.state & MOD_MASK
+
+            if event.string and not modifiers_on:
+                self.input.grab_focus()
+                self.input.insert_text(event.string, -1)
+                self.input.set_position(-1)
+        
+        self.connect("key-press-event", transfer_text)
 
 class ServerWindow(Window):   
     def write(self, *args):
+        if get_active() != self:
+            self.activity |= activity_type
+    
         self.output.write(*args)
 
     def __init__(self, network, type, id, title=None):
@@ -380,6 +378,9 @@ class ServerWindow(Window):
 
 class ChannelWindow(Window):
     def write(self, *args):
+        if get_active() != self:
+            self.activity |= activity_type
+    
         self.output.write(*args)
 
     def set_nicklist(self, nicks):
@@ -425,50 +426,61 @@ class Tabs(gtk.Notebook):
     def __init__(self):
         gtk.Notebook.__init__(self)
         
-        self.window_list = {}
+        self.__windows = {}
         
-        if conf.get("ui-gtk/tab-pos") is not None:
-            self.set_property("tab-pos", conf.get("ui-gtk/tab-pos"))
+        tab_pos = conf.get("ui-gtk/tab-pos")
+        if tab_pos is not None:
+            self.set_property("tab-pos", tab_pos)
         else:
             self.set_property("tab-pos", gtk.POS_TOP)
 
-        if conf.get("ui-gtk/tab-margin") is not None:
-            self.set_border_width(conf.get("ui-gtk/tab-margin"))
+        tab_margin = conf.get("ui-gtk/tab-margin")
+        if tab_margin is not None:
+            self.set_border_width(tab_margin)
         else:
             self.set_border_width(10)
    
         self.set_scrollable(True)
         self.set_show_border(True)
         
-        def focus_entry(self, window, page_num):
+        def focus_input(self, wptr, page_num):
             window = self.get_nth_page(page_num)
         
             window.activity = 0
-            window.label.update()
             
             register_idle(window.input.grab_focus)
         
             events.trigger("Active", window)
         
-        self.connect_after("switch-page", focus_entry)
+        self.connect_after("switch-page", focus_input)
         
-    def __setitem__(self, item, value):
-        network, type, id = item
-        
-        if network:
-            id = network.normalize_case(id)
-    
-        self.window_list[network, type, id] = value
- 
     def __getitem__(self, item):
         network, type, id = item
         
         if network:
             id = network.normalize_case(id)
 
-        if (network, type, id) in self.window_list:
-            return self.window_list[network, type, id]
-            
+        if (network, type, id) in self.__windows:
+            return self.__windows[network, type, id]
+
+    def __setitem__(self, nti, window):
+        network, type, id = nti
+        
+        if network:
+            id = network.normalize_case(id)
+        
+        pos = len(self)
+        if window.network:
+            for i in reversed(range(pos)):
+                if self.get_nth_page(i).network == window.network:
+                    pos = i+1
+                    break
+                    
+        self.__windows[network, type, id] = window
+                    
+        self.insert_page(window, None, pos)
+        self.set_tab_label(window, window.label)
+
     def __delitem__(self, item):
         network, type, id = item
         
@@ -476,13 +488,13 @@ class Tabs(gtk.Notebook):
             id = network.normalize_case(id)
 
         self.remove_page(self.page_num(self.window_list[network, type, id]))
-        del self.window_list[network, type, id]
+        del self.__windows[network, type, id]
 
     def __iter__(self):
-        return iter(self.window_list)
+        return iter(self.__windows)
         
     def __len__(self):
-        return len(self.window_list)
+        return len(self.__windows)
 
 class UrkUI(gtk.Window):
     def shutdown(self, *args):
@@ -528,38 +540,16 @@ def activate(window):
         window = window_list.page_num(window)
 
     window_list.set_current_page(window)
-    window_list.get_nth_page(window).input.grab_focus()
-
-# Always make a new window and return it.
-def force_make_window(network, type, nid, title, is_chan):
-    if is_chan:
-        window = ChannelWindow(network, type, nid, title=title)
-    else:
-        window = ServerWindow(network, type, nid, title=title)
-        
-    window.network = network
-
-    pos = len(window_list)
-    if network:
-        for i in reversed(range(pos)):
-            if window_list.get_nth_page(i).network == window.network:
-                pos = i+1
-                break
-
-    window_list[network, type, nid] = window
-    window_list.insert_page(window, None, pos)
-    window_list.set_tab_label(window, window.label)
-
-    return window
 
 # Make a window for the given network, type, id if it doesn't exist.
 #  Return it.
 def make_window(network, type, id, title=None, is_chan=False):
-    if window_list[network, type, id]:
-        return window_list[network, type, id]
+    if not window_list[network, type, id]:
+        w = (is_chan and ChannelWindow or ServerWindow)(network, type, id, title or id)
+            
+        window_list[network, type, id] = w
         
-    else:
-        return force_make_window(network, type, id, title or id, is_chan)
+    return window_list[network, type, id]
 
 # Close a window.
 def close_window(window):
@@ -594,10 +584,16 @@ def start():
         first_network = irc.Network("irc.flugurgle.org")
         first_window = make_window(first_network, "status", "Status Window", "[%s]" % first_network.server)
         
+        #make_window(first_network, "batus", "Status Window", "[%s]" % first_network.server)
+        
         #first_window.set_nicklist(str(x) for x in range(100))
+        
+    #for i in range(1000):
+    #    first_window.write("\x040000CC<\x04nick\x040000CC>\x04 text")
+    #register_idle(ui.shutdown)
 
     try:
-        #register_idle(ui.shutdown)
+        register_idle(ui.shutdown)
         gtk.main()
     except KeyboardInterrupt:
         ui.shutdown()
