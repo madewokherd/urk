@@ -109,8 +109,7 @@ class Network:
                 self.socket.send('')
             except socket.error, (number, detail):
                 self.disconnect(error=detail)
-            except:
-                self.disconnect(error="Network error!")
+            self.disconnect(error="Network error!")
         
         return True
         
@@ -122,8 +121,7 @@ class Network:
             self.socket.send('')
         except socket.error, (number, detail):
             self.disconnect(error=detail)
-        except:
-            self.disconnect(error="Network error!")
+        self.disconnect(error="Network error!")
         
         return True
         
