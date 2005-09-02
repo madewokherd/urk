@@ -61,9 +61,8 @@ def defRaw(event):
             if event.network.me == event.source:
                 event.network.me = event.newnick
                 
-                for n, t, i in ui.window_list:
-                    if n == event.network:
-                        ui.window_list[n,t,i].nick_label.update()
+                for w in ui.get_window_for(network=event.network):
+                    w.nick_label.update()
 
             event.done = True
             event.quiet = True
