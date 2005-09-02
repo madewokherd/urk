@@ -47,8 +47,8 @@ def handle_echo(event):
     event.done = True
 
 def handle_query(event):
-    window = ui.make_window(event.network, 'query', event.args[0])
-    ui.activate(window)
+    window = ui.QueryWindow(event.network, 'query', event.args[0])
+    window.activate()
     event.done = True
 
 # make /nick work offline
@@ -112,8 +112,8 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        window = ui.make_window(event.network, 'status', "Status Window", "[%s]" % event.network.server)
-        ui.activate(window)
+        window = ui.ServerWindow(event.network, 'status', "Status Window", "[%s]" % event.network.server)
+        window.activate()
         
     if "server" in network_info:
         event.network.server = network_info["server"]
@@ -178,8 +178,8 @@ def onStart(event):
             
         nw = irc.Network(**network_info)
         
-        window = ui.make_window(nw, 'status', "Status Window", "[%s]" % nw.server)
-        ui.activate(window)
+        window = ui.ServerWindow(nw, 'status', "Status Window", "[%s]" % nw.server)
+        window.activate()
 
         nw.connect()
 
@@ -216,7 +216,7 @@ def onDisconnect(event):
 
 def setupText(event):
     if event.target == event.network.me:
-        event.window = ui.make_window(event.network, 'query', event.source)
+        event.window = ui.QueryWindow(event.network, 'query', event.source)
     else:
         event.window = \
             ui.window_list[event.network, 'channel', event.target] or \
@@ -227,8 +227,8 @@ setupAction = setupText
 
 def setupJoin(event):
     if event.source == event.network.me:
-        event.window = ui.make_window(event.network, 'channel', event.target, is_chan=True)
-        ui.activate(event.window)
+        event.window = ui.ChannelWindow(event.network, 'channel', event.target)
+        event.window.activate()
 
     event.window = ui.window_list[event.network, 'channel', event.target] or event.window
 
@@ -239,7 +239,7 @@ def postPart(event):
     if event.source == event.network.me:
         window = ui.window_list[event.network, 'channel', event.target]
         if window:
-            ui.close_window(window)
+            window.close()
 
 setupTopic = setupPart
 
@@ -257,6 +257,6 @@ def onClose(window):
         if window.network.status:
             window.network.quit()
         
-        for w in list(ui.get_window_for(network=window.network)):
-            if not (w is window):
-                ui.close_window(w)
+        for w in ui.get_window_for(network=window.network):
+            if w is not window:
+                w.close()

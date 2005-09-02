@@ -32,7 +32,7 @@ def urk_about(action):
     
 def get_tab_actions(window):
     def close_tab(action):
-        close_window(window)
+        window.close()
         
     to_add = (
         ("CloseTab", gtk.STOCK_CLOSE, "_Close Tab", None, None, close_tab),
@@ -316,9 +316,16 @@ class Window(gtk.VBox):
         
     activity = property(get_activity, set_activity)
     
+    def activate(self):
+        window_list.set_current_page(window_list.page_num(self))
+    
+    def close(self):
+        events.trigger("Close", self)
+        del window_list[self.network, self.type, self.id]
+    
     def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
-        
+
         if network:
             id = network.normalize_case(id)
         
@@ -347,80 +354,97 @@ class Window(gtk.VBox):
         
         self.connect("key-press-event", transfer_text)
 
-class ServerWindow(Window):   
-    def write(self, *args):
-        if get_active() != self:
-            self.activity |= activity_type
-    
-        self.output.write(*args)
+def ServerWindow(network, type, id, title=None):
+    w = window_list[network, type, id]
 
-    def __init__(self, network, type, id, title=None):
-        Window.__init__(self, network, type, id, title)
+    if not w:
+        w = Window(network, type, id, title or id)
 
-        self.output = TextOutput(self)
-        self.input = TextInput(self)
+        def write(text, activity_type=EVENT):
+            if get_active() != w:
+                w.activity |= activity_type
         
-        self.nick_label = NickEdit(self)
+            w.output.write(text, activity_type)
+        w.write = write
+
+        w.output = TextOutput(w)
+        w.input = TextInput(w)
+        
+        w.nick_label = NickEdit(w)
         
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
+        topbox.add(w.output)
         
-        self.pack_start(topbox)
+        w.pack_start(topbox)
         
         botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
+        botbox.pack_start(w.input)
+        botbox.pack_end(w.nick_label, expand=False)
         
-        self.pack_end(botbox, expand=False)
-  
-        self.show_all()
+        w.pack_end(botbox, expand=False)
 
-class ChannelWindow(Window):
-    def write(self, *args):
-        if get_active() != self:
-            self.activity |= activity_type
+        w.show_all()
+        
+        window_list[network, type, id] = w
     
-        self.output.write(*args)
+    return w
+    
+QueryWindow = ServerWindow
 
-    def set_nicklist(self, nicks):
-        self.nicklist.userlist.clear()
-        
-        for nick in nicks:
-            self.nicklist.userlist.append([nick])
+def ChannelWindow(network, type, id, title=None):
+    w = window_list[network, type, id]
 
-    def __init__(self, network, type, id, title=None):
-        Window.__init__(self, network, type, id, title)
+    if not w:
+        w = Window(network, type, id, title or id)
+        
+        def write(text, activity_type=EVENT):
+            if get_active() != w:
+                w.activity |= activity_type
+        
+            w.output.write(text, activity_type)
+        w.write = write
 
-        self.output = TextOutput(self)
-        self.input = TextInput(self)
+        def set_nicklist(nicks):
+            w.nicklist.userlist.clear()
+            
+            for nick in nicks:
+                w.nicklist.userlist.append([nick])
+        w.set_nicklist = set_nicklist
+
+        w.output = TextOutput(w)
+        w.input = TextInput(w)
         
-        self.nicklist = Nicklist(self)
+        w.nicklist = Nicklist(w)
         
-        self.nick_label = NickEdit(self)
+        w.nick_label = NickEdit(w)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
+        topbox.add(w.output)
         
         pane = gtk.HPaned()
         pane.pack1(topbox, resize=True, shrink=False)
-        pane.pack2(self.nicklist, resize=False, shrink=True)
+        pane.pack2(w.nicklist, resize=False, shrink=True)
         
         def set_pane_pos():
             pos = conf.get("ui-gtk/chatview-width") or pane.get_property("max-position") 
             pane.set_position(pos)
         register_idle(set_pane_pos)
         
-        self.pack_start(pane)
+        w.pack_start(pane)
 
         botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
+        botbox.pack_start(w.input)
+        botbox.pack_end(w.nick_label, expand=False)
         
-        self.pack_end(botbox, expand=False)
-  
-        self.show_all()
+        w.pack_end(botbox, expand=False)
+
+        w.show_all()
+        
+        window_list[network, type, id] = w
+    
+    return w
   
 class Tabs(gtk.Notebook):
     def __init__(self):
@@ -451,8 +475,8 @@ class Tabs(gtk.Notebook):
             register_idle(window.input.grab_focus)
         
             events.trigger("Active", window)
-        
-        self.connect_after("switch-page", focus_input)
+            
+        self.connect("switch-page", focus_input)
         
     def __getitem__(self, item):
         network, type, id = item
@@ -487,7 +511,7 @@ class Tabs(gtk.Notebook):
         if network:
             id = network.normalize_case(id)
 
-        self.remove_page(self.page_num(self.window_list[network, type, id]))
+        self.remove_page(self.page_num(self.__windows[network, type, id]))
         del self.__windows[network, type, id]
 
     def __iter__(self):
@@ -532,35 +556,12 @@ class UrkUI(gtk.Window):
 
         self.add(box)
         self.show_all()
-
-# Select the page with the given window or with the given tab position
-def activate(window):
-    # if this is an actual window, then we want its tab number
-    if not isinstance(window, int):
-        window = window_list.page_num(window)
-
-    window_list.set_current_page(window)
-
-# Make a window for the given network, type, id if it doesn't exist.
-#  Return it.
-def make_window(network, type, id, title=None, is_chan=False):
-    if not window_list[network, type, id]:
-        w = (is_chan and ChannelWindow or ServerWindow)(network, type, id, title or id)
-            
-        window_list[network, type, id] = w
-        
-    return window_list[network, type, id]
-
-# Close a window.
-def close_window(window):
-    events.trigger("Close", window_list[window.network, window.type, window.id])
-    del window_list[window.network, window.type, window.id]
         
 def get_window_for(network=None, type=None, id=None):
     if network and id:
         id = network.normalize_case(id)
 
-    for n, t, i in window_list:
+    for n, t, i in list(window_list):
         if network and n != network:
             continue
         if type and t != type:
@@ -582,9 +583,20 @@ def get_active():
 def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
-        first_window = make_window(first_network, "status", "Status Window", "[%s]" % first_network.server)
         
-        #make_window(first_network, "batus", "Status Window", "[%s]" % first_network.server)
+        ServerWindow(
+            first_network, 
+            "status", 
+            "Status Window", 
+            "[%s]" % first_network.server
+            )
+        
+        #ServerWindow(
+        #    first_network, 
+        #    "batus", 
+        #    "Status Window", 
+        #    "[%s]" % first_network.server
+        #    )
         
         #first_window.set_nicklist(str(x) for x in range(100))
         
@@ -593,7 +605,6 @@ def start():
     #register_idle(ui.shutdown)
 
     try:
-        register_idle(ui.shutdown)
         gtk.main()
     except KeyboardInterrupt:
         ui.shutdown()
