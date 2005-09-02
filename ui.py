@@ -7,15 +7,42 @@ import conf
 import events
 import parse_mirc
 
+# IO Type Constants
+IO_IN = gobject.IO_IN
+IO_OUT = gobject.IO_OUT
+IO_PRI = gobject.IO_PRI
+IO_ERR = gobject.IO_ERR
+IO_HUP = gobject.IO_HUP
+
+# Priority Constants
+PRIORITY_HIGH = gobject.PRIORITY_HIGH
+PRIORITY_DEFAULT = gobject.PRIORITY_DEFAULT
+PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
+PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
+PRIORITY_LOW = gobject.PRIORITY_LOW
+
+def register_io(f, fd, condition, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback(source, cb_condition):
+        return f(*args, **kwargs)
+    return gobject.io_add_watch(fd, condition, callback, priority=priority)
+
+def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback():
+        return f(*args, **kwargs)
+    return gobject.idle_add(callback, priority=priority)
+
+def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+    def callback():
+        return f(*args, **kwargs)
+    return gobject.timeout_add(time, callback, priority=priority)
+
+def unregister(tag):
+    gobject.source_remove(tag)
+
+# Window activity Constants
 HILIT = 4
 TEXT = 2
 EVENT = 1
-
-ACTIVITY_INDICATOR = {
-    HILIT: "<span style='italic' foreground='#00F'>%s</span>",
-    TEXT: "<span foreground='red'>%s</span>",
-    EVENT: "<span foreground='#363'>%s</span>",
-    }
 
 def urk_about(action):
     import __main__
@@ -259,12 +286,18 @@ class TextOutput(gtk.TextView):
         self.set_property("indent", 0)
         
         self.set_style(get_style("view"))
-        
+
 class WindowLabel(gtk.EventBox):
     def update(self):
-        for a in (HILIT, TEXT, EVENT):
-            if self.win.activity & a:
-                title = ACTIVITY_INDICATOR[a] % self.win.title
+        activity_markup = {
+            HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+            TEXT: "<span foreground='red'>%s</span>",
+            EVENT: "<span foreground='#363'>%s</span>",
+            }
+    
+        for a_type in (HILIT, TEXT, EVENT):
+            if self.win.activity & a_type:
+                title = activity_markup[a_type] % self.win.title
                 break
         else:
             title = self.win.title
@@ -642,38 +675,6 @@ def set_style(widget, style):
         styles[widget] = dummy.rc_get_style()
     else:
         styles[widget] = None
-
-# IO Type Constants
-IO_IN = gobject.IO_IN
-IO_OUT = gobject.IO_OUT
-IO_PRI = gobject.IO_PRI
-IO_ERR = gobject.IO_ERR
-IO_HUP = gobject.IO_HUP
-
-# Priority constants
-PRIORITY_HIGH = gobject.PRIORITY_HIGH
-PRIORITY_DEFAULT = gobject.PRIORITY_DEFAULT
-PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
-PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
-PRIORITY_LOW = gobject.PRIORITY_LOW
-
-def register_io(f, fd, condition, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
-    def callback(source, cb_condition):
-        return f(*args, **kwargs)
-    return gobject.io_add_watch(fd, condition, callback, priority=priority)
-
-def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
-    def callback():
-        return f(*args, **kwargs)
-    return gobject.idle_add(callback, priority=priority)
-
-def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
-    def callback():
-        return f(*args, **kwargs)
-    return gobject.timeout_add(time, callback, priority=priority)
-
-def unregister(tag):
-    gobject.source_remove(tag)
 
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
