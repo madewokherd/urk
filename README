@@ -139,9 +139,3 @@ we'd want to see as an external script, not as part of the default setup, and
 something we're not likely to implement soon), there are probably a lot of 
 little things that we may have skipped over because we don't use them or have 
 become used to not having them.
-
-
-License:
-
-GPL. Some legal stuff should probably go here. and I guess we need a LICENSE
-file.
