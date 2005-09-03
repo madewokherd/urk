@@ -112,7 +112,12 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        window = ui.ServerWindow(event.network, 'status', "Status Window", "[%s]" % event.network.server)
+        window = ui.ServerWindow(
+                    event.network,
+                    'status',
+                    "Status Window",
+                    "[%s]" % event.network.server
+                    )
         window.activate()
         
     if "server" in network_info:
@@ -159,14 +164,16 @@ def postCommand(event):
         event.done = True
         
 def get_network_info(network, network_info):
-    #FIXME: if conf.get("networks/%s" % network):
+    key_info = conf.get("networks/%s/server" % network)
+    if key_info:
+        network_info["server"] = key_info
     
-    for info in ("server", "port", "nicks", "fullname"):
-        if info not in network_info:
-            key_info = conf.get("networks/%s/%s" % (network, info))
-    
-            if key_info:
-                network_info[info] = key_info
+        for info in ("port", "nicks", "fullname"):
+            if info not in network_info:
+                key_info = conf.get("networks/%s/%s" % (network, info))
+        
+                if key_info:
+                    network_info[info] = key_info
 
     return network_info
 
