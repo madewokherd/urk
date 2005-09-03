@@ -459,11 +459,25 @@ def ChannelWindow(network, type, id, title=None):
         pane = gtk.HPaned()
         pane.pack1(topbox, resize=True, shrink=False)
         pane.pack2(w.nicklist, resize=False, shrink=True)
-        
+
         def set_pane_pos():
-            pos = conf.get("ui-gtk/chatview-width") or pane.get_property("max-position") 
+            pos = conf.get("ui-gtk/nicklist-width")
+            if pos is not None:
+                pos = pane.get_property("max-position") - conf.get("ui-gtk/nicklist-width")
+            else:
+                pos = pane.get_property("max-position")
+        
             pane.set_position(pos)
         register_idle(set_pane_pos)
+
+        def connect_save():
+            def save_nicklist_width(pane, event):
+                pos = pane.get_property("max-position") - pane.get_position()
+
+                conf.set("ui-gtk/nicklist-width", pos)
+        
+            pane.connect("size-request", save_nicklist_width)
+        register_idle(connect_save)
         
         w.pack_start(pane)
 
@@ -606,7 +620,7 @@ def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
         
-        ServerWindow(
+        ChannelWindow(
             first_network, 
             "status", 
             "Status Window", 
