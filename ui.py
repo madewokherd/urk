@@ -50,7 +50,7 @@ def urk_about(action):
     about = gtk.AboutDialog()
     
     about.set_name(__main__.name+" (GTK+ Frontend)")
-    about.set_version(".".join(__main__.version))
+    about.set_version(".".join(str(x) for x in __main__.version))
     about.set_copyright("Copyright \xc2\xa9 %s" % __main__.copyright)
     about.set_website(__main__.website)
     about.set_authors(__main__.authors)
