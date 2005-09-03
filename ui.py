@@ -350,7 +350,7 @@ class Window(gtk.VBox):
     activity = property(get_activity, set_activity)
     
     def activate(self):
-        window_list.set_current_page(window_list.page_num(self))
+        window_list.nb.set_current_page(window_list.nb.page_num(self))
     
     def close(self):
         events.trigger("Close", self)
@@ -479,46 +479,15 @@ def ChannelWindow(network, type, id, title=None):
     
     return w
   
-class Tabs(gtk.Notebook):
-    def __init__(self):
-        gtk.Notebook.__init__(self)
-        
-        self.__windows = {}
-        
-        tab_pos = conf.get("ui-gtk/tab-pos")
-        if tab_pos is not None:
-            self.set_property("tab-pos", tab_pos)
-        else:
-            self.set_property("tab-pos", gtk.POS_TOP)
-
-        tab_margin = conf.get("ui-gtk/tab-margin")
-        if tab_margin is not None:
-            self.set_border_width(tab_margin)
-        else:
-            self.set_border_width(10)
-   
-        self.set_scrollable(True)
-        self.set_show_border(True)
-        
-        def focus_input(self, wptr, page_num):
-            window = self.get_nth_page(page_num)
-        
-            window.activity = 0
-            
-            register_idle(window.input.grab_focus)
-        
-            events.trigger("Active", window)
-            
-        self.connect("switch-page", focus_input)
-        
+class Tabs(dict):       
     def __getitem__(self, item):
         network, type, id = item
         
         if network:
             id = network.normalize_case(id)
 
-        if (network, type, id) in self.__windows:
-            return self.__windows[network, type, id]
+        if (network, type, id) in self:
+            return dict.__getitem__(self, (network, type, id))
 
     def __setitem__(self, nti, window):
         network, type, id = nti
@@ -529,14 +498,14 @@ class Tabs(gtk.Notebook):
         pos = len(self)
         if window.network:
             for i in reversed(range(pos)):
-                if self.get_nth_page(i).network == window.network:
+                if self.nb.get_nth_page(i).network == window.network:
                     pos = i+1
                     break
                     
-        self.__windows[network, type, id] = window
+        dict.__setitem__(self, (network, type, id), window)
                     
-        self.insert_page(window, None, pos)
-        self.set_tab_label(window, window.label)
+        self.nb.insert_page(window, None, pos)
+        self.nb.set_tab_label(window, window.label)
 
     def __delitem__(self, item):
         network, type, id = item
@@ -544,14 +513,34 @@ class Tabs(gtk.Notebook):
         if network:
             id = network.normalize_case(id)
 
-        self.remove_page(self.page_num(self.__windows[network, type, id]))
-        del self.__windows[network, type, id]
-
-    def __iter__(self):
-        return iter(self.__windows)
+        self.nb.remove_page(self.nb.page_num(self[network, type, id]))
+        dict.__delitem__(self, (network, type, id))
         
-    def __len__(self):
-        return len(self.__windows)
+    def __init__(self):
+        dict.__init__(self)
+        
+        self.nb = gtk.Notebook()
+        
+        tab_pos = conf.get("ui-gtk/tab-pos")
+        if tab_pos is not None:
+            self.nb.set_property("tab-pos", tab_pos)
+        else:
+            self.nb.set_property("tab-pos", gtk.POS_TOP)
+
+        self.nb.set_border_width(10)
+        self.nb.set_scrollable(True)
+        self.nb.set_show_border(True)
+        
+        def focus_input(nb, wptr, page_num):
+            window = nb.get_nth_page(page_num)
+        
+            window.activity = 0
+            
+            register_idle(window.input.grab_focus)
+        
+            events.trigger("Active", window)
+            
+        self.nb.connect("switch-page", focus_input)
 
 class UrkUI(gtk.Window):
     def shutdown(self, *args):
@@ -585,7 +574,7 @@ class UrkUI(gtk.Window):
         # widgets
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
-        box.pack_end(window_list)
+        box.pack_end(window_list.nb)
 
         self.add(box)
         self.show_all()
@@ -610,8 +599,8 @@ def get_status_window(network):
             return window_list[n, t, i]
         
 def get_active():
-    active = window_list.get_current_page()
-    return window_list.get_nth_page(active)
+    active = window_list.nb.get_current_page()
+    return window_list.nb.get_nth_page(active)
 
 def start():
     if not window_list:
@@ -623,7 +612,7 @@ def start():
             "Status Window", 
             "[%s]" % first_network.server
             )
-        
+
         #ServerWindow(
         #    first_network, 
         #    "batus", 
