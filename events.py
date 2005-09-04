@@ -134,8 +134,6 @@ def run_command(text, window, network):
     else:
         c_data.switches = set()
         c_data.args = split[1:]
-        
-    print c_data.args
 
     c_data.window = window
     c_data.network = network
