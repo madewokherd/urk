@@ -73,7 +73,7 @@ def get_tab_actions(window):
 def get_urk_actions(ui):
     to_add = (
         ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.shutdown),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
         
         ("HelpMenu", None, "_Help"),
             ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
@@ -478,13 +478,12 @@ def ChannelWindow(network, type, id, title=None):
         
             pane.connect("size-request", save_nicklist_width)
         register_idle(connect_save)
-        
-        w.pack_start(pane)
 
         botbox = gtk.HBox()
         botbox.pack_start(w.input)
         botbox.pack_end(w.nick_label, expand=False)
         
+        w.pack_start(pane)        
         w.pack_end(botbox, expand=False)
 
         w.show_all()
@@ -557,20 +556,18 @@ class Tabs(dict):
         self.nb.connect("switch-page", focus_input)
 
 class UrkUI(gtk.Window):
-    def shutdown(self, *args):
-        conf.set("xy", self.get_position())
-        conf.set("wh", self.get_size())
-
-        if gtk.main_level():
-            gtk.main_quit()
-
     def __init__(self):
         # threading stuff
         gtk.gdk.threads_init()
         
         gtk.Window.__init__(self)
         self.set_title("Urk")
-        self.connect("delete_event", self.shutdown)
+        
+        def save_xywh(*args):
+            conf.set("xy", self.get_position())
+            conf.set("wh", self.get_size())
+        self.connect("configure_event", save_xywh)
+        self.connect("delete_event", gtk.main_quit)
 
         # layout
         xy = conf.get("xy") or (-1, -1)
@@ -643,7 +640,7 @@ def start():
     try:
         gtk.main()
     except KeyboardInterrupt:
-        ui.shutdown()
+        pass
 
 #FIXME: MEH hates dictionaries, they remind him of the bad words
 styles = {}
