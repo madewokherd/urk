@@ -1,19 +1,18 @@
-before the first release:
-
-Documentation
-
-    If not complete documentation, there should be enough there that someone
-can get it running quickly and do some basic scripting (maybe a complete
-description of onText and we can assume theme.py will have to be the
-documentation for other events for now).
-
-
-
 before we can claim it's not beta:
 
-Channel Nicklist
+Add path to urk.py
 
-    we should automatically save our nicklist size somehow
+    put the program path in sys.path
+
+
+Random theme thing
+
+    theme.py should show part messages
+
+
+Conf enumeration
+
+    get a directory listing with conf.get('networks/')
 
 
 Network Prefs and Data

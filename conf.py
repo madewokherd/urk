@@ -22,7 +22,16 @@ def valueToPython(value):
         return None
 
 def get(key):
-    return valueToPython(client.get("/apps/urk/"+key))
+    gconf_key = "/apps/urk/"+key
+    if gconf_key.endswith('/'):
+        result = {}
+        for entry in client.all_entries(gconf_key[:-1]):
+            result[entry.key[len(gconf_key):]] = valueToPython(entry.get_value())
+        for directory in client.all_dirs(gconf_key[:-1]):
+            result[directory[len(gconf_key):]+'/'] = get(directory[10:]+'/')
+        return result
+    else:
+        return valueToPython(client.get("/apps/urk/"+key))
 
 def set(key, value):
     key = "/apps/urk/"+key
