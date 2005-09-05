@@ -1,10 +1,5 @@
 before we can claim it's not beta:
 
-Add path to urk.py
-
-    put the program path in sys.path
-
-
 Random theme thing
 
     theme.py should show part messages

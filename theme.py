@@ -71,6 +71,8 @@ def onPart(event):
         to_write = "\x02You\x02 left %s" % event.target
     else:
         to_write = "\x02%s\x02 (%s) left %s" % (event.source, event.address, event.target)
+    if event.text:
+        to_write += ' (%s)' % event.text
     
     if not event.quiet:
         event.window.write(to_write)
