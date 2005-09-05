@@ -1,3 +1,5 @@
+import os
+
 import gobject
 import gtk
 import pango
@@ -6,6 +8,7 @@ import irc
 import conf
 import events
 import parse_mirc
+import __main__ as urk
 
 # IO Type Constants
 IO_IN = gobject.IO_IN
@@ -577,7 +580,7 @@ class UrkUI(gtk.Window):
         self.set_default_size(*wh)
         
         self.add_accel_group(ui_manager.get_accel_group())
-        ui_manager.add_ui_from_file("ui.xml")
+        ui_manager.add_ui_from_file(os.path.join(urk.urk_path,"ui.xml"))
         ui_manager.insert_action_group(get_urk_actions(self), 0)
         
         menu = ui_manager.get_widget("/MenuBar")

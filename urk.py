@@ -3,6 +3,16 @@
 import imp
 import getopt
 import sys
+import inspect
+import os
+
+#add ~/.urk and urk_path (normally where urk.py is located) to sys.path
+urk_path = None #change this line when we do a system install
+if not urk_path: #normal install
+    urk_path = os.path.dirname(inspect.getfile(sys.modules[__name__]))
+sys.path.insert(1, urk_path)
+
+sys.path.insert(1, os.path.expanduser("~/.urk"))
 
 import events
 
