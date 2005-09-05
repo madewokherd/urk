@@ -127,4 +127,5 @@ def defCtcp(event):
             e_data.type = 'action'
             e_data.text = ' '.join(event.args)
             events.trigger('Action', e_data)
-        event.done = True
+            event.done = True
+            event.quiet = True

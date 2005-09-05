@@ -80,6 +80,13 @@ def handle_raw(event):
     else:
         event.error_text = "We're not connected to a network."
 
+def handle_ctcp(event):
+    if event.network.status >= irc.INITIALIZING:
+        event.network.ctcp(event.args[0],event.args[1].upper()+' '+' '.join(event.args[2:]))
+        event.done = True
+    else:
+        event.error_text = "We're not connected to a network."
+
 def handle_join(event):
     if event.args:
         if event.network.status >= irc.INITIALIZING:
@@ -149,6 +156,7 @@ command_handlers = {
     'quit': handle_quit,
     'raw': handle_raw,
     'quote': handle_raw,
+    'ctcp': handle_ctcp,
     'join': handle_join,
     'server': handle_server,
     }

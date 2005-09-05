@@ -57,6 +57,21 @@ def onOwnNotice(event):
     if not event.quiet:
         event.window.write(to_write)
 
+def onCtcp(event):
+    to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (event.source, event.text)
+    
+    if not event.quiet:
+        event.window.write(to_write)
+
+def onCtcpReply(event):
+    to_write = "--- %s reply from %s: %s" % (event.name.capitalize(), event.source, ' '.join(event.args))
+    
+    if not event.quiet:
+        window = ui.get_active()
+        if window.network != event.network:
+            window = ui.get_status_window(event.network)
+        window.write(to_write, ui.TEXT)
+
 def onJoin(event):
     if event.network.me == event.source:
         to_write = "\x02You\x02 joined %s" % event.target

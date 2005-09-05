@@ -1,15 +1,5 @@
 before we can claim it's not beta:
 
-Random theme thing
-
-    theme.py should show part messages
-
-
-Conf enumeration
-
-    get a directory listing with conf.get('networks/')
-
-
 Network Prefs and Data
 
     some sort of system for keeping separating settings for 
@@ -22,13 +12,6 @@ Preferences UI
 "connect or edit connection" dialog
 
     we want a number of "preflets" rather than one gigantic prefs window
-
-
-CTCP
-
-    we should have a script or something for replying to CTCP's..and pinging 
-people (MEH hates /ctcp ping and thinks we should have a separate /ping command
-in this script that adds a proper human-readable timestamp)
 
 
 Hotlinking
