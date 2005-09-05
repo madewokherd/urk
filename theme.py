@@ -142,8 +142,10 @@ def onRaw(event):
         if event.msg[1] == '332':
             window = ui.window_list[event.network, 'channel', event.msg[3]] or event.window
             window.write("topic on %s is: %s" % (event.msg[3], event.text))
+        elif event.msg[1].isdigit():
+            event.window.write("* %s" % ' '.join(event.msg[3:]))
         else:
-            event.window.write("* %s %s" % (event.source, event.text))
+            event.window.write("* %s" % ' '.join(event.msg[0:]))
 
 def onDisconnect(event):
     if event.error:
