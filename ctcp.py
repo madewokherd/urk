@@ -21,7 +21,6 @@ def emote(network, user, msg):
     e_data.source = network.me
     e_data.target = str(user)
     e_data.text = msg
-    e_data.type = 'action'
     e_data.network = network
     e_data.window = ui.get_status_window(network)
     events.trigger('Action', e_data)
@@ -47,7 +46,6 @@ def defCommand(event):
 def setupText(event):
     if event.text[0] == '\x01' and event.text[-1] == '\x01':
         e_data = copy.copy(event)
-        e_data.type = 'ctcp'
         e_data.text = event.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
@@ -58,7 +56,6 @@ def setupText(event):
 def setupNotice(event):
     if event.text[0] == '\x01' and event.text[-1] == '\x01':
         e_data = copy.copy(event)
-        e_data.type = 'ctcp_reply'
         e_data.text = event.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
@@ -79,7 +76,6 @@ def defCtcp(event):
     if not event.done:
         if event.name == 'ACTION':
             e_data = copy.copy(event)
-            e_data.type = 'action'
             e_data.text = ' '.join(event.args)
             events.trigger('Action', e_data)
             event.done = True

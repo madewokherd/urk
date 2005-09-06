@@ -23,7 +23,6 @@ def defRaw(event):
                     e_data.window = event.window
                     e_data.source = event.network.me
                     e_data.newnick = event.msg[2]
-                    e_data.type = 'nick'
                     events.trigger('Nick', e_data)
                     event.network.me = event.msg[2]
                 
@@ -34,20 +33,17 @@ def defRaw(event):
         
         elif event.msg[1] in ("JOIN", "PART", "MODE"):
             event.channel = event.target
-            event.type = event.msg[1].lower()
             event.text = ' '.join(event.msg[3:])
             events.trigger(event.msg[1].capitalize(), event)
             event.done = True
             event.quiet = True
             
         elif event.msg[1] == "QUIT":
-            event.type = 'quit'
             events.trigger('Quit', event)
             event.done = True
             event.quiet = True
             
         elif event.msg[1] == "KICK":
-            event.type = 'kick'
             event.channel = event.msg[2]
             event.target = event.msg[3]
             events.trigger('Kick', event)
@@ -55,7 +51,6 @@ def defRaw(event):
             event.quiet = True
             
         elif event.msg[1] == "NICK":
-            event.type = 'nick'
             event.newnick = event.msg[2]
             events.trigger('Nick', event)
             if event.network.me == event.source:
@@ -68,19 +63,16 @@ def defRaw(event):
             event.quiet = True
             
         elif event.msg[1] == "PRIVMSG":
-            event.type = "text"
             events.trigger('Text', event)
             event.done = True
             event.quiet = True
         
         elif event.msg[1] == "NOTICE":
-            event.type = "notice"
             events.trigger('Notice', event)
             event.done = True
             event.quiet = True
         
         elif event.msg[1] == "TOPIC":
-            event.type = "topic"
             events.trigger('Topic', event)
             event.done = True
             event.quiet = True
@@ -89,7 +81,6 @@ def defRaw(event):
             if event.network.status == irc.INITIALIZING:
                 event.network.status = irc.CONNECTED
                 e_data = copy.copy(event)
-                e_data.type = 'connect'
                 events.trigger('Connect', e_data)
             event.done = True
 
@@ -99,5 +90,3 @@ def setupSocketConnect(event):
 def setupDisconnect(event):
     if not hasattr(event, 'window'):
         event.window = ui.get_status_window(event.network)
-    
-    event.type = "disconnect"

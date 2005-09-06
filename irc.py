@@ -85,7 +85,6 @@ class Network:
     
         e_data = events.data()
         e_data.network = self
-        e_data.type = "socket_connect"
         events.trigger('SocketConnect', e_data)
         
         return True
@@ -144,7 +143,6 @@ class Network:
         e_data.text = e_data.msg[-1]
         e_data.network = self
         e_data.window = ui.get_status_window(self)
-        e_data.type = "raw"
         
         source = e_data.msg[0].split('!')
         e_data.source = source[0]
@@ -182,7 +180,6 @@ class Network:
             
             e_data = events.data()
             e_data.network = self
-            e_data.type = "connecting"            
             events.trigger('Connecting', e_data)
     
     def disconnect(self, error=None):
@@ -202,7 +199,6 @@ class Network:
         e_data = events.data()
         e_data.network = self
         e_data.error = error
-        e_data.type = "disconnect"
         events.trigger('Disconnect', e_data)
         
         #trigger a nick change if the nick we want is different from the one we
@@ -213,7 +209,6 @@ class Network:
             e_data.window = ui.get_status_window(self)
             e_data.source = self.me
             e_data.newnick = self.nicks[0]
-            e_data.type = 'nick'
             events.trigger('Nick', e_data)
             self.me = self.nicks[0]
         
@@ -246,7 +241,6 @@ class Network:
         e_data.source = self.me
         e_data.target = str(target)
         e_data.text = msg
-        e_data.type = 'text'
         e_data.network = self
         e_data.window = ui.get_status_window(self)
         events.trigger('Text', e_data)
@@ -257,7 +251,6 @@ class Network:
         e_data.source = self.me
         e_data.target = str(target)
         e_data.text = msg
-        e_data.type = 'ownnotice'
         e_data.network = self
         e_data.window = ui.get_status_window(self)
         events.trigger('OwnNotice', e_data)

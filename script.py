@@ -52,7 +52,6 @@ def handle_nick(event):
         e_data.window = ui.get_status_window(event.network)
         e_data.source = event.network.me
         e_data.newnick = event.args[0]
-        e_data.type = 'nick'
         events.trigger('Nick', e_data)
         event.network.nicks[0] = event.args[0]
         event.network.me = event.args[0]
