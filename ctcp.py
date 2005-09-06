@@ -1,4 +1,5 @@
 import time
+import events
 
 import __main__ as urk
 
@@ -27,3 +28,5 @@ def defCtcp(event):
         elif event.name == 'TIME':
             event.network.ctcp_reply(event.source, 'TIME %s' % time.asctime())
             event.done = True
+
+events.load(__name__)

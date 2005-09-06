@@ -66,15 +66,18 @@ def load(s_name, reloading = False):
         f.close()
         return False
     
+    loaded[filename] = None
+    
     try:
         if reloading:
             unload(filename)
         
         imported = imp.load_module(*args)
-    finally:
+    except Exception, e:
+        del loaded[filename]
         f.close()
-    
-    loaded[filename] = None
+        raise e
+    f.close()
     
     # we look through everything defined in the file    
     for f in dir(imported):
