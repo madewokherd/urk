@@ -68,32 +68,14 @@ def defRaw(event):
             event.quiet = True
             
         elif event.msg[1] == "PRIVMSG":
-            if event.text[0] == '\x01' and event.text[-1] == '\x01':
-                e_data = copy.copy(event)
-                e_data.type = 'ctcp'
-                e_data.text = event.text[1:-1]
-                tokens = e_data.text.split(' ')
-                e_data.name = tokens[0]
-                e_data.args = tokens[1:]
-                events.trigger('Ctcp', e_data)
-            else:
-                event.type = "text"
-                events.trigger('Text', event)
+            event.type = "text"
+            events.trigger('Text', event)
             event.done = True
             event.quiet = True
         
         elif event.msg[1] == "NOTICE":
-            if event.text[0] == '\x01' and event.text[-1] == '\x01':
-                e_data = copy.copy(event)
-                e_data.type = 'ctcp_reply'
-                e_data.text = event.text[1:-1]
-                tokens = e_data.text.split(' ')
-                e_data.name = tokens[0]
-                e_data.args = tokens[1:]
-                events.trigger('CtcpReply', e_data)
-            else:
-                event.type = "notice"
-                events.trigger('Notice', event)
+            event.type = "notice"
+            events.trigger('Notice', event)
             event.done = True
             event.quiet = True
         
@@ -119,13 +101,3 @@ def setupDisconnect(event):
         event.window = ui.get_status_window(event.network)
     
     event.type = "disconnect"
-
-def defCtcp(event):
-    if not event.done:
-        if event.name == 'ACTION':
-            e_data = copy.copy(event)
-            e_data.type = 'action'
-            e_data.text = ' '.join(event.args)
-            events.trigger('Action', e_data)
-            event.done = True
-            event.quiet = True

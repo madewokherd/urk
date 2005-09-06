@@ -251,17 +251,6 @@ class Network:
         e_data.window = ui.get_status_window(self)
         events.trigger('Text', e_data)
 
-    def emote(self, target, msg):
-        self.raw("PRIVMSG %s :\x01ACTION %s\x01" % (target, msg))
-        e_data = events.data()
-        e_data.source = self.me
-        e_data.target = str(target)
-        e_data.text = msg
-        e_data.type = 'action'
-        e_data.network = self
-        e_data.window = ui.get_status_window(self)
-        events.trigger('Action', e_data)
-
     def notice(self, target, msg):
         self.raw("NOTICE %s :%s" % (target, msg))
         e_data = events.data()
@@ -272,29 +261,3 @@ class Network:
         e_data.network = self
         e_data.window = ui.get_status_window(self)
         events.trigger('OwnNotice', e_data)
-
-    def ctcp(self, target, msg):
-        self.raw("PRIVMSG %s :\x01%s\x01" % (target, msg))
-        e_data = events.data()
-        e_data.source = self.me
-        e_data.target = str(target)
-        e_data.text = msg
-        e_data.args = e_data.text.split(' ')
-        e_data.name = e_data.args.pop(0)
-        e_data.type = 'own_ctcp'
-        e_data.network = self
-        e_data.window = ui.get_status_window(self)
-        events.trigger('OwnCtcp', e_data)
-
-    def ctcp_reply(self, target, msg):
-        self.raw("NOTICE %s :\x01%s\x01" % (target, msg))
-        e_data = events.data()
-        e_data.source = self.me
-        e_data.target = str(target)
-        e_data.text = msg
-        e_data.args = e_data.text.split(' ')
-        e_data.name = e_data.args.pop(0)
-        e_data.type = 'own_ctcp_reply'
-        e_data.network = self
-        e_data.window = ui.get_status_window(self)
-        events.trigger('OwnCtcpReply', e_data)

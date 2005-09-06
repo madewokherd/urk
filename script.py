@@ -31,13 +31,6 @@ def handle_msg(event):
     event.network.msg(event.args[0], ' '.join(event.args[1:]))
     event.done = True
 
-def handle_me(event):
-    if event.window.type in ('channel', 'query'):
-        event.network.emote(event.window.id, ' '.join(event.args))
-        event.done = True
-    else:
-        event.error_text = "There's no one here to speak to."
-
 def handle_notice(event):
     event.network.notice(event.args[0], ' '.join(event.args[1:]))
     event.done = True
@@ -76,13 +69,6 @@ def handle_quit(event):
 def handle_raw(event):
     if event.network.status >= irc.INITIALIZING:
         event.network.raw(' '.join(event.args))
-        event.done = True
-    else:
-        event.error_text = "We're not connected to a network."
-
-def handle_ctcp(event):
-    if event.network.status >= irc.INITIALIZING:
-        event.network.ctcp(event.args[0],event.args[1].upper()+' '+' '.join(event.args[2:]))
         event.done = True
     else:
         event.error_text = "We're not connected to a network."
@@ -148,7 +134,6 @@ def handle_server(event):
 command_handlers = {
     'say': handle_say,
     'msg': handle_msg,
-    'me': handle_me,
     'notice': handle_notice,
     'echo': handle_echo,
     'query': handle_query,
@@ -156,7 +141,6 @@ command_handlers = {
     'quit': handle_quit,
     'raw': handle_raw,
     'quote': handle_raw,
-    'ctcp': handle_ctcp,
     'join': handle_join,
     'server': handle_server,
     }
@@ -229,7 +213,7 @@ def onDisconnect(event):
     if window:
         window.title = "[%s]" % event.network.server
 
-def setupText(event):
+def preText(event):
     if event.target == event.network.me:
         event.window = ui.QueryWindow(event.network, 'query', event.source)
     else:
@@ -238,9 +222,9 @@ def setupText(event):
             ui.window_list[event.network, 'query', event.target] or \
             event.window
 
-setupAction = setupText
+preAction = preText
 
-def setupJoin(event):
+def preJoin(event):
     if event.source == event.network.me:
         event.window = ui.ChannelWindow(event.network, 'channel', event.target)
         event.window.activate()

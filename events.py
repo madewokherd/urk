@@ -6,6 +6,9 @@ import imp
 class error(Exception):
     pass
 
+class EventStopError(error):
+    pass
+
 class data:
     done = False
     quiet = False
@@ -27,8 +30,14 @@ def trigger(e_name, e_data=None):
                 for f_ref, s_name in events[e_name][e_stage]:
                     try:
                         f_ref(e_data)
+                    except EventStopError:
+                        return
                     except:
                         traceback.print_exc()
+
+# Stop all processing of the current event now!
+def halt():
+    raise EventStopError
 
 # Registers a specific function with an event at the given sequence stage.
 def register(e_name, e_stage, f_ref, s_name=""):
