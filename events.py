@@ -128,7 +128,7 @@ def run_command(text, window, network):
     
     c_data.name = split[0]
 
-    if len(split) > 1 and split[1][0] == "-":
+    if len(split) > 1 and split[1].startswith("-"):
         c_data.switches = set(split[1][1:])
         c_data.args = split[2:]
     else:
