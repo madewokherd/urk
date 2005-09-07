@@ -33,7 +33,7 @@ def defCommand(event):
                 event.done = True
             else:
                 event.error_text = "There's no one here to speak to."
-        if event.name == 'ctcp':
+        elif event.name == 'ctcp':
             ctcp(event.network, event.args[0], ' '.join(event.args[1:]))
             event.done = True
         elif event.name == 'ping':

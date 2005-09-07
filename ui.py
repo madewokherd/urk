@@ -271,7 +271,11 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(start_i + cc),
                 buffer.get_iter_at_offset(end_i + cc)
                 )
-
+    
+    #def mouseover(self, widget, event):
+        #pos = self.get_iter_at_location(*event.get_coords())
+        #self.get_pointer()
+    
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
         
@@ -287,6 +291,9 @@ class TextOutput(gtk.TextView):
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
         self.set_property("indent", 0)
+        #self.set_property("events", self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK)
+        
+        #self.connect("motion-notify-event", self.mouseover)
         
         self.set_style(get_style("view"))
 
