@@ -338,6 +338,8 @@ class UrkUI(gtk.Window):
             self.connect("configure_event", save_xywh)
         register_idle(connect_save)
         
+        ui_manager = gtk.UIManager()
+        
         self.add_accel_group(ui_manager.get_accel_group())
         ui_manager.add_ui_from_file(os.path.join(urk.urk_path,"ui.xml"))
         ui_manager.insert_action_group(get_urk_actions(self), 0)
@@ -403,9 +405,6 @@ def start():
         gtk.main()
     except KeyboardInterrupt:
         pass
-
-# UI manager to use throughout   
-ui_manager = gtk.UIManager()
     
 # build our tab widget
 window_list = Tabs()

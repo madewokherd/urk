@@ -281,9 +281,11 @@ class WindowLabel(gtk.EventBox):
 
     def tab_popup(self, widget, event):
         if event.button == 3: # right click
+            ui_manager = gtk.UIManager()
+        
             # add some tab UI                
             tab_id = ui_manager.add_ui_from_file("tabui.xml")
-            ui_manager.insert_action_group(get_tab_actions(self.win), 0)
+            ui_manager.insert_action_group(ui.get_tab_actions(self.win), 0)
 
             tab_menu = ui_manager.get_widget("/TabPopup")
             
