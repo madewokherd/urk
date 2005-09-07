@@ -1,11 +1,5 @@
 before we can claim it's not beta:
 
-Network Prefs and Data
-
-    some sort of system for keeping separating settings for 
-networks so that we can connect from a list on start
-
-
 Preferences UI
 
     a preferences ui, probably with a separate sort of 
@@ -16,7 +10,7 @@ Preferences UI
 
 Hotlinking
 
-    url's, nicks, channels, etc. should be clickable
+    urls, nicks, channels, etc. should be clickable
 
 
 
@@ -33,19 +27,6 @@ Logging
 in IRCWindow.write().
 
         
-MEH hates tabs
-
-    the mdi system might need revised--some people like to be on 
-more channels than tabs can reasonably accomodate
-
-
-while 1: suckAtMainLoop()
-
-    we should use idle timers or whatever they're called to read the queue
-    
-    (MEH thinks this is done)
-
-
 replacements for stuff
 
     It'd be cool to have alternative ui's and conf's..maybe we could optionally
