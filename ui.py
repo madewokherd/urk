@@ -42,11 +42,13 @@ def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
 
 def unregister(tag):
     gobject.source_remove(tag)
+    
+set_style = widgets.set_style
 
 # Window activity Constants
-HILIT = 4
-TEXT = 2
-EVENT = 1
+HILIT = widgets.HILIT
+TEXT = widgets.TEXT
+EVENT = widgets.EVENT
 
 def urk_about(action):
     import __main__
@@ -401,40 +403,6 @@ def start():
         gtk.main()
     except KeyboardInterrupt:
         pass
-
-#FIXME: MEH hates dictionaries, they remind him of the bad words
-styles = {}
-    
-def get_style(widget):
-    if widget in styles:
-        return styles[widget]
-
-def set_style(widget, style):
-    def apply_style_fg(wdg, value):
-        wdg.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
-
-    def apply_style_bg(wdg, value):
-        wdg.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
-
-    def apply_style_font(wdg, value):
-        wdg.modify_font(pango.FontDescription(value))
-
-    style_functions = {
-        'fg': apply_style_fg,
-        'bg': apply_style_bg,
-        'font': apply_style_font,
-        }
-
-    if style:
-        # FIXME: find a better way...
-        dummy = gtk.Label()
-        dummy.set_style(None)
-    
-        for name in style:
-            style_functions[name](dummy, style[name])
-        styles[widget] = dummy.rc_get_style()
-    else:
-        styles[widget] = None
 
 # UI manager to use throughout   
 ui_manager = gtk.UIManager()

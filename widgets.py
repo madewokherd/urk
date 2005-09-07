@@ -1,5 +1,8 @@
 import gtk
+import pango
 
+import events
+import parse_mirc
 import ui
 
 # FIXME: make these the same as ui
@@ -10,6 +13,40 @@ EVENT = 1
 
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
+
+#FIXME: MEH hates dictionaries, they remind him of the bad words
+styles = {}
+    
+def get_style(widget):
+    if widget in styles:
+        return styles[widget]
+
+def set_style(widget, style):
+    def apply_style_fg(wdg, value):
+        wdg.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+    def apply_style_bg(wdg, value):
+        wdg.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+    def apply_style_font(wdg, value):
+        wdg.modify_font(pango.FontDescription(value))
+
+    style_functions = {
+        'fg': apply_style_fg,
+        'bg': apply_style_bg,
+        'font': apply_style_font,
+        }
+
+    if style:
+        # FIXME: find a better way...
+        dummy = gtk.Label()
+        dummy.set_style(None)
+    
+        for name in style:
+            style_functions[name](dummy, style[name])
+        styles[widget] = dummy.rc_get_style()
+    else:
+        styles[widget] = None
 
 class Nicklist(gtk.VBox):
     def __init__(self, window):
@@ -28,7 +65,7 @@ class Nicklist(gtk.VBox):
         view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         view.set_property("fixed-height-mode", True)
         
-        view.set_style(ui.get_style("nicklist"))
+        view.set_style(get_style("nicklist"))
         
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
@@ -173,7 +210,7 @@ class TextOutput(gtk.TextView):
             def scroll():
                 self.scroll_mark_onscreen(buffer.get_mark("end"))
                 
-            register_idle(scroll)
+            ui.register_idle(scroll)
 
         buffer.insert(end, text + "\n")
 
@@ -199,6 +236,8 @@ class TextOutput(gtk.TextView):
     #def mouseover(self, widget, event):
         #pos = self.get_iter_at_location(*event.get_coords())
         #self.get_pointer()
+        
+        #print pos
     
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
@@ -215,11 +254,13 @@ class TextOutput(gtk.TextView):
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
         self.set_property("indent", 0)
-        #self.set_property("events", self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK)
+        #self.set_property("events", 
+        #    self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK
+        #    )
         
         #self.connect("motion-notify-event", self.mouseover)
         
-        self.set_style(ui.get_style("view"))
+        self.set_style(get_style("view"))
 
 class WindowLabel(gtk.EventBox):
     def update(self):
