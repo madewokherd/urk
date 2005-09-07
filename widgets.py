@@ -235,23 +235,25 @@ class TextOutput(gtk.TextView):
     
     def mouseover(self, widget, event):
         x, y = event.get_coords()
+        x, y = int(x), int(y)
+        
+        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, x, y)
     
-        strt = self.get_iter_at_location(int(x), int(y))
-        end = self.get_iter_at_location(int(x), int(y))
-        self.get_pointer()
-        
-        if strt.get_char() == "\n":
-            return
+        strt = self.get_iter_at_location(x, y)
+        end = self.get_iter_at_location(x, y)
 
-        buffer = self.get_buffer()
-        
-        strt.backward_lines(1) and strt.forward_lines(1)
-        end.forward_lines(1)
-        
-        text = buffer.get_text(strt, end)
-        if text:
-            import time
-            print time.time(), text
+        if not strt.ends_line():
+            buffer = self.get_buffer()
+            
+            strt.backward_lines(1) and strt.forward_lines(1)
+            end.forward_lines(1)
+            
+            text = buffer.get_text(strt, end)
+            if text:
+                import time
+                print time.time(), text
+                
+        self.get_pointer()
     
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
