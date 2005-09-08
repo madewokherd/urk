@@ -215,6 +215,8 @@ class TextOutput(gtk.TextView):
         buffer.insert(end, text + "\n")
 
         for tag_props, start_i, end_i in tag_data:
+            print tag_props
+        
             for i, (prop, val) in enumerate(tag_props):
                 if val == parse_mirc.BOLD:
                     tag_props[i] = prop, pango.WEIGHT_BOLD
@@ -234,24 +236,44 @@ class TextOutput(gtk.TextView):
                 )
     
     def mouseover(self, widget, event):
+        buffer = self.get_buffer()
+    
+        for fr, to in self.linking:
+            buffer.remove_tag_by_name("link", fr, to)
+        
+        self.linking = []
+    
         x, y = event.get_coords()
         x, y = int(x), int(y)
         
         x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, x, y)
     
-        strt = self.get_iter_at_location(x, y)
-        end = self.get_iter_at_location(x, y)
+        pos = self.get_iter_at_location(x, y)
 
-        if not strt.ends_line():
-            buffer = self.get_buffer()
-            
-            strt.backward_lines(1) and strt.forward_lines(1)
+        if not pos.ends_line():
+            strt = buffer.get_iter_at_line(pos.get_line())
+            end = strt.copy()
             end.forward_lines(1)
+        
+            text = buffer.get_text(strt, end).rstrip("\n")
             
-            text = buffer.get_text(strt, end)
-            if text:
-                import time
-                print time.time(), text
+            h_data = events.data(
+                        window=self.win, 
+                        pos=pos.get_line_offset(),
+                        text=text, 
+                        tolink=[]
+                        )
+            events.trigger("Hover", h_data)
+            
+            start_i = strt.get_offset()
+            
+            for fr, to in h_data.tolink:
+                fr = buffer.get_iter_at_offset(start_i + fr)
+                to = buffer.get_iter_at_offset(start_i + to)
+            
+                buffer.apply_tag_by_name("link", fr, to)
+                
+                self.linking += [(fr, to)]
                 
         self.get_pointer()
     
@@ -270,6 +292,11 @@ class TextOutput(gtk.TextView):
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
         self.set_property("indent", 0)
+
+        buffer.create_tag("link", underline=pango.UNDERLINE_SINGLE)
+        self.linking = []
+        
+        # self.props.events |= gtk.gdk.POINTER_MOTION_HINT_MASK  (pygtk 2.8)
         self.set_property("events", 
             self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK
             )
