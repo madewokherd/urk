@@ -238,8 +238,33 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(start_i + cc),
                 buffer.get_iter_at_offset(end_i + cc)
                 )
+                
+    def click(self, widget, event):
+        buffer = self.get_buffer()
     
-    def mouseover(self, widget, event):
+        x, y = event.get_coords()
+        x, y = int(x), int(y)
+        
+        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, x, y)
+    
+        pos = self.get_iter_at_location(x, y)
+        
+        if not pos.ends_line():
+            strt = buffer.get_iter_at_line(pos.get_line())
+            end = strt.copy()
+            end.forward_lines(1)
+        
+            text = buffer.get_text(strt, end).rstrip("\n")
+            
+            c_data = events.data(
+                        window=self.win, 
+                        pos=pos.get_line_offset(),
+                        text=text, 
+                        tolink=[]
+                        )
+            events.trigger("Click", c_data)
+    
+    def hover(self, widget, event):
         buffer = self.get_buffer()
     
         for fr, to in self.linking:
@@ -304,7 +329,8 @@ class TextOutput(gtk.TextView):
             self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK
             )
         
-        self.connect("motion-notify-event", self.mouseover)
+        self.connect("motion-notify-event", self.hover)
+        self.connect("button-press-event", self.click)
         
         self.set_style(get_style("view"))
 
