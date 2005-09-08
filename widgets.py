@@ -219,8 +219,6 @@ class TextOutput(gtk.TextView):
         buffer.insert(end, text + "\n")
 
         for tag_props, start_i, end_i in tag_data:
-            print tag_props
-        
             for i, (prop, val) in enumerate(tag_props):
                 if val == parse_mirc.BOLD:
                     tag_props[i] = prop, pango.WEIGHT_BOLD
@@ -238,72 +236,86 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(start_i + cc),
                 buffer.get_iter_at_offset(end_i + cc)
                 )
-                
+            
     def click(self, widget, event):
         buffer = self.get_buffer()
     
-        x, y = event.get_coords()
-        x, y = int(x), int(y)
-        
-        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, x, y)
+        x, y = event.get_coords()       
+        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
     
-        pos = self.get_iter_at_location(x, y)
-        
-        if not pos.ends_line():
-            strt = buffer.get_iter_at_line(pos.get_line())
-            end = strt.copy()
-            end.forward_lines(1)
-        
-            text = buffer.get_text(strt, end).rstrip("\n")
+        hover_iter = self.get_iter_at_location(x, y)
+
+        if not hover_iter.ends_line():
+            line_strt = buffer.get_iter_at_line(hover_iter.get_line())
+            line_end = line_strt.copy()
+            line_end.forward_lines(1)
             
-            c_data = events.data(
-                        window=self.win, 
-                        pos=pos.get_line_offset(),
-                        text=text, 
-                        tolink=[]
+            pos = hover_iter.get_line_offset()        
+            text = buffer.get_text(line_strt, line_end).rstrip("\n")
+            
+            h_data = events.data(
+                        window=self.win, pos=pos, text=text,
+                        word=word, word_fr=fr, word_to=to,
+                        tolink=set()
                         )
-            events.trigger("Click", c_data)
+            events.trigger("Hover", h_data)
     
-    def hover(self, widget, event):
+    def clear_hover(self, *args):
         buffer = self.get_buffer()
     
         for fr, to in self.linking:
             buffer.remove_tag_by_name("link", fr, to)
         
-        self.linking = []
-    
-        x, y = event.get_coords()
-        x, y = int(x), int(y)
-        
-        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, x, y)
-    
-        pos = self.get_iter_at_location(x, y)
+        self.linking = set()
 
-        if not pos.ends_line():
-            strt = buffer.get_iter_at_line(pos.get_line())
-            end = strt.copy()
-            end.forward_lines(1)
-        
-            text = buffer.get_text(strt, end).rstrip("\n")
+    def hover(self, widget, event):
+        self.clear_hover()
+    
+        buffer = self.get_buffer()
+
+        x, y = event.get_coords()
+        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
+    
+        hover_iter = self.get_iter_at_location(x, y)
+
+        if not hover_iter.ends_line():
+            line_strt = buffer.get_iter_at_line(hover_iter.get_line())
+            line_end = line_strt.copy()
+            line_end.forward_lines(1)
+            
+            pos = hover_iter.get_line_offset()        
+            text = buffer.get_text(line_strt, line_end).rstrip("\n")
+            
+            fr = to = 0
+            for word in text.split(" "):
+                to += len(word)
+                
+                if fr <= pos < to:
+                    break
+                
+                fr += len(word)
+                
+                fr += 1
+                to += 1
+            else:
+                word = ""
             
             h_data = events.data(
-                        window=self.win, 
-                        pos=pos.get_line_offset(),
-                        text=text, 
-                        tolink=[]
+                        window=self.win, pos=pos, text=text,
+                        word=word, word_fr=fr, word_to=to,
+                        tolink=set()
                         )
             events.trigger("Hover", h_data)
             
-            start_i = strt.get_offset()
-            
+            offset = line_strt.get_offset()           
             for fr, to in h_data.tolink:
-                fr = buffer.get_iter_at_offset(start_i + fr)
-                to = buffer.get_iter_at_offset(start_i + to)
-            
+                fr = buffer.get_iter_at_offset(offset + fr)
+                to = buffer.get_iter_at_offset(offset + to)
+                
                 buffer.apply_tag_by_name("link", fr, to)
                 
-                self.linking += [(fr, to)]
-                
+                self.linking.add((fr, to))
+
         self.get_pointer()
     
     def __init__(self, window):
@@ -322,15 +334,16 @@ class TextOutput(gtk.TextView):
         self.set_property("right-margin", 3)
         self.set_property("indent", 0)
 
-        self.linking = []
+        self.linking = set()
         
         # self.props.events |= gtk.gdk.POINTER_MOTION_HINT_MASK  (pygtk 2.8)
         self.set_property("events", 
-            self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK
+            self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.LEAVE_NOTIFY_MASK
             )
         
         self.connect("motion-notify-event", self.hover)
         self.connect("button-press-event", self.click)
+        self.connect("leave-notify-event", self.clear_hover)
         
         self.set_style(get_style("view"))
 
