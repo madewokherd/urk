@@ -253,6 +253,20 @@ class TextOutput(gtk.TextView):
             pos = hover_iter.get_line_offset()        
             text = buffer.get_text(line_strt, line_end).rstrip("\n")
             
+            fr = to = 0
+            for word in text.split(" "):
+                to += len(word)
+                
+                if fr <= pos < to:
+                    break
+                
+                fr += len(word)
+                
+                fr += 1
+                to += 1
+            else:
+                word = ""
+            
             h_data = events.data(
                         window=self.win, pos=pos, text=text,
                         word=word, word_fr=fr, word_to=to,
