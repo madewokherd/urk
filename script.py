@@ -10,19 +10,8 @@ COMMAND_PREFIX = conf.get("command_prefix") or "/"
 events.load('irc_basicinfo')
 
 def onHover(event):
-    fr = to = 0
-    
-    for word in event.text.split(" "):
-        to += len(word)
-        
-        if fr <= event.pos < to and word == "marc":
-            event.tolink += [(fr, to)]
-            break
-            
-        fr += len(word)
-        
-        fr += 1
-        to += 1
+    if event.word in event.window.network.channels:
+        event.tolink.add((event.word_fr, event.word_to))
 
 def defInput(event):
     if not event.done:
