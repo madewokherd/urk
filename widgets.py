@@ -14,6 +14,10 @@ EVENT = 1
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
 
+link_tag = gtk.TextTag()
+link_tag.set_property('underline',pango.UNDERLINE_SINGLE)
+tag_table.add(link_tag)
+
 #FIXME: MEH hates dictionaries, they remind him of the bad words
 styles = {}
     
@@ -293,7 +297,6 @@ class TextOutput(gtk.TextView):
         self.set_property("right-margin", 3)
         self.set_property("indent", 0)
 
-        buffer.create_tag("link", underline=pango.UNDERLINE_SINGLE)
         self.linking = []
         
         # self.props.events |= gtk.gdk.POINTER_MOTION_HINT_MASK  (pygtk 2.8)
