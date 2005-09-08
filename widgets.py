@@ -14,7 +14,7 @@ EVENT = 1
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
 
-link_tag = gtk.TextTag()
+link_tag = gtk.TextTag('link')
 link_tag.set_property('underline',pango.UNDERLINE_SINGLE)
 tag_table.add(link_tag)
 
