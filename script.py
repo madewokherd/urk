@@ -16,12 +16,12 @@ def onClick(event):
             event.window.network.join(event.word)
         
     # nick on this channel
-    if event.window.type == "channel" and
+    if event.window.type == "channel" and \
         event.word in event.window.network.channels[event.window.id].nicks:
             pass
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
-    if (event.word.startswith("http://") and event.word.count(".") >= 1) or
+    if (event.word.startswith("http://") and event.word.count(".") >= 1) or \
             event.word.startswith("www") and event.word.count(".") >= 2:
         pass # launch a browser
 
@@ -31,12 +31,12 @@ def onHover(event):
         event.tolink.add((event.word_fr, event.word_to))
         
     # nick on this channel
-    if event.window.type == "channel" and
+    if event.window.type == "channel" and \
             event.word in event.window.network.channels[event.window.id].nicks:
         event.tolink.add((event.word_fr, event.word_to))
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
-    if (event.word.startswith("http://") and event.word.count(".") >= 1) or
+    if (event.word.startswith("http://") and event.word.count(".") >= 1) or \
             event.word.startswith("www") and event.word.count(".") >= 2:
         event.tolink.add((event.word_fr, event.word_to))
 
@@ -135,13 +135,12 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        window = ui.ServerWindow(
-                    event.network,
-                    'status',
-                    "Status Window",
-                    "[%s]" % event.network.server
-                    )
-        window.activate()
+        ui.ServerWindow(
+            event.network,
+            'status',
+            "Status Window",
+            "[%s]" % event.network.server
+            ).activate()
         
     if "server" in network_info:
         event.network.server = network_info["server"]
@@ -256,9 +255,8 @@ preAction = preText
 
 def preJoin(event):
     if event.source == event.network.me:
-        event.window = ui.ChannelWindow(event.network, 'channel', event.target)
-        event.window.activate()
-
+        ui.ChannelWindow(event.network, 'channel', event.target).activate()
+        
     event.window = ui.window_list[event.network, 'channel', event.target] or event.window
 
 def setupPart(event):
