@@ -16,17 +16,26 @@ CONNECTED = 3
 def parse_irc(msg, server):
     msg = msg.split(" ")
     
+    # if our very first character is :
+    # then this is the source, 
+    # otherwise insert the server as the source
     if msg[0][0] == ":":
         msg[0] = msg[0][1:]
     else:
         msg.insert(0, server)
     
+    # loop through the msg until we find the :blah token
+    # once we do, remove it and join the rest of the tokens up as a sentence
     for i, token in enumerate(msg):
         if token and token[0] == ":":
             msg = msg[:i] + [" ".join([token[1:]] + msg[i+1:])]
             break
     
+    # filter out the empty pre-":" tokens and add on the text to the end
     return [m for m in msg[:-1] if m] + msg[-1:]
+    
+    # note: this sucks and makes very little sense, but it matches the BNF
+    #       as far as we'v tested, which seems to be the goal
 
 class Network:
     socket = None               # this network's socket
