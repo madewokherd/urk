@@ -9,8 +9,35 @@ COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
 events.load('irc_basicinfo')
 
+def onClick(event):
+    # click on a #channel
+    if event.word.startswith("#"):
+        if event.word not in event.window.network.channels:
+            event.window.network.join(event.word)
+        
+    # nick on this channel
+    if event.window.type == "channel" and
+        event.word in event.window.network.channels[event.window.id].nicks:
+            pass
+    
+    # url of the form http://xxx.xxx or www.xxx.xxx       
+    if (event.word.startswith("http://") and event.word.count(".") >= 1) or
+            event.word.startswith("www") and event.word.count(".") >= 2:
+        pass # launch a browser
+
 def onHover(event):
+    # channel i'm on
     if event.word in event.window.network.channels:
+        event.tolink.add((event.word_fr, event.word_to))
+        
+    # nick on this channel
+    if event.window.type == "channel" and
+            event.word in event.window.network.channels[event.window.id].nicks:
+        event.tolink.add((event.word_fr, event.word_to))
+    
+    # url of the form http://xxx.xxx or www.xxx.xxx       
+    if (event.word.startswith("http://") and event.word.count(".") >= 1) or
+            event.word.startswith("www") and event.word.count(".") >= 2:
         event.tolink.add((event.word_fr, event.word_to))
 
 def defInput(event):
