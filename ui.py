@@ -388,7 +388,7 @@ def start():
     if not window_list:
         first_network = irc.Network("irc.flugurgle.org")
         
-        ChannelWindow(
+        ServerWindow(
             first_network, 
             "status", 
             "Status Window", 
