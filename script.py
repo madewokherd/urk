@@ -87,6 +87,9 @@ def handle_nick(event):
         event.network.nicks[0] = event.args[0]
         event.network.me = event.args[0]
         event.done = True
+        
+        for w in ui.get_window_for(network=event.network):
+            w.nick_label.update()
 
 # make /quit always disconnect us
 def handle_quit(event):
@@ -286,4 +289,4 @@ def onClose(window):
         
         for w in ui.get_window_for(network=window.network):
             if w is not window:
-                w.close()
+                w.close()        
