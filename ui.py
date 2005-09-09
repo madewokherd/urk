@@ -1,7 +1,11 @@
 import os
+import sys #only needed for the stupid workaround
 
 import gobject
 import gtk
+#stupid workaround
+if sys.path[0] == sys.path[3]:
+    sys.path.pop(0)
 import pango
 
 import widgets
