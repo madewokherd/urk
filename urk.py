@@ -10,9 +10,11 @@ import os
 urk_path = None #change this line when we do a system install
 if not urk_path: #normal install
     urk_path = os.path.dirname(inspect.getfile(sys.modules[__name__]))
-sys.path.insert(1, urk_path)
+sys.path.insert(0, urk_path)
 
-sys.path.insert(1, os.path.expanduser("~/.urk"))
+sys.path.insert(0, ".")
+
+sys.path.insert(0, os.path.expanduser("~/.urk"))
 
 import events
 
