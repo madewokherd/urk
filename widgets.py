@@ -79,9 +79,11 @@ class Nicklist(gtk.VBox):
 
 # Label used to display/edit your current nick on a network
 class NickEdit(gtk.EventBox):
-    def update(self):
-        self.label.set_text(self.win.network.me)
-        self.edit.set_text(self.win.network.me)
+    def update(self, nick=None):
+        nick = nick or self.win.network.me
+            
+        self.label.set_text(nick)
+        self.edit.set_text(nick)
     
     def toggle(self, *args):
         if self.mode == "edit":

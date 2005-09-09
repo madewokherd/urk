@@ -25,9 +25,6 @@ def defRaw(event):
                     e_data.newnick = event.msg[2]
                     events.trigger('Nick', e_data)
                     event.network.me = event.msg[2]
-                    
-                    for w in ui.get_window_for(network=event.network):
-                        w.nick_label.update()
                 
         if event.msg[1] == "PING":
             event.network.raw("PONG :%s" % event.msg[-1])
@@ -58,9 +55,6 @@ def defRaw(event):
             events.trigger('Nick', event)
             if event.network.me == event.source:
                 event.network.me = event.newnick
-                
-            for w in ui.get_window_for(network=event.network):
-                w.nick_label.update()
 
             event.done = True
             event.quiet = True

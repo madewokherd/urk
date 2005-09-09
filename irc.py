@@ -220,9 +220,6 @@ class Network:
             e_data.newnick = self.nicks[0]
             events.trigger('Nick', e_data)
             self.me = self.nicks[0]
-            
-            for w in ui.get_window_for(network=self):
-                w.nick_label.update()
         
     def normalize_case(self, string):
         return string.lower()
