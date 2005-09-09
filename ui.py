@@ -252,7 +252,18 @@ def ChannelWindow(network, type, id, title=None):
     
     return w
   
-class Tabs(dict):       
+class Tabs(dict):   
+    def window_change(self, notebook, wptr, page_num):
+        window = notebook.get_nth_page(page_num)
+        
+        window.activity = 0
+        
+        ui.set_title("%s - urk" % window.title)
+        
+        register_idle(window.input.grab_focus)
+    
+        events.trigger("Active", window)
+    
     def __getitem__(self, nti):
         network, type, id = nti
         
@@ -303,17 +314,8 @@ class Tabs(dict):
         self.nb.set_border_width(10)
         self.nb.set_scrollable(True)
         self.nb.set_show_border(True)
-        
-        def focus_input(nb, wptr, page_num):
-            window = nb.get_nth_page(page_num)
-        
-            window.activity = 0
-            
-            register_idle(window.input.grab_focus)
-        
-            events.trigger("Active", window)
-            
-        self.nb.connect("switch-page", focus_input)
+
+        self.nb.connect("switch-page", self.window_change)
 
 class UrkUI(gtk.Window):
     def __init__(self):
@@ -321,7 +323,7 @@ class UrkUI(gtk.Window):
         gtk.gdk.threads_init()
         
         gtk.Window.__init__(self)
-        self.set_title("Urk")
+        self.set_title("urk")
         self.connect("delete_event", gtk.main_quit)
 
         # layout
