@@ -272,9 +272,48 @@ class TextOutput(gtk.TextView):
             h_data = events.data(
                         window=self.win, pos=pos, text=text,
                         target=word, word_fr=fr, word_to=to,
-                        tolink=set()
+                        menu=[]
                         )
-            events.trigger("Click", h_data)
+  
+            if event.button == 1:
+                events.trigger("Click", h_data)
+                
+            elif event.button == 3:
+                events.trigger("RightClick", h_data)
+                
+                if h_data.menu:
+                    ui_manager = gtk.UIManager()
+                    ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
+                    
+                    actions = gtk.ActionGroup("Click")
+                    
+                    def callback(action, f): f()
+                    
+                    for item in h_data.menu: 
+                        if item:
+                            name, function = item
+                                
+                            actions.add_actions(
+                                ((name, None, name, None, None, callback),), function
+                                )
+
+                            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                                "/TabPopup/",
+                                name, name, 
+                                gtk.UI_MANAGER_MENUITEM, False)
+
+                        else: # None means add a separator
+                            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                                "/TabPopup/",
+                                "", None, 
+                                gtk.UI_MANAGER_SEPARATOR, False)
+                                
+                    ui_manager.insert_action_group(actions, 0) 
+                    ui_manager.get_widget(
+                        "/TabPopup"
+                        ).popup(None, None, None, event.button, event.time)
+                
+                    return True
     
     def clear_hover(self, *args):
         buffer = self.get_buffer()
