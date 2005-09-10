@@ -382,20 +382,53 @@ class WindowLabel(gtk.EventBox):
 
     def tab_popup(self, widget, event):
         if event.button == 3: # right click
+            c_data = events.data(window=self.win, menu=[])
+            events.trigger("WindowMenu", c_data)
+
             ui_manager = gtk.UIManager()
-        
-            # add some tab UI                
-            tab_id = ui_manager.add_ui_from_file("tabui.xml")
-            ui_manager.insert_action_group(ui.get_tab_actions(self.win), 0)
-
-            tab_menu = ui_manager.get_widget("/TabPopup")
+            ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
             
-            # remove the tab UI, so we can recompute it later
-            def remove_tab_ui(action):
-                ui_manager.remove_ui(tab_id)
-            tab_menu.connect("deactivate", remove_tab_ui)
+            actions = gtk.ActionGroup("Tab")
+            
+            def callback(action, f): f()
+            
+            for item in c_data.menu: 
+                if item:
+                    name, function = item
+                        
+                    actions.add_actions(
+                        ((name, None, name, None, None, callback),), function
+                        )
 
-            tab_menu.popup(None, None, None, event.button, event.time)
+                    ui_manager.add_ui(ui_manager.new_merge_id(), 
+                        "/TabPopup/",
+                        name, name, 
+                        gtk.UI_MANAGER_MENUITEM, False)
+
+                else: # None means add a separator
+                    ui_manager.add_ui(ui_manager.new_merge_id(), 
+                        "/TabPopup/",
+                        "", None, 
+                        gtk.UI_MANAGER_SEPARATOR, False)
+
+            actions.add_actions(
+                (("Close", gtk.STOCK_CLOSE, None, "<Control>W", None, callback),),
+                self.win.close
+                )
+             
+            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                        "/TabPopup/",
+                        "", None, 
+                        gtk.UI_MANAGER_SEPARATOR, False)   
+            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                        "/TabPopup/",
+                        "Close", "Close", 
+                        gtk.UI_MANAGER_MENUITEM, False)
+                        
+            ui_manager.insert_action_group(actions, 0) 
+            ui_manager.get_widget(
+                "/TabPopup"
+                ).popup(None, None, None, event.button, event.time)
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)

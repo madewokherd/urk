@@ -67,19 +67,6 @@ def urk_about(action):
     
     about.show_all()
     
-def get_tab_actions(window):
-    def close_tab(action):
-        window.close()
-        
-    to_add = (
-        ("CloseTab", gtk.STOCK_CLOSE, "_Close Tab", None, None, close_tab),
-        )
-        
-    tab_actions = gtk.ActionGroup("Tab")
-    tab_actions.add_actions(to_add)
-    
-    return tab_actions
-    
 def get_urk_actions(ui):
     to_add = (
         ("FileMenu", None, "_File"),
@@ -328,7 +315,7 @@ class UrkUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("urk")
-        self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path,"urk_icon.svg")))
+        self.set_icon(gtk.gdk.pixbuf_new_from_file("urk_icon.svg"))
         self.connect("delete_event", gtk.main_quit)
 
         # layout
@@ -338,7 +325,7 @@ class UrkUI(gtk.Window):
         self.move(*xy)
         self.set_default_size(*wh)
         
-        def connect_save():        
+        def connect_save():
             def save_xywh(*args):
                 conf.set("xy", self.get_position())
                 conf.set("wh", self.get_size())
@@ -348,7 +335,7 @@ class UrkUI(gtk.Window):
         ui_manager = gtk.UIManager()
         
         self.add_accel_group(ui_manager.get_accel_group())
-        ui_manager.add_ui_from_file(os.path.join(urk.path,"ui.xml"))
+        ui_manager.add_ui_from_file(os.path.join(urk.path, "ui.xml"))
         ui_manager.insert_action_group(get_urk_actions(self), 0)
         
         menu = ui_manager.get_widget("/MenuBar")
