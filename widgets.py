@@ -271,7 +271,7 @@ class TextOutput(gtk.TextView):
             
             h_data = events.data(
                         window=self.win, pos=pos, text=text,
-                        word=word, word_fr=fr, word_to=to,
+                        target=word, word_fr=fr, word_to=to,
                         tolink=set()
                         )
             events.trigger("Hover", h_data)
@@ -318,7 +318,7 @@ class TextOutput(gtk.TextView):
             
             h_data = events.data(
                         window=self.win, pos=pos, text=text,
-                        word=word, word_fr=fr, word_to=to,
+                        target=word, word_fr=fr, word_to=to,
                         tolink=set()
                         )
             events.trigger("Hover", h_data)
