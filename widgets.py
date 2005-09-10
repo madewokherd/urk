@@ -274,7 +274,7 @@ class TextOutput(gtk.TextView):
                         target=word, word_fr=fr, word_to=to,
                         tolink=set()
                         )
-            events.trigger("Hover", h_data)
+            events.trigger("Click", h_data)
     
     def clear_hover(self, *args):
         buffer = self.get_buffer()
