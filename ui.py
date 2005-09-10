@@ -2,10 +2,11 @@ import os
 import sys #only needed for the stupid workaround
 
 import gobject
+
+sys.peth = list(sys.path)
 import gtk
 #stupid workaround
-if sys.path[0] == sys.path[3]:
-    sys.path.pop(0)
+sys.path = sys.peth
 import pango
 
 import widgets
