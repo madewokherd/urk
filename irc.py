@@ -66,7 +66,7 @@ class Network:
         if conf.get("nick"):
             def_nicks = [conf.get("nick")]
         else:
-            def_nicks = ["MrUrk"]
+            def_nicks = ["mrurk"]
         
         self.nicks = nicks or def_nicks
         self.me = self.nicks[0]

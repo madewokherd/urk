@@ -1,16 +1,16 @@
-Urk 0.-1.2
+urk 0.-1.2
 http://urk.sourceforge.net/
 
 
 Overview:
 
-Urk is an IRC client written purely in python for linux/gnome. It has a built-in
+urk is an IRC client written purely in python for linux/gnome. It has a built-in
 scripting system (also python), which is used to implement much of the client.
 
 
 Requirements/User installation:
 
-Urk requires the following packages (and should run on any os that can provide 
+urk requires the following packages (and should run on any os that can provide 
 them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
@@ -43,7 +43,7 @@ one), use the -m switch as in '/server -m irc.gamesurge.net'.
 To join a channel when you're connected to a server, type '/join #channelname',
 replacing #channelname with the channel you want to join.
 
-Urk currently only supports the bare minimum commands and features you should
+urk currently only supports the bare minimum commands and features you should
 need to connect and chat normally. On channels, you can send messages by
 typing them (if you want to send a message that starts with a /, use /say to
 send your message). You can send actions to channels with /me and send messages
@@ -72,7 +72,7 @@ Setting:            Description:
 'scripts_to_load'   A list of scripts urk should load on startup. Defaults to
     ['script.py', 'theme.py', 'irc_basicinfo.py', 'irc_events_us.py']
 
-'nick'              The nickname urk should use. Defaults to 'MrUrk'
+'nick'              The nickname urk should use. Defaults to 'mrurk'
 
 'start_networks'    The networks/servers urk should connect to at startup. 
     Defaults to []
@@ -99,7 +99,7 @@ Not yet implemented.
 
 About scripting:
 
-Urk scripts are python programs that contain definitions of functions with 
+urk scripts are python programs that contain definitions of functions with 
 certain "magic" names, like onText (for when someone sends a channel or private 
 message). See www.python.org for help on writing python code. The format for 
 onText is:

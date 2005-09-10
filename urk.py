@@ -6,12 +6,12 @@ import sys
 import inspect
 import os
 
-#add ~/.urk and urk_path (normally where urk.py is located) to sys.path
-urk_path = None #change this line when we do a system install
-if not urk_path: #normal install
-    urk_path = os.path.dirname(inspect.getfile(sys.modules[__name__]))
+#add ~/.urk and path (normally where urk.py is located) to sys.path
+path = None #change this line when we do a system install
+if not path: #normal install
+    path = os.path.dirname(inspect.getfile(sys.modules[__name__]))
 
-sys.path = [os.path.expanduser("~/.urk"),".",urk_path] + sys.path
+sys.path = [os.path.expanduser("~/.urk"),".",path] + sys.path
 
 import events
 
@@ -27,8 +27,8 @@ ui_module = imp.find_module(opts.get('-u') or opts.get('--ui') or 'ui')
 ui = imp.load_module('ui', *ui_module)
 ui_module[0].close()
 
-name = "Urk"
-long_name = "Urk IRC Client"
+name = "urk"
+long_name = "urk IRC"
 version = 0, -1, 2
 long_version = "%s v%s" % (long_name, ".".join(str(x) for x in version))
 website = "http://urk.sf.net/"
