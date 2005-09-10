@@ -319,7 +319,11 @@ class TextOutput(gtk.TextView):
         buffer = self.get_buffer()
     
         for fr, to in self.linking:
-            buffer.remove_tag_by_name("link", fr, to)
+            buffer.remove_tag_by_name(
+                "link", 
+                buffer.get_iter_at_mark(fr), 
+                buffer.get_iter_at_mark(to)
+                )
         
         self.linking = set()
 
@@ -333,7 +337,7 @@ class TextOutput(gtk.TextView):
     
         hover_iter = self.get_iter_at_location(x, y)
 
-        if not hover_iter.ends_line():
+        if not hover_iter.ends_line():        
             line_strt = buffer.get_iter_at_line(hover_iter.get_line())
             line_end = line_strt.copy()
             line_end.forward_lines(1)
@@ -369,10 +373,13 @@ class TextOutput(gtk.TextView):
                 
                 buffer.apply_tag_by_name("link", fr, to)
                 
-                self.linking.add((fr, to))
+                self.linking.add(
+                    (buffer.create_mark(str(fr), fr), 
+                        buffer.create_mark(str(to), to))
+                    )
 
         self.get_pointer()
-    
+
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
         
