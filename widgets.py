@@ -1,3 +1,5 @@
+import codecs
+
 import gtk
 import pango
 
@@ -199,6 +201,11 @@ class TextInput(gtk.Entry):
 class TextOutput(gtk.TextView):
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type=EVENT):
+        if not isinstance(text, unicode):
+            try:
+                text = codecs.utf_8_decode(text)[0]
+            except:
+                text = codecs.latin_1_decode(text)[0]
         tag_data, text = parse_mirc.parse_mirc(text)
     
         buffer = self.get_buffer()
