@@ -10,7 +10,11 @@ Preferences UI
 
 Hotlinking
 
+    stop using webbrowser
+    
     we need to figure out what to do when you click on nicks
+    
+    also, we need the hand cursor
 
 
 Functional Nicklist
@@ -26,6 +30,7 @@ Keyboard Shortcuts for Formatting
 System Install
 
     a script (probably python) to do a system-wide install
+
 
 
 some time in the future:
