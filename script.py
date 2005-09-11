@@ -4,6 +4,7 @@ import events
 import irc
 import conf
 import ui
+import webbrowser
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
@@ -17,23 +18,23 @@ def onClick(event):
         
     # nick on this channel
     if event.window.type == "channel" and \
-        event.target in event.window.network.channels[event.window.id].nicks:
+        event.target.lstrip('@+%.(<').rstrip(')>:,') in event.window.network.channels[event.window.id].nicks:
             pass
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
             event.target.startswith("www") and event.target.count(".") >= 2:
-        pass # launch a browser
+        webbrowser.open(event.target)
 
 def onHover(event):
-    # channel i'm on
-    if event.target in event.window.network.channels:
+    # click on a #channel
+    if event.target.startswith("#"):
         event.tolink.add((event.target_fr, event.target_to))
         
     # nick on this channel
     if event.window.type == "channel" and \
-            event.target in event.window.network.channels[event.window.id].nicks:
-        event.tolink.add((event.target_fr, event.target_to))
+            event.target.lstrip('@+%.(<').rstrip(')>:,') in event.window.network.channels[event.window.id].nicks:
+        event.tolink.add((event.target_fr+len(event.target)-len(event.target.lstrip('@+%.(<')), event.target_to-len(event.target)+len(event.target.rstrip(')>:,'))))
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \

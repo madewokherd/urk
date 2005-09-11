@@ -36,7 +36,7 @@ authors = ["Vincent Povirk", "Marc Liddell"]
 copyright = "2005 %s" % ', '.join(authors)
 
 if __name__ == "__main__":
-    for script in conf.get("scripts_to_load") or ['script.py','theme.py','irc_basicinfo.py', 'irc_events_us.py']:
+    for script in conf.get("scripts_to_load") or ['script.py','theme.py','irc_basicinfo.py', 'irc_events_us.py', 'ctcp.py']:
         events.load(script)
 
     events.trigger("Start")
