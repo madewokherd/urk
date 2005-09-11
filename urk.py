@@ -20,7 +20,13 @@ opts, dummy = getopt.getopt(sys.argv[1:],'c:u:', ['conf=','ui='])
 opts = dict(opts)
 
 conf_module = imp.find_module(opts.get('-c') or opts.get('--conf') or 'conf')
-conf = imp.load_module('conf', *conf_module)
+try:
+    conf = imp.load_module('conf', *conf_module)
+except:
+    conf_module[0].close()
+    print "Unable to load gconf; your settings will not be saved."
+    conf_module = imp.find_module('conf_dummy')
+    conf = imp.load_module('conf', *conf_module)
 conf_module[0].close()
 
 ui_module = imp.find_module(opts.get('-u') or opts.get('--ui') or 'ui')

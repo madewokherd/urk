@@ -10,7 +10,7 @@ Preferences UI
 
 Hotlinking
 
-    urls, nicks, channels, etc. should be clickable
+    we need to figure out what to do when you click on nicks
 
 
 Functional Nicklist
@@ -28,8 +28,13 @@ System Install
     a script (probably python) to do a system-wide install
 
 
-
 some time in the future:
+
+Start up Text Editor
+
+    we need a nice way to start a text editor for editing scripts, probably a 
+/edit command
+
 
 DCC Stuff
 
