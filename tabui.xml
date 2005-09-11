@@ -1,7 +1,0 @@
-<ui>
- <popup name="TabPopup">
-   <separator/>
-   <menuitem action="CloseTab"/>
-   <separator/>
- </popup>
-</ui>
