@@ -316,7 +316,10 @@ class UrkUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("urk")
-        self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path, "urk_icon.svg")))
+        try:
+            self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path, "urk_icon.svg")))
+        except:
+            print "There was an error loading the icon. You won't see our beautiful artwork."
         self.connect("delete_event", gtk.main_quit)
 
         # layout
