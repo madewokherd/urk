@@ -6,9 +6,9 @@ import conf
 import ui
 import webbrowser
 
-COMMAND_PREFIX = conf.get("command_prefix") or "/"
+import chaninfo
 
-events.load('irc_basicinfo')
+COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
 def onClick(event):
     # click on a #channel

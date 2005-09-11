@@ -4,7 +4,7 @@ import gtk
 import ui
 import events
 
-events.load('irc_basicinfo')
+import chaninfo
 
 textareas = {
     'bg': '#2E3D49',

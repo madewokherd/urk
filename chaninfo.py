@@ -1,5 +1,4 @@
 import events
-events.load('irc_events_us')
 
 # FIXME:
 def update_nicks(network, channel):
@@ -31,12 +30,6 @@ def update_nicks(network, channel):
 
 def setupSocketConnect(event):
     event.network.channels = {}
-    event.network.isupport = {
-        'NETWORK': event.network.server, 
-        'PREFIX': '(ohv)@%+',
-        'CHANMODES': 'b,k,l,imnpstr',
-    }
-    event.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
 
 def postDisconnect(event):
     event.network.channels = {}
@@ -191,3 +184,5 @@ def setupRaw(event):
         channel = event.network.channels.get(event.network.normalize_case(event.msg[3]))
         if channel:
             channel.topic = event.text
+
+events.load('irc_events_us')

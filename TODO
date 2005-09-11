@@ -13,6 +13,16 @@ Hotlinking
     urls, nicks, channels, etc. should be clickable
 
 
+Functional Nicklist
+
+    right-clicking the nicklist should do something
+
+
+Keyboard Shortcuts for Formatting
+
+    ^B, ^K etc.
+
+
 System Install
 
     a script (probably python) to do a system-wide install
