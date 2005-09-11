@@ -316,7 +316,7 @@ class UrkUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("urk")
-        self.set_icon(gtk.gdk.pixbuf_new_from_file("urk_icon.svg"))
+        self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path, "urk_icon.svg")))
         self.connect("delete_event", gtk.main_quit)
 
         # layout
