@@ -293,5 +293,6 @@ def onClose(window):
                 w.close()   
                 
 def onNick(event):
-    for w in ui.get_window_for(network=event.network):
-        w.nick_label.update(event.newnick)     
+    if event.source == event.network.me:
+        for w in ui.get_window_for(network=event.network):
+            w.nick_label.update(event.newnick)     
