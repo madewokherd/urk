@@ -133,6 +133,10 @@ class NickEdit(gtk.EventBox):
         self.edit.connect("focus-out-event", self.toggle)
         
         self.update()
+        
+        def set_cursor():
+            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.XTERM))
+        ui.register_idle(set_cursor)
 
 # The entry which you type in to send messages        
 class TextInput(gtk.Entry):
@@ -333,6 +337,7 @@ class TextOutput(gtk.TextView):
                 )
         
         self.linking = set()
+        self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)
 
     def hover(self, widget, event):
         self.clear_hover()
@@ -384,8 +389,12 @@ class TextOutput(gtk.TextView):
                     (buffer.create_mark(str(fr), fr), 
                         buffer.create_mark(str(to), to))
                     )
+                    
+                self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
         self.get_pointer()
+        
+        return True
 
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
@@ -415,6 +424,10 @@ class TextOutput(gtk.TextView):
         self.connect("leave-notify-event", self.clear_hover)
         
         self.set_style(get_style("view"))
+        
+        def set_cursor():
+            self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
+        ui.register_idle(set_cursor)
 
 class WindowLabel(gtk.EventBox):
     def update(self):
