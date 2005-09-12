@@ -393,8 +393,6 @@ class TextOutput(gtk.TextView):
                 self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
         self.get_pointer()
-        
-        return True
 
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
