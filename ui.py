@@ -138,8 +138,6 @@ def ServerWindow(network, type, id, title=None):
         w.write = write
         
         def transfer_text(widget, event):
-            print event.string
-        
             if event.string and not w.input.is_focus():
                 w.input.grab_focus()
                 w.input.set_position(-1)
