@@ -32,6 +32,17 @@ System Install
     a script (probably python) to do a system-wide install
 
 
+Take Back Stupid Decision
+
+    own text shouldn't trigger onText
+
+
+Commands that want colons
+
+    things like /topic, /part, /kick, whatever else need to have :'s added in
+the appropriate spots when we send them
+
+
 
 some time in the future:
 

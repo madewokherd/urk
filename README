@@ -70,9 +70,10 @@ To see the current value, use
 Setting:            Description:
 
 'scripts_to_load'   A list of scripts urk should load on startup. Defaults to
-    ['script.py', 'theme.py', 'irc_basicinfo.py', 'irc_events_us.py']
+    ['script.py', 'theme.py', 'chaninfo.py', 'irc_events_us.py']
 
-'nick'              The nickname urk should use. Defaults to 'mrurk'
+'nick'              The nickname urk should use. Defaults to None (if this is
+    set to None, urk tries to get a username from the os)
 
 'start_networks'    The networks/servers urk should connect to at startup. 
     Defaults to []

@@ -158,16 +158,20 @@ def run_command(text, window, network):
         c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
 
 def handle_pyeval(event):
+    loc = sys.modules.copy()
+    loc.update(event.__dict__)
     try:
-        event.window.write(repr(eval(' '.join(event.args), globals(), event.__dict__)))
+        event.window.write(repr(eval(' '.join(event.args), globals(), loc)))
     except:
         for line in traceback.format_exc().split('\n'):
             event.window.write(line)
     event.done = True
 
 def handle_pyexec(event):
+    loc = sys.modules.copy()
+    loc.update(event.__dict__)
     try:
-        exec ' '.join(event.args) in globals(), event.__dict__
+        exec ' '.join(event.args) in globals(), loc
     except:
         for line in traceback.format_exc().split('\n'):
             event.window.write(line)
