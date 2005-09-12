@@ -17,8 +17,17 @@ def onClick(event):
             event.window.network.join(event.target)
         
     # nick on this channel
+    target_l = event.target.lstrip('@+%.(<')
+    target_fr = event.target_fr + len(event.target) - len(target_l)
+    
+    target_r = event.target.rstrip(')>:,')
+    target_to = event.target_to - len(event.target) + len(target_r)
+    
+    target = event.target[target_fr:target_to]
+    
     if event.window.type == "channel" and \
-        event.target.lstrip('@+%.(<').rstrip(')>:,') in event.window.network.channels[event.window.id].nicks:
+            target in event.window.network.channels[event.window.id].nicks:
+        event.tolink.add((target_fr, target_to)) 
             pass
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
@@ -33,9 +42,17 @@ def onHover(event):
         event.tolink.add((event.target_fr, event.target_to))
         
     # nick on this channel
+    target_l = event.target.lstrip('@+%.(<')
+    target_fr = event.target_fr + len(event.target) - len(target_l)
+    
+    target_r = event.target.rstrip(')>:,')
+    target_to = event.target_to - len(event.target) + len(target_r)
+    
+    target = event.target[target_fr:target_to]
+    
     if event.window.type == "channel" and \
-            event.target.lstrip('@+%.(<').rstrip(')>:,') in event.window.network.channels[event.window.id].nicks:
-        event.tolink.add((event.target_fr+len(event.target)-len(event.target.lstrip('@+%.(<')), event.target_to-len(event.target)+len(event.target.rstrip(')>:,'))))
+            target in event.window.network.channels[event.window.id].nicks:
+        event.tolink.add((target_fr, target_to))        
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
