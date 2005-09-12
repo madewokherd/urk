@@ -303,7 +303,7 @@ class Tabs(dict):
         else:
             self.nb.set_property("tab-pos", gtk.POS_TOP)
 
-        self.nb.set_border_width(3)
+        self.nb.set_border_width(6)
         self.nb.set_scrollable(True)
         self.nb.set_show_border(True)
 

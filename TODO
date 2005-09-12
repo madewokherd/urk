@@ -1,12 +1,4 @@
-before we can claim it's not beta:
-
-Preferences UI
-
-    a preferences ui, probably with a separate sort of 
-"connect or edit connection" dialog
-
-    we want a number of "preflets" rather than one gigantic prefs window
-
+before next release:
 
 Hotlinking
 
@@ -14,22 +6,16 @@ Hotlinking
     
     we need to figure out what to do when you click on nicks
     
-    also, we need the hand cursor
 
-
-Functional Nicklist
-
-    right-clicking the nicklist should do something
-
-
-Keyboard Shortcuts for Formatting
+Keyboard Shortcuts
 
     ^B, ^K etc.
-
-
-System Install
-
-    a script (probably python) to do a system-wide install
+    
+    ^T for new server window?
+    
+    tab for nick completion
+    
+    we could just have an onKeypress event..scripts are good..
 
 
 Take Back Stupid Decision
@@ -43,14 +29,45 @@ Commands that want colons
 the appropriate spots when we send them
 
 
+Format more stuff
 
-some time in the future:
+    Change formatting of tabs, tabs with new text
+
 
 Start up Text Editor
 
     we need a nice way to start a text editor for editing scripts, probably a 
 /edit command
 
+
+
+before we can claim it's not beta:
+
+Preferences UI
+
+    a preferences ui, probably with a separate sort of 
+"connect or edit connection" dialog
+
+    we want a number of "preflets" rather than one gigantic prefs window
+
+
+Functional Nicklist
+
+    right-clicking the nicklist should do something
+
+
+System Install
+
+    a script (probably python) to do a system-wide install
+
+
+Highlighting
+    
+    Provide a means for highlighting. Maybe theme should trigger an event? :/
+
+
+
+some time in the future:
 
 DCC Stuff
 

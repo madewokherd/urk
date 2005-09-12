@@ -406,7 +406,7 @@ class TextOutput(gtk.TextView):
             line_end.forward_lines(1)
             
             pos = hover_iter.get_line_offset()        
-            text = buffer.get_text(line_strt, line_end).rstrip("\n")
+            text = line_strt.get_text(line_end).rstrip("\n")
             
             fr = to = 0
             for word in text.split(" "):
