@@ -27,8 +27,7 @@ def onClick(event):
     
     if event.window.type == "channel" and \
             target in event.window.network.channels[event.window.id].nicks:
-        event.tolink.add((target_fr, target_to)) 
-            pass
+        event.tolink.add((target_fr, target_to))
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
