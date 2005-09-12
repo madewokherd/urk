@@ -3,7 +3,7 @@
 #this is mostly here so developers can simulate a fresh install, but users can
 #use it as a substitute for the normal conf.py, which requires gnome-python
 
-#to simply use urk with no default settings, run 'python urk.py -c conf_dummy'
+#to force urk to use this module, run 'python urk.py -c conf_dummy'
 
 #the initial settings; you should make a copy if you want to change these
 values = {

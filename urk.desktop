@@ -1,7 +1,7 @@
 [Desktop Entry]
-Version=0.-1.2
+Version=0.-1.3
 Encoding=UTF-8
-Name=Urk IRC
+Name=urk irc
 Exec=urk
 Icon=stock_help-chat
 Type=Application

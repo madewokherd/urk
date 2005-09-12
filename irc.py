@@ -71,7 +71,7 @@ class Network:
         self.nicks = nicks or def_nicks
         self.me = self.nicks[0]
             
-        self.fullname = fullname or "Urk user"
+        self.fullname = fullname or "urk user"
 
         self.channels = {}
     

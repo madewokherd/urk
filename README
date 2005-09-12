@@ -1,4 +1,4 @@
-urk 0.-1.2
+urk 0.-1.3
 http://urk.sourceforge.net/
 
 
@@ -14,14 +14,39 @@ urk requires the following packages (and should run on any os that can provide
 them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
+optional (needed to save):
 -gnome-python 2.10 or greater (www.pygtk.org)
 
 It's possible to make things work without gnome-python, but any changes urk 
-makes to your settings will not be preserved across sessions. See conf_dummy.py 
-for instructions to do this.
+makes to your settings will not be preserved across sessions.
 
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
+
+
+Windows users:
+
+urk was designed for linux, but it happens nearly everything we used is
+cross-platform so..yeah..it runs on windows. You need to install some things:
+
+-python version 2.4 or greater from www.python.org
+-pygtk 2.6 or greater from http://www.pcpm.ucl.ac.be/~gustin/win32_ports/
+-gtk+ for windows from http://gladewin32.sourceforge.net/
+
+It's very important that you get gtk+ from the site given. People who have tried
+other installers, such as the one gaim provides, have failed. Also, you'll need
+to restart after you've installed those things.
+
+urk currently relies on gconf to save its settings, and gconf isn't available
+for windows. So, uh it won't save your settings (not that it saves much anyway).
+
+Since you won't be using conf.py, the manual configuration method described
+below won't work for you. You should copy conf_dummy.py to your user 
+configuration directory (type '/pyeval sys.path[0]' in urk to determine where
+this is; it should be in some generic settings folder\urk). Then you can modify
+it, using the list of settings defined below. conf_dummy.py is not expected to
+change much (though we expect to provide a way to actually save settings later,
+when it becomes more meaningful), so you should be safe overriding it.
 
 
 Getting started:

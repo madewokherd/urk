@@ -303,7 +303,7 @@ class Tabs(dict):
         else:
             self.nb.set_property("tab-pos", gtk.POS_TOP)
 
-        self.nb.set_border_width(10)
+        self.nb.set_border_width(3)
         self.nb.set_scrollable(True)
         self.nb.set_show_border(True)
 
@@ -400,7 +400,9 @@ def start():
     #register_idle(gtk.main_quit)
 
     try:
+        gtk.threads_enter()
         gtk.main()
+        gtk.threads_leave()
     except KeyboardInterrupt:
         pass
     
