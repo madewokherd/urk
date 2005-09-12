@@ -123,21 +123,6 @@ class Window(gtk.VBox):
         
         self.label = widgets.WindowLabel(self)
         self.label.show_all()
-        
-        MOD_MASK = 0
-        for m in (gtk.gdk.CONTROL_MASK, gtk.gdk.MOD1_MASK, gtk.gdk.MOD3_MASK,
-                        gtk.gdk.MOD4_MASK, gtk.gdk.MOD5_MASK):
-            MOD_MASK |= m   
-
-        def transfer_text(widget, event):
-            modifiers_on = event.state & MOD_MASK
-
-            if event.string and not modifiers_on:
-                self.input.grab_focus()
-                self.input.insert_text(event.string, -1)
-                self.input.set_position(-1)
-        
-        self.connect("key-press-event", transfer_text)
 
 def ServerWindow(network, type, id, title=None):
     w = window_list[network, type, id]
@@ -151,6 +136,16 @@ def ServerWindow(network, type, id, title=None):
         
             w.output.write(text, activity_type)
         w.write = write
+        
+        def transfer_text(widget, event):
+            print event.string
+        
+            if event.string and not w.input.is_focus():
+                w.input.grab_focus()
+                w.input.set_position(-1)
+                w.input.event(event)
+
+        w.connect("key-press-event", transfer_text)
 
         w.output = widgets.TextOutput(w)
         w.input = widgets.TextInput(w)
@@ -183,19 +178,27 @@ def ChannelWindow(network, type, id, title=None):
     if not w:
         w = Window(network, type, id, title or id)
         
-        def write(text, activity_type=EVENT):
-            if get_active() != w:
-                w.activity |= activity_type
-        
-            w.output.write(text, activity_type)
-        w.write = write
-
         def set_nicklist(nicks):
             w.nicklist.userlist.clear()
             
             for nick in nicks:
                 w.nicklist.userlist.append([nick])
         w.set_nicklist = set_nicklist
+        
+        def write(text, activity_type=EVENT):
+            if get_active() != w:
+                w.activity |= activity_type
+        
+            w.output.write(text, activity_type)
+        w.write = write
+        
+        def transfer_text(widget, event):
+            if event.string and not w.input.is_focus():
+                w.input.grab_focus()
+                w.input.set_position(-1)
+                w.input.event(event)
+
+        w.connect("key-press-event", transfer_text)
 
         w.output = widgets.TextOutput(w)
         w.input = widgets.TextInput(w)
