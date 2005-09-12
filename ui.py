@@ -71,7 +71,7 @@ def urk_about(action):
 def get_urk_actions(ui):
     to_add = (
         ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, gtk.main_quit),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.exit),
         
         ("HelpMenu", None, "_Help"),
             ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
@@ -311,6 +311,11 @@ class Tabs(dict):
         self.nb.connect("switch-page", self.window_change)
 
 class UrkUI(gtk.Window):
+    def exit(self, *args):
+        gtk.main_level() and gtk.main_quit()
+
+        events.trigger("Exit")
+
     def __init__(self):
         # threading stuff
         gtk.gdk.threads_init()
@@ -321,7 +326,7 @@ class UrkUI(gtk.Window):
             self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path, "urk_icon.svg")))
         except:
             print "There was an error loading the icon. You won't see our beautiful artwork."
-        self.connect("delete_event", gtk.main_quit)
+        self.connect("delete_event", self.exit)
 
         # layout
         xy = conf.get("xy") or (-1, -1)
@@ -405,7 +410,7 @@ def start():
         gtk.main()
         gtk.threads_leave()
     except KeyboardInterrupt:
-        pass
+        ui.exit()
     
 # build our tab widget
 window_list = Tabs()
