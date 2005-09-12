@@ -140,7 +140,7 @@ def handle_server(event):
     if len(event.args):
         server = event.args[0]
         if ':' in server:
-            server, port = server.split(':')
+            server, port = server.rsplit(':', 1)
             network_info["port"] = int(port)
             
         network_info["server"] = server
