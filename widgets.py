@@ -55,8 +55,57 @@ def set_style(widget, style):
         styles[widget] = None
 
 class Nicklist(gtk.VBox):
+    def click(self, widget, event, view):
+        if event.button == 3:
+            x, y = event.get_coords()
+            x, y = int(x), int(y)
+    
+            (data,), path, x, y = view.get_path_at_pos(x, y)
+        
+            c_data = events.data(
+                        win=self.win,
+                        data=data,
+                        menu=[]
+                        )
+        
+            events.trigger("ListRightClick", c_data)
+            
+            if c_data.menu:
+                ui_manager = gtk.UIManager()
+                ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
+                
+                actions = gtk.ActionGroup("ListClick")
+                
+                def callback(action, f): f()
+                
+                for item in c_data.menu: 
+                    if item:
+                        name, function = item
+                            
+                        actions.add_actions(
+                            ((name, None, name, None, None, callback),), function
+                            )
+
+                        ui_manager.add_ui(ui_manager.new_merge_id(), 
+                            "/TabPopup/",
+                            name, name, 
+                            gtk.UI_MANAGER_MENUITEM, False)
+
+                    else: # None means add a separator
+                        ui_manager.add_ui(ui_manager.new_merge_id(), 
+                            "/TabPopup/",
+                            "", None, 
+                            gtk.UI_MANAGER_SEPARATOR, False)
+                            
+                ui_manager.insert_action_group(actions, 0) 
+                ui_manager.get_widget(
+                    "/TabPopup"
+                    ).popup(None, None, None, event.button, event.time)
+
     def __init__(self, window):
         gtk.VBox.__init__(self)
+        
+        self.win = window
         
         self.userlist = gtk.ListStore(str)
         
@@ -76,6 +125,8 @@ class Nicklist(gtk.VBox):
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
         win.add(view)
+
+        view.connect("button-press-event", self.click, view)
 
         self.pack_end(win)
 
