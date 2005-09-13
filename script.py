@@ -40,8 +40,7 @@ def onClick(event):
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
             event.target.startswith("www") and event.target.count(".") >= 2:
-        #webbrowser.open(event.target)
-        pass
+        ui.open_file(event.target)
 
 def onHover(event):
     # click on a #channel
