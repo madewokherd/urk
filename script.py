@@ -10,6 +10,14 @@ import chaninfo
 
 COMMAND_PREFIX = conf.get("command_prefix") or "/"
 
+def onRightClick(event):
+    def print_blah():
+        print "blah"
+        
+    event.menu.append(("Print Blah", print_blah))
+    
+onListRightClick = onWindowMenu = onRightClick
+
 def onClick(event):
     # click on a #channel
     if event.target.startswith("#"):
@@ -89,8 +97,15 @@ def handle_echo(event):
     event.done = True
 
 def handle_query(event):
-    window = ui.QueryWindow(event.network, 'query', event.args[0])
-    window.activate()
+    if ui.window_list[event.network, 'query', event.args[0]]:
+        ui.window_list[event.network, 'query', event.args[0]].activate()
+    else:
+        ui.QueryWindow(
+            event.network,
+            'query', 
+            event.args[0]
+            ).activate()
+
     event.done = True
 
 # make /nick work offline
@@ -155,7 +170,7 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        ui.ServerWindow(
+        ui.StatusWindow(
             event.network,
             'status',
             "Status Window",
@@ -222,7 +237,7 @@ def onStart(event):
             
         nw = irc.Network(**network_info)
         
-        window = ui.ServerWindow(nw, 'status', "Status Window", "[%s]" % nw.server)
+        window = ui.StatusWindow(nw, 'status', "Status Window", "[%s]" % nw.server)
         window.activate()
 
         nw.connect()
@@ -260,7 +275,10 @@ def onDisconnect(event):
 
 def preText(event):
     if event.target == event.network.me:
-        event.window = ui.QueryWindow(event.network, 'query', event.source)
+        if ui.window_list[event.network, 'query', event.source]:
+            event.window = ui.window_list[event.network, 'query', event.source]
+        else:
+            event.window = ui.QueryWindow(event.network, 'query', event.source)
     else:
         event.window = \
             ui.window_list[event.network, 'channel', event.target] or \

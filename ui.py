@@ -126,7 +126,7 @@ class Window(gtk.VBox):
         
         window_list[network, type, id] = self
 
-class ServerWindow(Window):
+class StatusWindow(Window):
     def focus(self):
         self.input.grab_focus()
 
@@ -166,7 +166,8 @@ class ServerWindow(Window):
 
         self.show_all()
     
-QueryWindow = ServerWindow
+class QueryWindow(StatusWindow):
+    pass
 
 class ChannelWindow(Window):
     def focus(self):
@@ -380,7 +381,7 @@ def start():
     if not window_list:
         first_network = irc.Network()
     
-        ServerWindow(
+        StatusWindow(
             first_network, 
             "status", 
             "Status Window", 
