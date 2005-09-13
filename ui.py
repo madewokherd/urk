@@ -148,15 +148,15 @@ class StatusWindow(Window):
         self.connect("key-press-event", transfer_text)
 
         self.output = widgets.TextOutput(self)
-        self.input = widgets.TextInput(self)
-
-        self.nick_label = widgets.NickEdit(self)
 
         topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         topbox.add(self.output)
 
         self.pack_start(topbox)
+        
+        self.input = widgets.TextInput(self)
+        self.nick_label = widgets.NickEdit(self)
 
         botbox = gtk.HBox()
         botbox.pack_start(self.input)
@@ -197,11 +197,7 @@ class ChannelWindow(Window):
         self.connect("key-press-event", transfer_text)
 
         self.output = widgets.TextOutput(self)
-        self.input = widgets.TextInput(self)
-        
         self.nicklist = widgets.Nicklist(self)
-        
-        self.nick_label = widgets.NickEdit(self)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -229,12 +225,16 @@ class ChannelWindow(Window):
         
             pane.connect("size-request", save_nicklist_width)
         register_idle(connect_save)
+        
+        self.pack_start(pane)
+        
+        self.input = widgets.TextInput(self)
+        self.nick_label = widgets.NickEdit(self)
 
         botbox = gtk.HBox()
         botbox.pack_start(self.input)
         botbox.pack_end(self.nick_label, expand=False)
-        
-        self.pack_start(pane)        
+      
         self.pack_end(botbox, expand=False)
 
         self.show_all()

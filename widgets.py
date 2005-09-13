@@ -283,7 +283,13 @@ def word_from_pos(text, pos):
         return word, fr, to
         
     else:
-        return "", 0, 0, 
+        return "", 0, 0
+        
+def get_iter_at_event(view, event):
+    x, y = event.get_coords()       
+    x, y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
+    
+    return view.get_iter_at_location(x, y)
 
 class TextOutput(gtk.TextView):
     # the unknowing print weird things to our text widget function
@@ -297,11 +303,9 @@ class TextOutput(gtk.TextView):
     
         buffer = self.get_buffer()
         
-        cc = buffer.get_char_count()
-        end = buffer.get_end_iter()
+        cc, end = buffer.get_char_count(), buffer.get_end_iter()
         
-        end_rect = self.get_iter_location(end)
-        vis_rect = self.get_visible_rect()
+        end_rect, vis_rect = self.get_iter_location(end), self.get_visible_rect()
         
         # this means we're scrolled down right to the bottom
         # we interpret this to mean we should scroll down after we've
@@ -329,11 +333,8 @@ class TextOutput(gtk.TextView):
             
     def click(self, widget, event):
         buffer = self.get_buffer()
-    
-        x, y = event.get_coords()       
-        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
-    
-        hover_iter = self.get_iter_at_location(x, y)
+
+        hover_iter = get_iter_at_event(self, event)
 
         if not hover_iter.ends_line():
             line_strt = buffer.get_iter_at_line(hover_iter.get_line())
@@ -379,10 +380,7 @@ class TextOutput(gtk.TextView):
     
         buffer = self.get_buffer()
 
-        x, y = event.get_coords()
-        x, y = self.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
-    
-        hover_iter = self.get_iter_at_location(x, y)
+        hover_iter = get_iter_at_event(self, event)
 
         if not hover_iter.ends_line():        
             line_strt = buffer.get_iter_at_line(hover_iter.get_line())
@@ -409,8 +407,8 @@ class TextOutput(gtk.TextView):
                 buffer.apply_tag_by_name("link", fr, to)
                 
                 self.linking.add(
-                    (buffer.create_mark(str(fr), fr), 
-                        buffer.create_mark(str(to), to))
+                    (buffer.create_mark(None, fr), 
+                        buffer.create_mark(None, to))
                     )
                     
                 self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
