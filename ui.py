@@ -52,18 +52,19 @@ set_style = widgets.set_style
 
 #open_file(filename)
 #opens a file or url using the "right" program
-open_file_cmd = "" #cache results of searching for the os program
+open_file_cmd = [] #cache results of searching for the os program
 os_commands = ( #list of commands to search for for opening files
-    ('gnome-open', 'gnome-open %s'), 
-    ('kfmclient', 'kfmclient exec %s'),
+    ('gnome-open', ['gnome-open']), 
+    ('kfmclient', ['kfmclient','exec']),
     )
 def open_file(filename):
     if conf.get('open-file-command'):
-        os.popen(conf.get('open-file-command') % filename)
+        cmd = conf.get('open-file-command').split(' ')
+        os.spawnvp(os.P_NOWAIT,cmd[0],cmd+[filename])
     elif hasattr(os, 'startfile'):
         os.startfile(filename)
     elif open_file_cmd:
-        os.popen(open_file_cmd % filename)
+        os.spawnvp(os.P_NOWAIT,open_file_cmd[0],open_file_cmd+[filename])
     else:
         #look for a command we can use
         paths = os.getenv("PATH") or os.defpath
@@ -72,7 +73,7 @@ def open_file(filename):
                 print os.path.join(path,cmdfile)
                 if os.access(os.path.join(path,cmdfile),os.X_OK):
                     globals()['open_file_cmd'] = cmd
-                    os.popen(cmd % filename)
+                    os.spawnvp(os.P_NOWAIT,cmd[0],cmd+[filename])
                     break
         else:
             print "Unable to find a method to open %s" % filename

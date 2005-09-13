@@ -31,21 +31,24 @@ def onClick(event):
     target_r = event.target.rstrip(')>:,')
     target_to = event.target_to - len(event.target) + len(target_r)
     
-    target = event.target[target_fr:target_to]
+    target = event.text[target_fr:target_to]
     
     #if event.window.type == "channel" and \
     #        target in event.window.network.channels[event.window.id].nicks:
     #    pass
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
-    if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
-            event.target.startswith("www") and event.target.count(".") >= 2:
-        ui.open_file(event.target)
+    if (target.startswith("http://") and target.count(".") >= 1) or \
+            target.startswith("www") and target.count(".") >= 2:
+        if target.startswith("www"):
+            target = "http://"+target
+        ui.open_file(target)
 
 def onHover(event):
     # click on a #channel
     if event.target.startswith("#"):
         event.tolink.add((event.target_fr, event.target_to))
+        return
         
     # nick on this channel
     target_l = event.target.lstrip('@+%.(<')
@@ -54,16 +57,16 @@ def onHover(event):
     target_r = event.target.rstrip(')>:,')
     target_to = event.target_to - len(event.target) + len(target_r)
     
-    target = event.target[target_fr:target_to]
+    target = event.text[target_fr:target_to]
     
     if event.window.type == "channel" and \
             target in event.window.network.channels[event.window.id].nicks:
         event.tolink.add((target_fr, target_to))        
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
-    if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
-            event.target.startswith("www") and event.target.count(".") >= 2:
-        event.tolink.add((event.target_fr, event.target_to))
+    elif (target.startswith("http://") and target.count(".") >= 1) or \
+            target.startswith("www") and target.count(".") >= 2:
+        event.tolink.add((target_fr, target_to))
 
 def defInput(event):
     if not event.done:
@@ -94,6 +97,15 @@ def handle_notice(event):
 def handle_echo(event):
     event.window.write(' '.join(event.args))
     event.done = True
+
+def handle_edit(event):
+    args = events.find_script(event.args[0])
+    if args[1]:
+        args[1].close()
+        ui.open_file(args[2])
+        event.done = True
+    else:
+        event.error_text = "Couldn't find script: %s" % event.args[0]
 
 def handle_query(event):
     if ui.window_list[event.network, 'query', event.args[0]]:
@@ -199,6 +211,7 @@ command_handlers = {
     'msg': handle_msg,
     'notice': handle_notice,
     'echo': handle_echo,
+    'edit': handle_edit,
     'query': handle_query,
     'nick': handle_nick,
     'quit': handle_quit,
