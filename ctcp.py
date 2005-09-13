@@ -28,7 +28,7 @@ def emote(network, user, msg):
 def defCommand(event):
     if not event.done:
         if event.name == 'me':
-            if event.window.type in ('channel', 'query'):
+            if type(event.window) in (ui.ChannelWindow, ui.QueryWindow):
                 emote(event.network, event.window.id, ' '.join(event.args))
                 event.done = True
             else:

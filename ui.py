@@ -132,7 +132,7 @@ class Window(gtk.VBox):
     
     def close(self):
         events.trigger("Close", self)
-        del window_list[self.network, self.type, self.id]
+        del window_list[self.network, type(self), self.id]
         
     def focus(self):
         pass
@@ -144,7 +144,6 @@ class Window(gtk.VBox):
             id = network.normalize_case(id)
         
         self.network = network
-        self.type = type
         self.id = id
         
         self.__title = title or id
@@ -179,7 +178,7 @@ class StatusWindow(Window):
         self.output = widgets.TextOutput(self)
 
         topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         topbox.add(self.output)
 
         self.pack_start(topbox)
@@ -279,6 +278,22 @@ class Tabs(dict):
         register_idle(window.focus)
     
         events.trigger("Active", window)
+        
+    def ensure(self, n, t, i):
+        w = window_list[n, t, i]
+        
+        if not w:
+            window_list[n, t, i] = t(n, t, i)
+              
+        return window_list[n, t, i]
+        
+    def __contains__(self, nti):
+        network, type, id = nti
+        
+        if network:
+            id = network.normalize_case(id)
+
+        return (network, type, id) in self
     
     def __getitem__(self, nti):
         network, type, id = nti
@@ -398,7 +413,7 @@ def get_window_for(network=None, type=None, id=None):
         
 def get_status_window(network):
     for n, t, i in window_list:
-        if t == "status" and n == network:
+        if t == StatusWindow and n == network:
             return window_list[n, t, i]
         
 def get_active():
@@ -412,7 +427,7 @@ def start():
     
         StatusWindow(
             first_network, 
-            "status", 
+            StatusWindow, 
             "Status Window", 
             "[%s]" % first_network.server
             )

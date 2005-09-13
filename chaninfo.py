@@ -1,9 +1,7 @@
 import events
+import ui
 
-# FIXME:
 def update_nicks(network, channel):
-    import ui
-    
     # this sucks
     fr, to = network.isupport["PREFIX"].split(")")
     fr = fr[1:]
@@ -25,7 +23,7 @@ def update_nicks(network, channel):
 
     nicklist = [prefix(nick) for nick in sorted(channel.nicks, key=status)]
     
-    for window in ui.get_window_for(network=network, type="channel", id=channel.name):
+    for window in ui.get_window_for(network=network, type=ui.ChannelWindow, id=channel.name):
         window.set_nicklist(nicklist)
 
 def setupSocketConnect(event):
