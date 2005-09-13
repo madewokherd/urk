@@ -7,9 +7,13 @@ import inspect
 import os
 
 #add ~/.urk and path (normally where urk.py is located) to sys.path
-path = None #change this line when we do a system install
-if not path: #normal install
-    path = os.path.dirname(inspect.getfile(sys.modules[__name__]))
+def path(filename):
+    return filename
+
+def path(filename):
+    urkpath = os.path.dirname(inspect.getfile(sys.modules[__name__]))
+    
+    return os.path.join(urkpath, filename)
 
 sys.path = [os.path.expanduser("~/.urk"),".",path] + sys.path
 

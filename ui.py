@@ -1,4 +1,3 @@
-import os
 import sys #only needed for the stupid workaround
 
 import gobject
@@ -56,15 +55,13 @@ TEXT = widgets.TEXT
 EVENT = widgets.EVENT
 
 def urk_about(action):
-    import __main__
-    
     about = gtk.AboutDialog()
     
-    about.set_name(__main__.name+" (GTK+ Frontend)")
-    about.set_version(".".join(str(x) for x in __main__.version))
-    about.set_copyright("Copyright \xc2\xa9 %s" % __main__.copyright)
-    about.set_website(__main__.website)
-    about.set_authors(__main__.authors)
+    about.set_name(urk.name+" (GTK+ Frontend)")
+    about.set_version(".".join(str(x) for x in urk.version))
+    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
+    about.set_website(urk.website)
+    about.set_authors(urk.authors)
     
     about.show_all()
     
@@ -316,7 +313,7 @@ class UrkUI(gtk.Window):
         gtk.Window.__init__(self)
         self.set_title("urk")
         try:
-            self.set_icon(gtk.gdk.pixbuf_new_from_file(os.path.join(urk.path, "urk_icon.svg")))
+            self.set_icon(gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg")))
         except:
             print "There was an error loading the icon. You won't see our beautiful artwork."
         self.connect("delete_event", self.exit)
@@ -338,7 +335,7 @@ class UrkUI(gtk.Window):
         ui_manager = gtk.UIManager()
         
         self.add_accel_group(ui_manager.get_accel_group())
-        ui_manager.add_ui_from_file(os.path.join(urk.path, "ui.xml"))
+        ui_manager.add_ui_from_file(urk.path("ui.xml"))
         ui_manager.insert_action_group(get_urk_actions(self), 0)
         
         menu = ui_manager.get_widget("/MenuBar")
