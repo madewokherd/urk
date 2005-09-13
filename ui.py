@@ -107,6 +107,9 @@ class Window(gtk.VBox):
     def close(self):
         events.trigger("Close", self)
         del window_list[self.network, self.type, self.id]
+        
+    def focus(self):
+        pass
     
     def __init__(self, network, type, id, title=None):
         gtk.VBox.__init__(self, False)
@@ -123,95 +126,92 @@ class Window(gtk.VBox):
         
         self.label = widgets.WindowLabel(self)
         self.label.show_all()
-
-def ServerWindow(network, type, id, title=None):
-    w = window_list[network, type, id]
-
-    if not w:
-        w = Window(network, type, id, title or id)
-
-        def write(text, activity_type=EVENT):
-            if get_active() != w:
-                w.activity |= activity_type
         
-            w.output.write(text, activity_type)
-        w.write = write
-        
+        window_list[network, type, id] = self
+
+class ServerWindow(Window):
+    def focus(self):
+        self.input.grab_focus()
+
+    def write(self, text, activity_type=EVENT):
+        if get_active() != self:
+            self.activity |= activity_type
+
+        self.output.write(text, activity_type)
+
+    def __init__(self, network, type, id, title=None):
+        Window.__init__(self, network, type, id, title or id)
+
         def transfer_text(widget, event):
-            if event.string and not w.input.is_focus():
-                w.input.grab_focus()
-                w.input.set_position(-1)
-                w.input.event(event)
+            if event.string and not self.input.is_focus():
+                self.input.grab_focus()
+                self.input.set_position(-1)
+                self.input.event(event)
 
-        w.connect("key-press-event", transfer_text)
+        self.connect("key-press-event", transfer_text)
 
-        w.output = widgets.TextOutput(w)
-        w.input = widgets.TextInput(w)
-        
-        w.nick_label = widgets.NickEdit(w)
-        
+        self.output = widgets.TextOutput(self)
+        self.input = widgets.TextInput(self)
+
+        self.nick_label = widgets.NickEdit(self)
+
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(w.output)
-        
-        w.pack_start(topbox)
-        
-        botbox = gtk.HBox()
-        botbox.pack_start(w.input)
-        botbox.pack_end(w.nick_label, expand=False)
-        
-        w.pack_end(botbox, expand=False)
+        topbox.add(self.output)
 
-        w.show_all()
-        
-        window_list[network, type, id] = w
-    
-    return w
+        self.pack_start(topbox)
+
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+
+        self.pack_end(botbox, expand=False)
+
+        self.show_all()
     
 QueryWindow = ServerWindow
 
-def ChannelWindow(network, type, id, title=None):
-    w = window_list[network, type, id]
+class ChannelWindow(Window):
+    def focus(self):
+        self.input.grab_focus()
 
-    if not w:
-        w = Window(network, type, id, title or id)
+    def write(self, text, activity_type=EVENT):
+        if get_active() != self:
+            self.activity |= activity_type
+    
+        self.output.write(text, activity_type)
+
+    def set_nicklist(self, nicks):
+        self.nicklist.userlist.clear()
         
-        def set_nicklist(nicks):
-            w.nicklist.userlist.clear()
-            
-            for nick in nicks:
-                w.nicklist.userlist.append([nick])
-        w.set_nicklist = set_nicklist
-        
-        def write(text, activity_type=EVENT):
-            if get_active() != w:
-                w.activity |= activity_type
-        
-            w.output.write(text, activity_type)
-        w.write = write
-        
+        for nick in nicks:
+            self.nicklist.userlist.append([nick])
+
+    def __init__(self, network, type, id, title=None):
+        Window.__init__(self, network, type, id, title or id)
+    
         def transfer_text(widget, event):
-            if event.string and not w.input.is_focus():
-                w.input.grab_focus()
-                w.input.set_position(-1)
-                w.input.event(event)
+            if event.string and not self.input.is_focus():
+                self.input.grab_focus()
+                self.input.set_position(-1)
+                self.input.event(event)
 
-        w.connect("key-press-event", transfer_text)
+        self.connect("key-press-event", transfer_text)
 
-        w.output = widgets.TextOutput(w)
-        w.input = widgets.TextInput(w)
+        self.output = widgets.TextOutput(self)
+        self.input = widgets.TextInput(self)
         
-        w.nicklist = widgets.Nicklist(w)
+        self.nicklist = widgets.Nicklist(self)
         
-        w.nick_label = widgets.NickEdit(w)
+        self.nick_label = widgets.NickEdit(self)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(w.output)
+        topbox.add(self.output)
         
         pane = gtk.HPaned()
         pane.pack1(topbox, resize=True, shrink=False)
-        pane.pack2(w.nicklist, resize=False, shrink=True)
+        pane.pack2(self.nicklist, resize=False, shrink=True)
 
         def set_pane_pos():
             pos = conf.get("ui-gtk/nicklist-width")
@@ -233,17 +233,13 @@ def ChannelWindow(network, type, id, title=None):
         register_idle(connect_save)
 
         botbox = gtk.HBox()
-        botbox.pack_start(w.input)
-        botbox.pack_end(w.nick_label, expand=False)
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
         
-        w.pack_start(pane)        
-        w.pack_end(botbox, expand=False)
+        self.pack_start(pane)        
+        self.pack_end(botbox, expand=False)
 
-        w.show_all()
-        
-        window_list[network, type, id] = w
-    
-    return w
+        self.show_all()
   
 class Tabs(dict):   
     def window_change(self, notebook, wptr, page_num):
@@ -253,7 +249,7 @@ class Tabs(dict):
         
         ui.set_title("%s - urk" % window.title)
         
-        register_idle(window.input.grab_focus)
+        register_idle(window.focus)
     
         events.trigger("Active", window)
     
@@ -305,8 +301,6 @@ class Tabs(dict):
             self.nb.set_property("tab-pos", gtk.POS_TOP)
 
         self.nb.set_scrollable(True)
-        self.nb.set_show_border(True)
-
         self.nb.connect("switch-page", self.window_change)
 
 class UrkUI(gtk.Window):
@@ -377,8 +371,9 @@ def get_status_window(network):
             return window_list[n, t, i]
         
 def get_active():
-    active = window_list.nb.get_current_page()
-    return window_list.nb.get_nth_page(active)
+    return window_list.nb.get_nth_page(
+            window_list.nb.get_current_page()
+            )
 
 def start():
     if not window_list:
@@ -390,19 +385,6 @@ def start():
             "Status Window", 
             "[%s]" % first_network.server
             )
-
-        #ServerWindow(
-        #    first_network, 
-        #    "batus", 
-        #    "Status Window", 
-        #    "[%s]" % first_network.server
-        #    )
-        
-        #first_window.set_nicklist(str(x) for x in range(100))
-        
-    #for i in range(1000):
-    #    first_window.write("\x040000CC<\x04nick\x040000CC>\x04 text")
-    #register_idle(gtk.main_quit)
 
     try:
         gtk.threads_enter()
