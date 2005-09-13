@@ -99,7 +99,11 @@ def handle_echo(event):
     event.done = True
 
 def handle_edit(event):
-    args = events.find_script(event.args[0])
+    try:
+        args = events.find_script(event.args[0])
+    except ImportError:
+        event.error_text = "Couldn't find script: %s" % event.args[0]
+        return
     if args[1]:
         args[1].close()
         ui.open_file(args[2])
