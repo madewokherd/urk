@@ -1,5 +1,4 @@
 import sys #only needed for the stupid workaround
-import os
 
 import gobject
 
@@ -49,34 +48,6 @@ def unregister(tag):
     gobject.source_remove(tag)
     
 set_style = widgets.set_style
-
-#open_file(filename)
-#opens a file or url using the "right" program
-open_file_cmd = [] #cache results of searching for the os program
-os_commands = ( #list of commands to search for for opening files
-    ('gnome-open', ['gnome-open']), 
-    ('kfmclient', ['kfmclient','exec']),
-    )
-def open_file(filename):
-    if conf.get('open-file-command'):
-        cmd = conf.get('open-file-command').split(' ')
-        os.spawnvp(os.P_NOWAIT,cmd[0],cmd+[filename])
-    elif hasattr(os, 'startfile'):
-        os.startfile(filename)
-    elif open_file_cmd:
-        os.spawnvp(os.P_NOWAIT,open_file_cmd[0],open_file_cmd+[filename])
-    else:
-        #look for a command we can use
-        paths = os.getenv("PATH") or os.defpath
-        for cmdfile, cmd in os_commands:
-            for path in paths.split(os.pathsep):
-                print os.path.join(path,cmdfile)
-                if os.access(os.path.join(path,cmdfile),os.X_OK):
-                    globals()['open_file_cmd'] = cmd
-                    os.spawnvp(os.P_NOWAIT,cmd[0],cmd+[filename])
-                    break
-        else:
-            print "Unable to find a method to open %s" % filename
 
 # Window activity Constants
 HILIT = widgets.HILIT
@@ -128,11 +99,11 @@ class Window(gtk.VBox):
     activity = property(get_activity, set_activity)
     
     def activate(self):
-        window_list.nb.set_current_page(window_list.nb.page_num(self))
+        windows.nb.set_current_page(windows.nb.page_num(self))
     
     def close(self):
         events.trigger("Close", self)
-        del window_list[self.network, type(self), self.id]
+        del windows[self.network, type(self), self.id]
         
     def focus(self):
         pass
@@ -152,7 +123,7 @@ class Window(gtk.VBox):
         self.label = widgets.WindowLabel(self)
         self.label.show_all()
         
-        window_list[network, type, id] = self
+        windows[network, type, id] = self
 
 class StatusWindow(Window):
     def focus(self):
@@ -280,12 +251,12 @@ class Tabs(dict):
         events.trigger("Active", window)
         
     def ensure(self, n, t, i):
-        w = window_list[n, t, i]
+        w = windows[n, t, i]
         
         if not w:
-            window_list[n, t, i] = t(n, t, i)
+            windows[n, t, i] = t(n, t, i)
               
-        return window_list[n, t, i]
+        return windows[n, t, i]
         
     def __contains__(self, nti):
         network, type, id = nti
@@ -392,7 +363,7 @@ class UrkUI(gtk.Window):
         # widgets
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
-        box.pack_end(window_list.nb)
+        box.pack_end(windows.nb)
 
         self.add(box)
         self.show_all()
@@ -401,7 +372,7 @@ def get_window_for(network=None, type=None, id=None):
     if network and id:
         id = network.normalize_case(id)
 
-    for n, t, i in list(window_list):
+    for n, t, i in list(windows):
         if network and n != network:
             continue
         if type and t != type:
@@ -409,20 +380,20 @@ def get_window_for(network=None, type=None, id=None):
         if id and i != id:
             continue
             
-        yield window_list[n, t, i]
+        yield windows[n, t, i]
         
 def get_status_window(network):
-    for n, t, i in window_list:
+    for n, t, i in windows:
         if t == StatusWindow and n == network:
-            return window_list[n, t, i]
+            return windows[n, t, i]
         
 def get_active():
-    return window_list.nb.get_nth_page(
-            window_list.nb.get_current_page()
+    return windows.nb.get_nth_page(
+            windows.nb.get_current_page()
             )
 
 def start():
-    if not window_list:
+    if not windows:
         first_network = irc.Network()
     
         StatusWindow(
@@ -440,7 +411,7 @@ def start():
         ui.exit()
     
 # build our tab widget
-window_list = Tabs()
+windows = Tabs()
 
 # build our overall UI
 ui = UrkUI()

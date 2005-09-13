@@ -110,7 +110,7 @@ def onQuit(event):
     if not event.quiet:
         for channame in event.network.channels:
             if event.source in event.network.channels[channame].nicks:
-                window = ui.window_list[event.network, ui.ChannelWindow, channame]
+                window = ui.windows[event.network, ui.ChannelWindow, channame]
                 if window:
                     window.write(to_write)
 
@@ -123,8 +123,8 @@ def onNick(event):
     if not event.quiet:
         for channame in event.network.channels:
             if event.source in event.network.channels[channame].nicks:
-                if (event.network, ui.ChannelWindow, channame) in ui.window_list:
-                    window = ui.window_list[event.network, ui.ChannelWindow, channame]
+                if (event.network, ui.ChannelWindow, channame) in ui.windows:
+                    window = ui.windows[event.network, ui.ChannelWindow, channame]
                     window.write(to_write)
 
         if event.source == event.network.me:
@@ -141,7 +141,7 @@ def onTopic(event):
 def onRaw(event):
     if not event.quiet:
         if event.msg[1] == '332':
-            window = ui.window_list[event.network, ui.ChannelWindow, event.msg[3]] or event.window
+            window = ui.windows[event.network, ui.ChannelWindow, event.msg[3]] or event.window
             window.write("topic on %s is: %s" % (event.msg[3], event.text))
         elif event.msg[1].isdigit():
             event.window.write("* %s" % ' '.join(event.msg[3:]))
@@ -153,6 +153,6 @@ def onDisconnect(event):
         to_write = '* Disconnected (%s)' % event.error
     else:
         to_write = '* Disconnected'
-    for network, type, id in ui.window_list:
+    for network, type, id in ui.windows:
         if network == event.network:
-            ui.window_list[network, type, id].write(to_write, (type == 'status' and ui.TEXT) or ui.EVENT)
+            ui.windows[network, type, id].write(to_write, (type == 'status' and ui.TEXT) or ui.EVENT)
