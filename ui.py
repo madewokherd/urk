@@ -312,10 +312,14 @@ class UrkUI(gtk.Window):
         
         gtk.Window.__init__(self)
         self.set_title("urk")
+        
         try:
-            self.set_icon(gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg")))
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
         except:
-            print "There was an error loading the icon. You won't see our beautiful artwork."
+            pass
+
         self.connect("delete_event", self.exit)
 
         # layout
@@ -374,8 +378,8 @@ def get_active():
 
 def start():
     if not window_list:
-        first_network = irc.Network("irc.flugurgle.org")
-        
+        first_network = irc.Network()
+    
         ServerWindow(
             first_network, 
             "status", 
