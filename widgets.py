@@ -7,8 +7,6 @@ import events
 import parse_mirc
 import ui
 
-# FIXME: make these the same as ui
-# Window activity Constants
 HILIT = 4
 TEXT = 2
 EVENT = 1
