@@ -44,7 +44,13 @@ class Network:
     
     buffer = ''              # data we've received but not processed yet
     
-    nicks = []                  # desired nicknames
+    if conf.get("nick"):
+        nicks = [conf.get("nick")]
+    else:
+        # FIXME: it'd be cool if we could use os.expanduser or something
+        #        more cross platform to make up a good nick here
+        nicks = ["mrurk"]                  # desired nicknames
+
     fullname = ""               # our full name
     
     server = None
@@ -59,16 +65,11 @@ class Network:
     
     channel_prefixes = '&#+$'   # from rfc2812
     
-    def __init__(self, server, port=6667, nicks=[], fullname=""):
+    def __init__(self, server="irc.default.org", port=6667, nicks=[], fullname=""):
         self.server = server
         self.port = port
         
-        if conf.get("nick"):
-            def_nicks = [conf.get("nick")]
-        else:
-            def_nicks = ["mrurk"]
-        
-        self.nicks = nicks or def_nicks
+        self.nicks = nicks or self.nicks
         self.me = self.nicks[0]
             
         self.fullname = fullname or "urk user"
