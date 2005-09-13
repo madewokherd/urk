@@ -51,6 +51,39 @@ def set_style(widget, style):
         styles[widget] = dummy.rc_get_style()
     else:
         styles[widget] = None
+        
+def menu_from_list(alist):
+    ui_manager = gtk.UIManager()
+    ui_manager.add_ui_from_string('<popup name="Menu"></popup>')
+    
+    actions = gtk.ActionGroup("Menu")
+    
+    def callback(action, f): f()
+    
+    for item in alist: 
+        if item:
+            if len(item) == 2:
+                name, function = item
+                action = (name, None, name, None, None, callback)
+            elif len(item) == 3:
+                name, stock_id, function = item
+                action = (name, stock_id, None, None, None, callback)
+                
+            actions.add_actions([action], function)
+
+            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                "/Menu/",
+                name, name, 
+                gtk.UI_MANAGER_MENUITEM, False)
+
+        else: # None means add a separator
+            ui_manager.add_ui(ui_manager.new_merge_id(), 
+                "/Menu/",
+                "", None, 
+                gtk.UI_MANAGER_SEPARATOR, False)
+                
+    ui_manager.insert_action_group(actions, 0) 
+    return ui_manager.get_widget("/Menu")
 
 class Nicklist(gtk.VBox):
     def click(self, widget, event, view):
@@ -69,36 +102,7 @@ class Nicklist(gtk.VBox):
             events.trigger("ListRightClick", c_data)
             
             if c_data.menu:
-                ui_manager = gtk.UIManager()
-                ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
-                
-                actions = gtk.ActionGroup("ListClick")
-                
-                def callback(action, f): f()
-                
-                for item in c_data.menu: 
-                    if item:
-                        name, function = item
-                            
-                        actions.add_actions(
-                            ((name, None, name, None, None, callback),), function
-                            )
-
-                        ui_manager.add_ui(ui_manager.new_merge_id(), 
-                            "/TabPopup/",
-                            name, name, 
-                            gtk.UI_MANAGER_MENUITEM, False)
-
-                    else: # None means add a separator
-                        ui_manager.add_ui(ui_manager.new_merge_id(), 
-                            "/TabPopup/",
-                            "", None, 
-                            gtk.UI_MANAGER_SEPARATOR, False)
-                            
-                ui_manager.insert_action_group(actions, 0) 
-                ui_manager.get_widget(
-                    "/TabPopup"
-                    ).popup(None, None, None, event.button, event.time)
+                menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
 
     def __init__(self, window):
         gtk.VBox.__init__(self)
@@ -183,9 +187,10 @@ class NickEdit(gtk.EventBox):
         
         self.update()
         
-        def set_cursor():
+        def set_cursor(widget, *args):
             self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.XTERM))
-        ui.register_idle(set_cursor)
+        
+        self.connect("realize", set_cursor)
 
 # The entry which you type in to send messages        
 class TextInput(gtk.Entry):
@@ -251,6 +256,35 @@ class TextInput(gtk.Entry):
 
         self.connect("key-press-event", check_history_explore)
         
+def prop_to_gtk(prop, val):
+    if val == parse_mirc.BOLD:
+        return prop, pango.WEIGHT_BOLD
+
+    elif val == parse_mirc.UNDERLINE:
+        return prop, pango.UNDERLINE_SINGLE
+        
+    else:
+        return prop, val
+        
+def word_from_pos(text, pos):
+    if text[pos] != " ":
+        fr = to = 0
+        for word in text.split(" "):
+            to += len(word)
+            
+            if fr <= pos < to:
+                break
+            
+            fr += len(word)
+            
+            fr += 1
+            to += 1
+
+        return word, fr, to
+        
+    else:
+        return "", 0, 0, 
+
 class TextOutput(gtk.TextView):
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type=EVENT):
@@ -281,14 +315,8 @@ class TextOutput(gtk.TextView):
         buffer.insert(end, text + "\n")
 
         for tag_props, start_i, end_i in tag_data:
-            for i, (prop, val) in enumerate(tag_props):
-                if val == parse_mirc.BOLD:
-                    tag_props[i] = prop, pango.WEIGHT_BOLD
-
-                elif val == parse_mirc.UNDERLINE:
-                    tag_props[i] = prop, pango.UNDERLINE_SINGLE
-                
-            tag_name = str(hash(tuple(tag_props)))
+            tag_props = tuple(prop_to_gtk(*p) for p in tag_props)
+            tag_name = str(hash(tag_props))
                  
             if not tag_table.lookup(tag_name):
                 buffer.create_tag(tag_name, **dict(tag_props))
@@ -315,64 +343,22 @@ class TextOutput(gtk.TextView):
             pos = hover_iter.get_line_offset()        
             text = buffer.get_text(line_strt, line_end).rstrip("\n")
             
-            fr = to = 0
-            for word in text.split(" "):
-                to += len(word)
-                
-                if fr <= pos < to:
-                    break
-                
-                fr += len(word)
-                
-                fr += 1
-                to += 1
-            else:
-                word = ""
+            word, fr, to = word_from_pos(text, pos)
             
-            h_data = events.data(
+            c_data = events.data(
                         window=self.win, pos=pos, text=text,
                         target=word, target_fr=fr, target_to=to,
                         menu=[]
                         )
   
             if event.button == 1:
-                events.trigger("Click", h_data)
+                events.trigger("Click", c_data)
                 
             elif event.button == 3:
-                events.trigger("RightClick", h_data)
+                events.trigger("RightClick", c_data)
                 
-                if h_data.menu:
-                    ui_manager = gtk.UIManager()
-                    ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
-                    
-                    actions = gtk.ActionGroup("Click")
-                    
-                    def callback(action, f): f()
-                    
-                    for item in h_data.menu: 
-                        if item:
-                            name, function = item
-                                
-                            actions.add_actions(
-                                ((name, None, name, None, None, callback),), function
-                                )
-
-                            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                                "/TabPopup/",
-                                name, name, 
-                                gtk.UI_MANAGER_MENUITEM, False)
-
-                        else: # None means add a separator
-                            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                                "/TabPopup/",
-                                "", None, 
-                                gtk.UI_MANAGER_SEPARATOR, False)
-                                
-                    ui_manager.insert_action_group(actions, 0) 
-                    ui_manager.get_widget(
-                        "/TabPopup"
-                        ).popup(None, None, None, event.button, event.time)
-                
+                if c_data.menu:
+                    menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
                     return True
     
     def clear_hover(self, *args):
@@ -406,19 +392,7 @@ class TextOutput(gtk.TextView):
             pos = hover_iter.get_line_offset()        
             text = line_strt.get_text(line_end).rstrip("\n")
             
-            fr = to = 0
-            for word in text.split(" "):
-                to += len(word)
-                
-                if fr <= pos < to:
-                    break
-                
-                fr += len(word)
-                
-                fr += 1
-                to += 1
-            else:
-                word = ""
+            word, fr, to = word_from_pos(text, pos)
             
             h_data = events.data(
                         window=self.win, pos=pos, text=text,
@@ -472,9 +446,10 @@ class TextOutput(gtk.TextView):
         
         self.set_style(get_style("view"))
         
-        def set_cursor():
+        def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
-        ui.register_idle(set_cursor)
+
+        self.connect("realize", set_cursor)
 
 class WindowLabel(gtk.EventBox):
     def update(self):
@@ -497,51 +472,10 @@ class WindowLabel(gtk.EventBox):
         if event.button == 3: # right click
             c_data = events.data(window=self.win, menu=[])
             events.trigger("WindowMenu", c_data)
-
-            ui_manager = gtk.UIManager()
-            ui_manager.add_ui_from_string('<popup name="TabPopup"></popup>')
             
-            actions = gtk.ActionGroup("Tab")
+            c_data.menu += [None, ("Close", gtk.STOCK_CLOSE, self.win.close)]
             
-            def callback(action, f): f()
-            
-            for item in c_data.menu: 
-                if item:
-                    name, function = item
-                        
-                    actions.add_actions(
-                        ((name, None, name, None, None, callback),), function
-                        )
-
-                    ui_manager.add_ui(ui_manager.new_merge_id(), 
-                        "/TabPopup/",
-                        name, name, 
-                        gtk.UI_MANAGER_MENUITEM, False)
-
-                else: # None means add a separator
-                    ui_manager.add_ui(ui_manager.new_merge_id(), 
-                        "/TabPopup/",
-                        "", None, 
-                        gtk.UI_MANAGER_SEPARATOR, False)
-
-            actions.add_actions(
-                (("Close", gtk.STOCK_CLOSE, None, "<Control>W", None, callback),),
-                self.win.close
-                )
-             
-            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                        "/TabPopup/",
-                        "", None, 
-                        gtk.UI_MANAGER_SEPARATOR, False)   
-            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                        "/TabPopup/",
-                        "Close", "Close", 
-                        gtk.UI_MANAGER_MENUITEM, False)
-                        
-            ui_manager.insert_action_group(actions, 0) 
-            ui_manager.get_widget(
-                "/TabPopup"
-                ).popup(None, None, None, event.button, event.time)
+            menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)
