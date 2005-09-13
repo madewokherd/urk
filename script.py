@@ -135,7 +135,7 @@ def handle_join(event):
         event.error_text = "You must supply a channel."
 
 def handle_server(event):
-    network_info = {}
+    network_info = {'server': 'irc.flugurgle.newt'}
 
     if len(event.args):
         server = event.args[0]
@@ -150,8 +150,7 @@ def handle_server(event):
         
         network_info["port"] = int(port)
 
-    if "server" in network_info:    
-        network_info = get_network_info(network_info["server"], network_info)
+    network_info = get_network_info(network_info["server"], network_info)
 
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    

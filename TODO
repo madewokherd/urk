@@ -86,6 +86,11 @@ Logging
     We'll need this at some point. Most likely we'll just put logging code
 in IRCWindow.write().
 
+
+Identd
+
+    IRC servers appear to expect us to run an identd server for no good reason.
+
         
 replacements for stuff
 
