@@ -25,9 +25,9 @@ def onClick(event):
     
     target = event.target[target_fr:target_to]
     
-    if event.window.type == "channel" and \
-            target in event.window.network.channels[event.window.id].nicks:
-        event.tolink.add((target_fr, target_to))
+    #if event.window.type == "channel" and \
+    #        target in event.window.network.channels[event.window.id].nicks:
+    #    pass
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (event.target.startswith("http://") and event.target.count(".") >= 1) or \
@@ -242,7 +242,7 @@ def defSocketConnect(event):
               ("urk", "8", "*", event.network.fullname))
               #per rfc2812 these are username, user mode flags, unused, realname
         
-        event.network.me = None
+        #event.network.me = None
         event.done = True
 
 def onConnect(event):
