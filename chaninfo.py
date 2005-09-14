@@ -3,8 +3,7 @@ import ui
 
 def update_nicks(network, channel):
     # this sucks
-    fr, to = network.isupport["PREFIX"].split(")")
-    fr = fr[1:]
+    fr, to = network.isupport["PREFIX"][1:].split(")")
 
     def prefix(nick, pre=""):
         modes = channel.nicks[nick]

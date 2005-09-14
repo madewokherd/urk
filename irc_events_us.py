@@ -77,14 +77,12 @@ def defRaw(event):
             for arg in event.msg[3:]:
                 if ' ' not in arg: #ignore "are supported by this server"
                     if '=' in arg:
-                        split = arg.split('=')
-                        name = split[0]
-                        value = '='.join(split[1:])
+                        name, value = arg.split('=', 1)
                         if value.isdigit():
                             value = int(value)
                     else:
-                        name = arg
-                        value = ''
+                        name, value = arg, ''
+
                     #in theory, we're supposed to replace \xHH with the
                     # corresponding ascii character, but I don't think anyone
                     # really does this
