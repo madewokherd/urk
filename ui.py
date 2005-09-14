@@ -3,10 +3,11 @@ import os
 
 import gobject
 
+#stupid workaround
 sys.peth = list(sys.path)
 import gtk
-#stupid workaround
 sys.path = sys.peth
+
 import pango
 
 import widgets
@@ -137,7 +138,7 @@ class Window(gtk.VBox):
     def focus(self):
         pass
     
-    def __init__(self, network, type, id, title=None):
+    def __init__(self, network, id, title=None):
         gtk.VBox.__init__(self, False)
 
         if network:
@@ -151,8 +152,6 @@ class Window(gtk.VBox):
         
         self.label = widgets.WindowLabel(self)
         self.label.show_all()
-        
-        windows[network, type, id] = self
 
 class StatusWindow(Window):
     def focus(self):
@@ -164,8 +163,8 @@ class StatusWindow(Window):
 
         self.output.write(text, activity_type)
 
-    def __init__(self, network, type, id, title=None):
-        Window.__init__(self, network, type, id, title or id)
+    def __init__(self, network, id, title=None):
+        Window.__init__(self, network, id, title)
 
         def transfer_text(widget, event):
             if event.string and not self.input.is_focus():
@@ -213,8 +212,8 @@ class ChannelWindow(Window):
         for nick in nicks:
             self.nicklist.userlist.append([nick])
 
-    def __init__(self, network, type, id, title=None):
-        Window.__init__(self, network, type, id, title or id)
+    def __init__(self, network, id, title=None):    
+        Window.__init__(self, network, id, title)
     
         def transfer_text(widget, event):
             if event.string and not self.input.is_focus():
@@ -267,7 +266,7 @@ class ChannelWindow(Window):
 
         self.show_all()
   
-class Tabs(dict):   
+class WindowTabs(dict):   
     def window_change(self, notebook, wptr, page_num):
         window = notebook.get_nth_page(page_num)
         
@@ -279,36 +278,34 @@ class Tabs(dict):
     
         events.trigger("Active", window)
         
-    def ensure(self, n, t, i):
-        w = windows[n, t, i]
-        
-        if not w:
-            windows[n, t, i] = t(n, t, i)
+    def new(self, network, win_type, id, title=None):
+        if (network, win_type, id) not in self:
+            self[network, win_type, id] = win_type(network, id, title)
               
-        return windows[n, t, i]
+        return self[network, win_type, id]
         
     def __contains__(self, nti):
-        network, type, id = nti
+        n, t, id = nti
         
-        if network:
-            id = network.normalize_case(id)
-
-        return (network, type, id) in self
+        if n:
+            id = n.normalize_case(id)
+            
+        return dict.__contains__(self, (n, t, id))
     
     def __getitem__(self, nti):
-        network, type, id = nti
+        n, t, i = nti
         
-        if network:
-            id = network.normalize_case(id)
+        if n:
+            i = n.normalize_case(i)
 
-        if (network, type, id) in self:
-            return dict.__getitem__(self, (network, type, id))
+        if dict.__contains__(self, (n, t, i)):
+            return dict.__getitem__(self, (n, t, i))
 
     def __setitem__(self, nti, window):
-        network, type, id = nti
+        n, t, id = nti
         
-        if network:
-            id = network.normalize_case(id)
+        if n:
+            id = n.normalize_case(id)
         
         pos = len(self)
         if window.network:
@@ -317,19 +314,19 @@ class Tabs(dict):
                     pos = i+1
                     break
                     
-        dict.__setitem__(self, (network, type, id), window)
+        dict.__setitem__(self, (n, t, id), window)
                     
         self.nb.insert_page(window, None, pos)
         self.nb.set_tab_label(window, window.label)
 
     def __delitem__(self, item):
-        network, type, id = item
+        n, t, id = nti
         
-        if network:
-            id = network.normalize_case(id)
+        if n:
+            id = n.normalize_case(id)
 
-        self.nb.remove_page(self.nb.page_num(self[network, type, id]))
-        dict.__delitem__(self, (network, type, id))
+        self.nb.remove_page(self.nb.page_num(self[n, t, id]))
+        dict.__delitem__(self, (n, t, id))
         
     def __init__(self):
         dict.__init__(self)
@@ -424,11 +421,11 @@ def get_active():
 def start():
     if not windows:
         first_network = irc.Network()
-    
-        StatusWindow(
-            first_network, 
-            StatusWindow, 
-            "Status Window", 
+        
+        windows.new(
+            first_network,
+            StatusWindow,
+            "Status Window",
             "[%s]" % first_network.server
             )
 
@@ -440,7 +437,7 @@ def start():
         ui.exit()
     
 # build our tab widget
-windows = Tabs()
+windows = WindowTabs()
 
 # build our overall UI
 ui = UrkUI()

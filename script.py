@@ -111,14 +111,11 @@ def handle_edit(event):
         event.error_text = "Couldn't find script: %s" % event.args[0]
 
 def handle_query(event):
-    if ui.windows[event.network, ui.QueryWindow, event.args[0]]:
-        ui.windows[event.network, ui.QueryWindow, event.args[0]].activate()
-    else:
-        ui.QueryWindow(
-            event.network,
-            ui.QueryWindow, 
-            event.args[0]
-            ).activate()
+    ui.windows.new(
+        event.network,
+        ui.QueryWindow,
+        event.args[0]
+        ).activate()
 
     event.done = True
 
@@ -184,7 +181,7 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        ui.StatusWindow(
+        ui.windows.new(
             event.network,
             ui.StatusWindow,
             "Status Window",
@@ -253,7 +250,7 @@ def onStart(event):
             
         nw = irc.Network(**network_info)
         
-        ui.StatusWindow(
+        ui.windows.new(
             nw,
             ui.StatusWindow,
             "Status Window",
@@ -295,10 +292,11 @@ def onDisconnect(event):
 
 def preText(event):
     if event.target == event.network.me:
-        if ui.windows[event.network, ui.QueryWindow, event.source]:
-            event.window = ui.windows[event.network, ui.QueryWindow, event.source]
-        else:
-            event.window = ui.QueryWindow(event.network, ui.QueryWindow, event.source)
+        ui.windows.new(
+            event.network,
+            ui.QueryWindow,
+            event.source
+            )
     else:
         event.window = \
             ui.windows[event.network, ui.ChannelWindow, event.target] or \
@@ -309,7 +307,11 @@ preAction = preText
 
 def preJoin(event):
     if event.source == event.network.me:
-        ui.ChannelWindow(event.network, ui.ChannelWindow, event.target).activate()
+        w = ui.windows.new(
+            event.network,
+            ui.ChannelWindow,
+            event.target
+            ).activate()
         
     event.window = ui.windows[event.network, ui.ChannelWindow, event.target] or event.window
 
