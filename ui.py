@@ -75,7 +75,6 @@ def open_file(filename):
         paths = os.getenv("PATH") or os.defpath
         for cmdfile, cmd in os_commands:
             for path in paths.split(os.pathsep):
-                print os.path.join(path,cmdfile)
                 if os.access(os.path.join(path,cmdfile),os.X_OK):
                     globals()['open_file_cmd'] = cmd
                     os.popen(cmd % filename)
@@ -278,31 +277,31 @@ class WindowTabs(dict):
     
         events.trigger("Active", window)
         
-    def new(self, network, win_type, id, title=None):
-        if (network, win_type, id) not in self:
-            self[network, win_type, id] = win_type(network, id, title)
+    def new(self, type, network, id, title=None):
+        if (type, network,id) not in self:
+            self[type, network, id] = type(network, id, title)
               
-        return self[network, win_type, id]
+        return self[type, network, id]
         
-    def __contains__(self, nti):
-        n, t, id = nti
+    def __contains__(self, tni):
+        t, n, id = tni
         
         if n:
             id = n.normalize_case(id)
             
-        return dict.__contains__(self, (n, t, id))
+        return dict.__contains__(self, (t, n, id))
     
-    def __getitem__(self, nti):
-        n, t, i = nti
+    def __getitem__(self, tni):
+        t, n, id = tni
         
         if n:
-            i = n.normalize_case(i)
+            id = n.normalize_case(id)
 
-        if dict.__contains__(self, (n, t, i)):
-            return dict.__getitem__(self, (n, t, i))
+        if dict.__contains__(self, (t, n, id)):
+            return dict.__getitem__(self, (t, n, id))
 
-    def __setitem__(self, nti, window):
-        n, t, id = nti
+    def __setitem__(self, tni, window):
+        t, n, id = tni
         
         if n:
             id = n.normalize_case(id)
@@ -314,19 +313,19 @@ class WindowTabs(dict):
                     pos = i+1
                     break
                     
-        dict.__setitem__(self, (n, t, id), window)
+        dict.__setitem__(self, (t, n, id), window)
                     
         self.nb.insert_page(window, None, pos)
         self.nb.set_tab_label(window, window.label)
 
     def __delitem__(self, item):
-        n, t, id = nti
+        t, n, id = tni
         
         if n:
             id = n.normalize_case(id)
 
-        self.nb.remove_page(self.nb.page_num(self[n, t, id]))
-        dict.__delitem__(self, (n, t, id))
+        self.nb.remove_page(self.nb.page_num(self[t, n, id]))
+        dict.__delitem__(self, (t, n, id))
         
     def __init__(self):
         dict.__init__(self)
@@ -344,9 +343,8 @@ class WindowTabs(dict):
 
 class UrkUI(gtk.Window):
     def exit(self, *args):
-        gtk.main_level() and gtk.main_quit()
-
         events.trigger("Exit")
+        gtk.main_level() and gtk.main_quit()
 
     def __init__(self):
         # threading stuff
@@ -394,24 +392,24 @@ class UrkUI(gtk.Window):
         self.add(box)
         self.show_all()
         
-def get_window_for(network=None, type=None, id=None):
+def get_window_for(type=None, network=None, id=None):
     if network and id:
         id = network.normalize_case(id)
 
-    for n, t, i in list(windows):
-        if network and n != network:
-            continue
+    for t, n, i in list(windows):
         if type and t != type:
+            continue
+        if network and n != network:
             continue
         if id and i != id:
             continue
             
-        yield windows[n, t, i]
+        yield windows[t, n, i]
         
 def get_status_window(network):
-    for n, t, i in windows:
+    for t, n, i in windows:
         if t == StatusWindow and n == network:
-            return windows[n, t, i]
+            return windows[t, n, i]
         
 def get_active():
     return windows.nb.get_nth_page(
@@ -423,8 +421,8 @@ def start():
         first_network = irc.Network()
         
         windows.new(
-            first_network,
             StatusWindow,
+            first_network,
             "Status Window",
             "[%s]" % first_network.server
             )

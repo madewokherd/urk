@@ -17,6 +17,10 @@ def onRightClick(event):
     
 onListRightClick = onWindowMenu = onRightClick
 
+def onExit(event):
+    for n in set(n for t, n, i in ui.windows if n.status):
+        n.quit()
+
 def onClick(event):
     # click on a #channel
     if event.target.startswith("#"):
@@ -112,8 +116,8 @@ def handle_edit(event):
 
 def handle_query(event):
     ui.windows.new(
-        event.network,
         ui.QueryWindow,
+        event.network,
         event.args[0]
         ).activate()
 
@@ -182,8 +186,8 @@ def handle_server(event):
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
         ui.windows.new(
-            event.network,
             ui.StatusWindow,
+            event.network,
             "Status Window",
             "[%s]" % event.network.server
             ).activate()
@@ -251,8 +255,8 @@ def onStart(event):
         nw = irc.Network(**network_info)
         
         ui.windows.new(
-            nw,
             ui.StatusWindow,
+            nw,
             "Status Window",
             "[%s]" % nw.server
             ).activate()
@@ -293,14 +297,14 @@ def onDisconnect(event):
 def preText(event):
     if event.target == event.network.me:
         ui.windows.new(
-            event.network,
             ui.QueryWindow,
+            event.network,
             event.source
             )
     else:
         event.window = \
-            ui.windows[event.network, ui.ChannelWindow, event.target] or \
-            ui.windows[event.network, ui.QueryWindow, event.target] or \
+            ui.windows[ui.ChannelWindow, event.network, event.target] or \
+            ui.windows[ui.QueryWindow, event.network, event.target] or \
             event.window
 
 preAction = preText
@@ -308,30 +312,30 @@ preAction = preText
 def preJoin(event):
     if event.source == event.network.me:
         w = ui.windows.new(
-            event.network,
             ui.ChannelWindow,
+            event.network,
             event.target
             ).activate()
         
-    event.window = ui.windows[event.network, ui.ChannelWindow, event.target] or event.window
+    event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
 
 def setupPart(event):
-    event.window = ui.windows[event.network, ui.ChannelWindow, event.target] or event.window
+    event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
 
 def postPart(event):
     if event.source == event.network.me:
-        window = ui.windows[event.network, ui.ChannelWindow, event.target]
+        window = ui.windows[ui.ChannelWindow, event.network, event.target]
         if window:
             window.close()
 
 setupTopic = setupPart
 
 def setupKick(event):
-    event.window = ui.windows[event.network, ui.ChannelWindow, event.channel] or event.window
+    event.window = ui.windows[ui.ChannelWindow, event.network, event.channel] or event.window
 
 def setupMode(event):
     if event.target != event.network.me:
-        event.window = ui.windows[event.network, ui.ChannelWindow, event.target] or event.window
+        event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
 
 def onClose(window):
     if type(window) == ui.ChannelWindow and window.id in window.network.channels:
