@@ -180,19 +180,14 @@ def handle_server(event):
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    
         event.network = irc.Network(**network_info)
-        ui.windows.new(
-            ui.StatusWindow,
-            event.network,
-            "Status Window",
-            "[%s]" % event.network.server
-            ).activate()
+        ui.windows.new(ui.StatusWindow, event.network, "status").activate()
         
     if "server" in network_info:
         event.network.server = network_info["server"]
         if not event.network.status:
             window = ui.get_status_window(event.network)
             if window:
-                window.title = "[%s]" % event.network.server
+                window.title.update()
     if "port" in network_info:
         event.network.port = network_info["port"]
 
@@ -249,12 +244,7 @@ def onStart(event):
             
         nw = irc.Network(**network_info)
         
-        ui.windows.new(
-            ui.StatusWindow,
-            nw,
-            "Status Window",
-            "[%s]" % nw.server
-            ).activate()
+        ui.windows.new(ui.StatusWindow, nw, "status").activate()
 
         nw.connect()
 
@@ -278,16 +268,12 @@ def onConnect(event):
             events.run_command(command, event.window, event.network)
     window = ui.get_status_window(event.network)
     if window:
-        #window.title = event.network.isupport['NETWORK']
-        # If we use the network name, it can make it harder to tell which
-        # windows are status windows. We need a better solution, but this is
-        # disabled for now.
-        window.title = event.network.server
+        window.title.update()
 
 def onDisconnect(event):
     window = ui.get_status_window(event.network)
     if window:
-        window.title = "[%s]" % event.network.server
+        window.title.update()
 
 def preText(event):
     if event.target == event.network.me:

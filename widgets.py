@@ -456,13 +456,13 @@ class WindowLabel(gtk.EventBox):
             TEXT: "<span foreground='red'>%s</span>",
             EVENT: "<span foreground='#363'>%s</span>",
             }
+            
+        title = str(self)
     
         for a_type in (HILIT, TEXT, EVENT):
             if self.win.activity & a_type:
-                title = activity_markup[a_type] % self.win.title
+                title = activity_markup[a_type] % title
                 break
-        else:
-            title = self.win.title
             
         self.label.set_markup(title)
 
@@ -474,6 +474,9 @@ class WindowLabel(gtk.EventBox):
             c_data.menu += [None, ("Close", gtk.STOCK_CLOSE, self.win.close)]
             
             menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+            
+    def __str__(self):
+        return self.win.get_title()
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)

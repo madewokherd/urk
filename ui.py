@@ -110,20 +110,14 @@ def get_urk_actions(ui):
         
 class Window(gtk.VBox):
     def get_title(self):
-        return self.__title
-    
-    def set_title(self, value):
-        self.__title = value
-        self.label.update()
-    
-    title = property(get_title, set_title)
+        return self.id
     
     def get_activity(self):
         return self.__activity
     
     def set_activity(self, value):
         self.__activity = value
-        self.label.update()
+        self.title.update()
         
     activity = property(get_activity, set_activity)
     
@@ -132,27 +126,33 @@ class Window(gtk.VBox):
     
     def close(self):
         events.trigger("Close", self)
-        del windows[self.network, type(self), self.id]
+        del windows[type(self), self.network, self.id]
         
     def focus(self):
         pass
     
-    def __init__(self, network, id, title=None):
+    def __init__(self, network, id):
         gtk.VBox.__init__(self, False)
 
         if network:
             id = network.normalize_case(id)
-        
+
         self.network = network
         self.id = id
         
-        self.__title = title or id
         self.__activity = 0
         
-        self.label = widgets.WindowLabel(self)
-        self.label.show_all()
+        self.title = widgets.WindowLabel(self)
+        self.title.show_all()
 
 class StatusWindow(Window):
+    def get_title(self):
+        # Something about self.network.isupport
+        if self.network.status:
+            return "%s" % self.network.server
+        else:
+            return "[%s]" % self.network.server
+
     def focus(self):
         self.input.grab_focus()
 
@@ -162,8 +162,8 @@ class StatusWindow(Window):
 
         self.output.write(text, activity_type)
 
-    def __init__(self, network, id, title=None):
-        Window.__init__(self, network, id, title)
+    def __init__(self, network, id):
+        Window.__init__(self, network, id)
 
         def transfer_text(widget, event):
             if event.string and not self.input.is_focus():
@@ -195,15 +195,9 @@ class StatusWindow(Window):
 class QueryWindow(StatusWindow):
     pass
 
-class ChannelWindow(Window):
-    def focus(self):
-        self.input.grab_focus()
-
-    def write(self, text, activity_type=EVENT):
-        if get_active() != self:
-            self.activity |= activity_type
-    
-        self.output.write(text, activity_type)
+class ChannelWindow(StatusWindow):
+    def get_title(self):
+        return self.id
 
     def set_nicklist(self, nicks):
         self.nicklist.userlist.clear()
@@ -211,8 +205,8 @@ class ChannelWindow(Window):
         for nick in nicks:
             self.nicklist.userlist.append([nick])
 
-    def __init__(self, network, id, title=None):    
-        Window.__init__(self, network, id, title)
+    def __init__(self, network, id):    
+        Window.__init__(self, network, id)
     
         def transfer_text(widget, event):
             if event.string and not self.input.is_focus():
@@ -271,15 +265,20 @@ class WindowTabs(dict):
         
         window.activity = 0
         
-        ui.set_title("%s - urk" % window.title)
+        if type(window) != StatusWindow:
+            title = "%s - %s - %s" % (window.network.me, window.network.server, window.title)
+        else:
+            title = "%s - %s" % (window.network.me, window.title)
+        
+        ui.set_title("%s - urk" % title)
         
         register_idle(window.focus)
     
         events.trigger("Active", window)
         
-    def new(self, type, network, id, title=None):
+    def new(self, type, network, id):
         if (type, network,id) not in self:
-            self[type, network, id] = type(network, id, title)
+            self[type, network, id] = type(network, id)
               
         return self[type, network, id]
         
@@ -316,7 +315,7 @@ class WindowTabs(dict):
         dict.__setitem__(self, (t, n, id), window)
                     
         self.nb.insert_page(window, None, pos)
-        self.nb.set_tab_label(window, window.label)
+        self.nb.set_tab_label(window, window.title)
 
     def __delitem__(self, item):
         t, n, id = tni
@@ -412,20 +411,11 @@ def get_status_window(network):
             return windows[t, n, i]
         
 def get_active():
-    return windows.nb.get_nth_page(
-            windows.nb.get_current_page()
-            )
+    return windows.nb.get_nth_page(windows.nb.get_current_page())
 
 def start():
     if not windows:
-        first_network = irc.Network()
-        
-        windows.new(
-            StatusWindow,
-            first_network,
-            "Status Window",
-            "[%s]" % first_network.server
-            )
+        windows.new(StatusWindow, irc.Network(), "status")
 
     try:
         gtk.threads_enter()
