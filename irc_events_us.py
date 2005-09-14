@@ -106,7 +106,3 @@ def setupSocketConnect(event):
         'CHANMODES': 'b,k,l,imnpstr',
     }
     event.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
-
-def setupDisconnect(event):
-    if not hasattr(event, 'window'):
-        event.window = ui.get_status_window(event.network)
