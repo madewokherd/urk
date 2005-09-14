@@ -115,12 +115,7 @@ def handle_edit(event):
         event.error_text = "Couldn't find script: %s" % event.args[0]
 
 def handle_query(event):
-    ui.windows.new(
-        ui.QueryWindow,
-        event.network,
-        event.args[0]
-        ).activate()
-
+    ui.windows.new(ui.QueryWindow, event.network, event.args[0]).activate()
     event.done = True
 
 # make /nick work offline
@@ -296,11 +291,7 @@ def onDisconnect(event):
 
 def preText(event):
     if event.target == event.network.me:
-        ui.windows.new(
-            ui.QueryWindow,
-            event.network,
-            event.source
-            )
+        ui.windows.new(ui.QueryWindow, event.network, event.source)
     else:
         event.window = \
             ui.windows[ui.ChannelWindow, event.network, event.target] or \
@@ -311,11 +302,7 @@ preAction = preText
 
 def preJoin(event):
     if event.source == event.network.me:
-        w = ui.windows.new(
-            ui.ChannelWindow,
-            event.network,
-            event.target
-            ).activate()
+        ui.windows.new(ui.ChannelWindow, event.network, event.target).activate()
         
     event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
 
