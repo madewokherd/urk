@@ -16,29 +16,41 @@ ui.set_style("view", textareas)
 ui.set_style("nicklist", textareas)
 
 def onText(event):
-    color = (event.network.me == event.source and "\x02\x04FF00FF") or "\x02\x040000CC"
+    color = "\x02\x040000CC"
     if event.network.me == event.target:
-        if event.window.id == event.network.normalize_case(event.source):
+        if event.window.id == event.network.norm_case(event.source):
             format = "%s<\x0F%s%s>\x0F %s"
         else:
             format = "%s*\x0F%s%s*\x0F %s"
         to_write = format % (color, event.source, color, event.text)
     else:
-        if event.window.id == event.network.normalize_case(event.target):
+        if event.window.id == event.network.norm_case(event.target):
             to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
         else:
-            to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
+            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, event.source, event.target, color, event.text)
     
     event.window.write(to_write, ui.TEXT)
     
-def onAction(event):
-    if event.network.me == event.source:
-        color = '\x02\x04FF00FF'
+def onOwnText(event):
+    color = "\x02\x04FF00FF"
+    if event.window.id == event.network.norm_case(event.target):
+        to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
     else:
-        color = '\x02\x040000CC'
+        to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
+    
+    event.window.write(to_write)
+    
+def onAction(event):
+    color = '\x02\x040000CC'
     to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
     
     event.window.write(to_write, ui.TEXT)
+
+def onOwnAction(event):
+    color = '\x02\x04FF00FF'
+    to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
+    
+    event.window.write(to_write)
 
 def onNotice(event):
     to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (event.source, event.text)

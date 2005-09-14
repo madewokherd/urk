@@ -135,8 +135,8 @@ class Window(gtk.VBox):
         gtk.VBox.__init__(self, False)
 
         if network:
-            id = network.normalize_case(id)
-
+            id = network.norm_case(id)
+        
         self.network = network
         self.id = id
         
@@ -286,7 +286,7 @@ class WindowTabs(dict):
         t, n, id = tni
         
         if n:
-            id = n.normalize_case(id)
+            id = n.norm_case(id)
             
         return dict.__contains__(self, (t, n, id))
     
@@ -294,7 +294,7 @@ class WindowTabs(dict):
         t, n, id = tni
         
         if n:
-            id = n.normalize_case(id)
+            id = n.norm_case(id)
 
         if dict.__contains__(self, (t, n, id)):
             return dict.__getitem__(self, (t, n, id))
@@ -303,7 +303,7 @@ class WindowTabs(dict):
         t, n, id = tni
         
         if n:
-            id = n.normalize_case(id)
+            id = n.norm_case(id)
         
         pos = len(self)
         if window.network:
@@ -321,7 +321,7 @@ class WindowTabs(dict):
         t, n, id = tni
         
         if n:
-            id = n.normalize_case(id)
+            id = n.norm_case(id)
 
         self.nb.remove_page(self.nb.page_num(self[t, n, id]))
         dict.__delitem__(self, (t, n, id))
@@ -393,7 +393,7 @@ class UrkUI(gtk.Window):
         
 def get_window_for(type=None, network=None, id=None):
     if network and id:
-        id = network.normalize_case(id)
+        id = network.norm_case(id)
 
     for t, n, i in list(windows):
         if type and t != type:

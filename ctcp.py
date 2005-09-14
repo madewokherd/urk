@@ -23,7 +23,7 @@ def emote(network, user, msg):
     e_data.text = msg
     e_data.network = network
     e_data.window = ui.get_status_window(network)
-    events.trigger('Action', e_data)
+    events.trigger('OwnAction', e_data)
 
 def defCommand(event):
     if not event.done:

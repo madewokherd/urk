@@ -193,6 +193,8 @@ class Network:
             events.trigger('Connecting', e_data)
     
     def disconnect(self, error=None):
+        self.socket.close()
+
         if self.writeable_id:
             ui.unregister(self.writeable_id)
             self.writeable_id = None
@@ -222,7 +224,7 @@ class Network:
             events.trigger('Nick', e_data)
             self.me = self.nicks[0]
         
-    def normalize_case(self, string):
+    def norm_case(self, string):
         return string.lower()
     
     def quit(self,msg=None):
@@ -253,7 +255,7 @@ class Network:
         e_data.text = msg
         e_data.network = self
         e_data.window = ui.get_status_window(self)
-        events.trigger('Text', e_data)
+        events.trigger('OwnText', e_data)
 
     def notice(self, target, msg):
         self.raw("NOTICE %s :%s" % (target, msg))

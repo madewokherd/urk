@@ -276,15 +276,24 @@ def onDisconnect(event):
         window.title.update()
 
 def preText(event):
+    print event.target, event.network.me
     if event.target == event.network.me:
         ui.windows.new(ui.QueryWindow, event.network, event.source)
     else:
         event.window = \
             ui.windows[ui.ChannelWindow, event.network, event.target] or \
-            ui.windows[ui.QueryWindow, event.network, event.target] or \
+            ui.windows[ui.QueryWindow, event.network, event.source] or \
             event.window
 
 preAction = preText
+
+def preOwnText(event):
+    event.window = \
+        ui.windows[ui.ChannelWindow, event.network, event.target] or \
+        ui.windows[ui.QueryWindow, event.network, event.target] or \
+        event.window
+
+preOwnAction = preOwnText
 
 def preJoin(event):
     if event.source == event.network.me:

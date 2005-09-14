@@ -25,6 +25,7 @@ def defRaw(event):
                     e_data.newnick = event.msg[2]
                     events.trigger('Nick', e_data)
                     event.network.me = event.msg[2]
+                    event.network.got_nick = True
                 
         if event.msg[1] == "PING":
             event.network.raw("PONG :%s" % event.msg[-1])
