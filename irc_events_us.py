@@ -29,26 +29,22 @@ def defRaw(event):
         if event.msg[1] == "PING":
             event.network.raw("PONG :%s" % event.msg[-1])
             event.done = True
-            event.quiet = True
         
         elif event.msg[1] in ("JOIN", "PART", "MODE"):
             event.channel = event.target
             event.text = ' '.join(event.msg[3:])
             events.trigger(event.msg[1].capitalize(), event)
             event.done = True
-            event.quiet = True
             
         elif event.msg[1] == "QUIT":
             events.trigger('Quit', event)
             event.done = True
-            event.quiet = True
             
         elif event.msg[1] == "KICK":
             event.channel = event.msg[2]
             event.target = event.msg[3]
             events.trigger('Kick', event)
             event.done = True
-            event.quiet = True
             
         elif event.msg[1] == "NICK":
             event.newnick = event.msg[2]
@@ -57,22 +53,18 @@ def defRaw(event):
                 event.network.me = event.newnick
 
             event.done = True
-            event.quiet = True
             
         elif event.msg[1] == "PRIVMSG":
             events.trigger('Text', event)
             event.done = True
-            event.quiet = True
         
         elif event.msg[1] == "NOTICE":
             events.trigger('Notice', event)
             event.done = True
-            event.quiet = True
         
         elif event.msg[1] == "TOPIC":
             events.trigger('Topic', event)
             event.done = True
-            event.quiet = True
         
         elif event.msg[1] == "376": #RPL_ENDOFMOTD
             if event.network.status == irc.INITIALIZING:

@@ -29,8 +29,7 @@ def onText(event):
         else:
             to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write, ui.TEXT)
+    event.window.write(to_write, ui.TEXT)
     
 def onAction(event):
     if event.network.me == event.source:
@@ -39,8 +38,7 @@ def onAction(event):
         color = '\x02\x040000CC'
     to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write, ui.TEXT)
+    event.window.write(to_write, ui.TEXT)
 
 def onNotice(event):
     to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (event.source, event.text)
@@ -54,23 +52,20 @@ def onNotice(event):
 def onOwnNotice(event):
     to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (event.target, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
 
 def onCtcp(event):
     to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (event.source, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
 
 def onCtcpReply(event):
     to_write = "--- %s reply from %s: %s" % (event.name.capitalize(), event.source, ' '.join(event.args))
     
-    if not event.quiet:
-        window = ui.get_active()
-        if window.network != event.network:
-            window = ui.get_status_window(event.network)
-        window.write(to_write, ui.TEXT)
+    window = ui.get_active()
+    if window.network != event.network:
+        window = ui.get_status_window(event.network)
+    window.write(to_write, ui.TEXT)
 
 def onJoin(event):
     if event.network.me == event.source:
@@ -78,8 +73,7 @@ def onJoin(event):
     else:
         to_write = "\x02%s\x02 (%s) joined %s" % (event.source, event.address, event.target)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
         
 def onPart(event):
     if event.network.me == event.source:
@@ -89,30 +83,26 @@ def onPart(event):
     if event.text:
         to_write += ' (%s)' % event.text
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
 
 def onKick(event):
     to_write = "\x02%s\x02 kicked %s (%s)" % (event.source, event.target, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
         
 def onMode(event):
     to_write = "\x02%s\x02 sets mode: %s" % (event.source, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
         
 def onQuit(event):
     to_write = "\x02%s\x02 (%s) quit (%s)" % (event.source, event.address, event.text)
     
-    if not event.quiet:
-        for channame in event.network.channels:
-            if event.source in event.network.channels[channame].nicks:
-                window = ui.windows[event.network, ui.ChannelWindow, channame]
-                if window:
-                    window.write(to_write)
+    for channame in event.network.channels:
+        if event.source in event.network.channels[channame].nicks:
+            window = ui.windows[ui.ChannelWindow, event.network, channame]
+            if window:
+                window.write(to_write)
 
 def onNick(event):
     if event.source == event.network.me:
@@ -120,39 +110,36 @@ def onNick(event):
     else:
         to_write = "\x02%s\x02 is now known as %s" % (event.source, event.newnick)
     
-    if not event.quiet:
-        for channame in event.network.channels:
-            if event.source in event.network.channels[channame].nicks:
-                if (event.network, ui.ChannelWindow, channame) in ui.windows:
-                    window = ui.windows[event.network, ui.ChannelWindow, channame]
-                    window.write(to_write)
-
-        if event.source == event.network.me:
-            window = ui.get_status_window(event.network)
+    for channame in event.network.channels:
+        if event.source in event.network.channels[channame].nicks:
+            window = ui.windows[event.network, ui.ChannelWindow, channame]
             if window:
                 window.write(to_write)
+
+    if event.source == event.network.me:
+        window = ui.get_status_window(event.network)
+        if window:
+            window.write(to_write)
 
 def onTopic(event):
     to_write = "\x02%s\x02 set topic on %s: %s" % (event.source, event.target, event.text)
     
-    if not event.quiet:
-        event.window.write(to_write)
+    event.window.write(to_write)
 
 def onRaw(event):
-    if not event.quiet:
+    if event.msg[1].isdigit() and not event.quiet:
         if event.msg[1] == '332':
-            window = ui.windows[event.network, ui.ChannelWindow, event.msg[3]] or event.window
+            window = ui.windows[ui.ChannelWindow, event.network, event.msg[3]] or event.window
             window.write("topic on %s is: %s" % (event.msg[3], event.text))
-        elif event.msg[1].isdigit():
-            event.window.write("* %s" % ' '.join(event.msg[3:]))
+            
         else:
-            event.window.write("* %s" % ' '.join(event.msg[0:]))
+            event.window.write("* %s" % ' '.join(event.msg[3:]))
 
 def onDisconnect(event):
     if event.error:
         to_write = '* Disconnected (%s)' % event.error
     else:
         to_write = '* Disconnected'
-    for network, type, id in ui.windows:
-        if network == event.network:
-            ui.windows[network, type, id].write(to_write, (type == 'status' and ui.TEXT) or ui.EVENT)
+
+    for window in ui.get_window_for(network=event.network):
+        window.write(to_write, (type(window) == StatusWindow and ui.TEXT) or ui.EVENT)
