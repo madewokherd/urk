@@ -4,7 +4,6 @@ import events
 import irc
 import conf
 import ui
-import webbrowser
 
 import chaninfo
 

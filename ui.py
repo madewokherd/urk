@@ -1,4 +1,5 @@
 import sys #only needed for the stupid workaround
+import os
 
 import gobject
 
@@ -53,6 +54,34 @@ set_style = widgets.set_style
 HILIT = widgets.HILIT
 TEXT = widgets.TEXT
 EVENT = widgets.EVENT
+
+#open_file(filename)
+#opens a file or url using the "right" program
+open_file_cmd = "" #cache results of searching for the os program
+os_commands = ( #list of commands to search for for opening files
+    ('gnome-open', 'gnome-open %s'),
+    ('kfmclient', 'kfmclient exec %s'),
+    )
+def open_file(filename):
+    if conf.get('open-file-command'):
+        os.popen(conf.get('open-file-command') % filename)
+    elif hasattr(os, 'startfile'):
+        os.startfile(filename)
+    elif open_file_cmd:
+        os.popen(open_file_cmd % filename)
+    else:
+        #look for a command we can use
+        paths = os.getenv("PATH") or os.defpath
+        for cmdfile, cmd in os_commands:
+            for path in paths.split(os.pathsep):
+                print os.path.join(path,cmdfile)
+                if os.access(os.path.join(path,cmdfile),os.X_OK):
+                    globals()['open_file_cmd'] = cmd
+                    os.popen(cmd % filename)
+                    break
+        else:
+            print "Unable to find a method to open %s" % filename
+
 
 def urk_about(action):
     about = gtk.AboutDialog()
