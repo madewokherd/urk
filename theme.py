@@ -96,7 +96,7 @@ def onMode(event):
     event.window.write(to_write)
         
 def onQuit(event):
-    to_write = "\x02%s\x02 (%s) quit (%s)" % (event.source, event.address, event.text)
+    to_write = "\x02%s\x02 quit (%s)" % (event.source, event.text)
     
     for channame in event.network.channels:
         if event.source in event.network.channels[channame].nicks:
@@ -142,4 +142,4 @@ def onDisconnect(event):
         to_write = '* Disconnected'
 
     for window in ui.get_window_for(network=event.network):
-        window.write(to_write, (type(window) == StatusWindow and ui.TEXT) or ui.EVENT)
+        window.write(to_write, (type(window) == ui.StatusWindow and ui.TEXT) or ui.EVENT)
