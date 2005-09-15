@@ -93,24 +93,15 @@ def urk_about(action):
     about.set_authors(urk.authors)
     
     about.show_all()
-    
-def get_urk_actions(ui):
-    to_add = (
-        ("FileMenu", None, "_File"),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, ui.exit),
-        
-        ("HelpMenu", None, "_Help"),
-            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about)
-        )
-    
-    urk_actions = gtk.ActionGroup("Urk")   
-    urk_actions.add_actions(to_add)
-    
-    return urk_actions
         
 class Window(gtk.VBox):
+    def get_id(self):
+        return self.network.norm_case(self.__id)
+
+    id = property(get_id)
+
     def get_title(self):
-        return self.id
+        return self.__id
     
     def get_activity(self):
         return self.__activity
@@ -133,12 +124,9 @@ class Window(gtk.VBox):
     
     def __init__(self, network, id):
         gtk.VBox.__init__(self, False)
-
-        if network:
-            id = network.norm_case(id)
         
         self.network = network
-        self.id = id
+        self.__id = id
         
         self.__activity = 0
         
@@ -194,11 +182,11 @@ class StatusWindow(Window):
     
 class QueryWindow(StatusWindow):
     def get_title(self):
-        return self.id
+        return Window.get_title(self)
 
 class ChannelWindow(StatusWindow):
     def get_title(self):
-        return self.id
+        return Window.get_title(self)
 
     def set_nicklist(self, nicks):
         self.nicklist.userlist.clear()
@@ -229,20 +217,17 @@ class ChannelWindow(StatusWindow):
         pane.pack2(self.nicklist, resize=False, shrink=True)
 
         def set_pane_pos():
-            pos = conf.get("ui-gtk/nicklist-width")
-            if pos is not None:
-                pos = pane.get_property("max-position") - conf.get("ui-gtk/nicklist-width")
-            else:
-                pos = pane.get_property("max-position")
-        
-            pane.set_position(pos)
+            pane.set_position(
+                pane.get_property("max-position") - (conf.get("ui-gtk/nicklist-width") or 0)
+                )
         register_idle(set_pane_pos)
 
         def connect_save():
             def save_nicklist_width(pane, event):
-                pos = pane.get_property("max-position") - pane.get_position()
-
-                conf.set("ui-gtk/nicklist-width", pos)
+                conf.set(
+                    "ui-gtk/nicklist-width", 
+                    pane.get_property("max-position") - pane.get_position()
+                    )
         
             pane.connect("size-request", save_nicklist_width)
         register_idle(connect_save)
@@ -377,10 +362,22 @@ class UrkUI(gtk.Window):
         register_idle(connect_save)
         
         ui_manager = gtk.UIManager()
-        
+
         self.add_accel_group(ui_manager.get_accel_group())
         ui_manager.add_ui_from_file(urk.path("ui.xml"))
-        ui_manager.insert_action_group(get_urk_actions(self), 0)
+        
+        menus = (
+            ("FileMenu", None, "_File"),
+            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, self.exit),
+        
+            ("HelpMenu", None, "_Help"),
+            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about),
+            )
+    
+        actions = gtk.ActionGroup("Urk")   
+        actions.add_actions(menus)
+        
+        ui_manager.insert_action_group(actions, 0)
         
         menu = ui_manager.get_widget("/MenuBar")
 
@@ -396,20 +393,17 @@ def get_window_for(type=None, network=None, id=None):
     if network and id:
         id = network.norm_case(id)
 
-    for t, n, i in list(windows):
-        if type and t != type:
-            continue
-        if network and n != network:
-            continue
-        if id and i != id:
-            continue
-            
-        yield windows[t, n, i]
-        
+    for tni in list(windows):
+        for a, b in zip((type, network, id), tni):
+            if a and a != b:
+                break
+        else:
+            yield windows[tni]
+
 def get_status_window(network):
-    for t, n, i in windows:
-        if t == StatusWindow and n == network:
-            return windows[t, n, i]
+    # There can be only one...
+    for window in get_window_for(type=StatusWindow, network=network):
+        return window
         
 def get_active():
     return windows.nb.get_nth_page(windows.nb.get_current_page())
