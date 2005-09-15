@@ -176,8 +176,9 @@ def handle_server(event):
         port = event.args[1]
         
         network_info["port"] = int(port)
-
-    get_network_info(network_info["server"], network_info)
+    
+    if 'server' in network_info:
+        get_network_info(network_info["server"], network_info)
 
     new_window = ("n" in event.switches or "m" in event.switches)
     if new_window or not event.network:    

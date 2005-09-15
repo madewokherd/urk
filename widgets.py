@@ -330,13 +330,11 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(start_i + cc),
                 buffer.get_iter_at_offset(end_i + cc)
                 )
-            
-    def click(self, widget, event):
-        buffer = self.get_buffer()
-
-        hover_iter = get_iter_at_event(self, event)
-
+    
+    def get_hover_event(self, hover_iter):
         if not hover_iter.ends_line():
+            buffer = self.get_buffer()
+            
             line_strt = buffer.get_iter_at_line(hover_iter.get_line())
             line_end = line_strt.copy()
             line_end.forward_lines(1)
@@ -346,21 +344,31 @@ class TextOutput(gtk.TextView):
             
             word, fr, to = word_from_pos(text, pos)
             
-            c_data = events.data(
+            return events.data(
                         window=self.win, pos=pos, text=text,
                         target=word, target_fr=fr, target_to=to,
                         menu=[]
                         )
+    
+    def mousedown(self, widget, event):
+        hover_iter = get_iter_at_event(self, event)
+
+        c_data = self.get_hover_event(hover_iter)
+        
+        if c_data and event.button == 1:
+            events.trigger("Click", c_data)
+    
+    def mouseup(self, widget, event):
+        hover_iter = get_iter_at_event(self, event)
+
+        c_data = self.get_hover_event(hover_iter)
   
-            if event.button == 1:
-                events.trigger("Click", c_data)
-                
-            elif event.button == 3:
-                events.trigger("RightClick", c_data)
-                
-                if c_data.menu:
-                    menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
-                    return True
+        if c_data and event.button == 3:
+            events.trigger("RightClick", c_data)
+            
+            if c_data.menu:
+                menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+                return True
     
     def clear_hover(self, *args):
         buffer = self.get_buffer()
@@ -439,7 +447,8 @@ class TextOutput(gtk.TextView):
             )
         
         self.connect("motion-notify-event", self.hover)
-        self.connect("button-press-event", self.click)
+        self.connect("button-press-event", self.mousedown)
+        self.connect("button-release-event", self.mouseup)
         self.connect("leave-notify-event", self.clear_hover)
         
         self.set_style(get_style("view"))

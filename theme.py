@@ -139,13 +139,16 @@ def onTopic(event):
     event.window.write(to_write)
 
 def onRaw(event):
-    if event.msg[1].isdigit() and not event.quiet:
-        if event.msg[1] == '332':
-            window = ui.windows[ui.ChannelWindow, event.network, event.msg[3]] or event.window
-            window.write("topic on %s is: %s" % (event.msg[3], event.text))
-            
-        else:
-            event.window.write("* %s" % ' '.join(event.msg[3:]))
+    if not event.quiet:
+        if event.msg[1].isdigit():
+            if event.msg[1] == '332':
+                window = ui.windows[ui.ChannelWindow, event.network, event.msg[3]] or event.window
+                window.write("topic on %s is: %s" % (event.msg[3], event.text))
+                
+            else:
+                event.window.write("* %s" % ' '.join(event.msg[3:]))
+        elif event.msg[1] == 'ERROR':
+            event.window.write("Error: %s" % event.text)
 
 def onDisconnect(event):
     if event.error:
