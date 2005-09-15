@@ -78,10 +78,7 @@ def open_file(filename):
                 if os.access(os.path.join(path,cmdfile),os.X_OK):
                     globals()['open_file_cmd'] = cmd
                     os.popen(cmd % filename)
-                    break
-        else:
-            print "Unable to find a method to open %s" % filename
-
+                    return
 
 def urk_about(action):
     about = gtk.AboutDialog()
