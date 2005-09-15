@@ -291,6 +291,23 @@ def get_iter_at_event(view, event):
     
     return view.get_iter_at_location(x, y)
 
+def get_event_at_iter(view, iter):
+    buffer = view.get_buffer()
+        
+    line_strt = buffer.get_iter_at_line(iter.get_line())
+    line_end = line_strt.copy()
+    line_end.forward_lines(1)
+    
+    pos = iter.get_line_offset()        
+    text = buffer.get_text(line_strt, line_end).rstrip("\n")
+    
+    word, fr, to = word_from_pos(text, pos)
+    
+    return events.data(
+                window=view.win, pos=pos, text=text,
+                target=word, target_fr=fr, target_to=to,
+                )
+
 class TextOutput(gtk.TextView):
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type=EVENT):
@@ -331,45 +348,29 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(end_i + cc)
                 )
     
-    def get_hover_event(self, hover_iter):
-        if not hover_iter.ends_line():
-            buffer = self.get_buffer()
-            
-            line_strt = buffer.get_iter_at_line(hover_iter.get_line())
-            line_end = line_strt.copy()
-            line_end.forward_lines(1)
-            
-            pos = hover_iter.get_line_offset()        
-            text = buffer.get_text(line_strt, line_end).rstrip("\n")
-            
-            word, fr, to = word_from_pos(text, pos)
-            
-            return events.data(
-                        window=self.win, pos=pos, text=text,
-                        target=word, target_fr=fr, target_to=to,
-                        menu=[]
-                        )
-    
     def mousedown(self, widget, event):
-        hover_iter = get_iter_at_event(self, event)
+        if event.button == 3:
+            hover_iter = get_iter_at_event(self, event)
+            
+            if not hover_iter.ends_line():
+                c_data = get_event_at_iter(self, hover_iter)
+                c_data.menu = []
 
-        c_data = self.get_hover_event(hover_iter)
-        
-        if c_data and event.button == 1:
-            events.trigger("Click", c_data)
+                events.trigger("RightClick", c_data)
+            
+                if c_data.menu:
+                    menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+                    return True
     
     def mouseup(self, widget, event):
-        hover_iter = get_iter_at_event(self, event)
+        if event.button == 1:
+            hover_iter = get_iter_at_event(self, event)
+        
+            if not hover_iter.ends_line():
+                c_data = get_event_at_iter(self, hover_iter)
 
-        c_data = self.get_hover_event(hover_iter)
-  
-        if c_data and event.button == 3:
-            events.trigger("RightClick", c_data)
-            
-            if c_data.menu:
-                menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
-                return True
-    
+                events.trigger("Click", c_data)
+
     def clear_hover(self, *args):
         buffer = self.get_buffer()
     
@@ -385,41 +386,31 @@ class TextOutput(gtk.TextView):
 
     def hover(self, widget, event):
         self.clear_hover()
-    
-        buffer = self.get_buffer()
 
         hover_iter = get_iter_at_event(self, event)
 
         if not hover_iter.ends_line():        
-            line_strt = buffer.get_iter_at_line(hover_iter.get_line())
-            line_end = line_strt.copy()
-            line_end.forward_lines(1)
-            
-            pos = hover_iter.get_line_offset()        
-            text = line_strt.get_text(line_end).rstrip("\n")
-            
-            word, fr, to = word_from_pos(text, pos)
-            
-            h_data = events.data(
-                        window=self.win, pos=pos, text=text,
-                        target=word, target_fr=fr, target_to=to,
-                        tolink=set()
-                        )
+            h_data = get_event_at_iter(self, hover_iter)
+            h_data.tolink = set()
+
             events.trigger("Hover", h_data)
             
-            offset = line_strt.get_offset()           
-            for fr, to in h_data.tolink:
-                fr = buffer.get_iter_at_offset(offset + fr)
-                to = buffer.get_iter_at_offset(offset + to)
-                
-                buffer.apply_tag_by_name("link", fr, to)
-                
-                self.linking.add(
-                    (buffer.create_mark(None, fr), 
-                        buffer.create_mark(None, to))
-                    )
+            if h_data.tolink:
+                buffer = self.get_buffer()
+            
+                offset = buffer.get_iter_at_line(hover_iter.get_line()).get_offset()        
+                for fr, to in h_data.tolink:
+                    fr = buffer.get_iter_at_offset(offset + fr)
+                    to = buffer.get_iter_at_offset(offset + to)
                     
-                self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+                    buffer.apply_tag_by_name("link", fr, to)
+                    
+                    self.linking.add(
+                        (buffer.create_mark(None, fr), 
+                            buffer.create_mark(None, to))
+                        )
+                        
+                    self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
         self.get_pointer()
 
