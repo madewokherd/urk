@@ -13,9 +13,19 @@ def onRightClick(event):
     def print_blah():
         print "blah"
         
-    event.menu.append(("Print Blah", print_blah))
+    event.menu.append(("RightClick", print_blah))
     
-onListRightClick = onWindowMenu = onRightClick
+def onListRightClick(event):
+    def print_blah():
+        print "blah"
+        
+    event.menu.append(("ListRightClick", print_blah))
+    
+def onWindowMenu(event):
+    def print_blah():
+        print "blah"
+        
+    event.menu.append(("WindowMenu", print_blah))
 
 def onExit(event):
     for n in set(n for t, n, i in ui.windows if n.status):
