@@ -1,7 +1,5 @@
 Hotlinking
 
-    stop using webbrowser
-    
     we need to figure out what to do when you click on nicks
     
 
@@ -14,11 +12,6 @@ Keyboard Shortcuts
     tab for nick completion
     
     we could just have an onKeypress event..scripts are good..
-
-
-Take Back Stupid Decision
-
-    own text shouldn't trigger onText
 
 
 Commands that want colons

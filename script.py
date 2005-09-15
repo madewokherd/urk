@@ -276,7 +276,6 @@ def onDisconnect(event):
         window.title.update()
 
 def preText(event):
-    print event.target, event.network.me
     if event.target == event.network.me:
         ui.windows.new(ui.QueryWindow, event.network, event.source)
     else:

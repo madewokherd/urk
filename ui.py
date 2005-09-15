@@ -317,7 +317,7 @@ class WindowTabs(dict):
         self.nb.insert_page(window, None, pos)
         self.nb.set_tab_label(window, window.title)
 
-    def __delitem__(self, item):
+    def __delitem__(self, tni):
         t, n, id = tni
         
         if n:
