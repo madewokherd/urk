@@ -14,12 +14,6 @@ Keyboard Shortcuts
     we could just have an onKeypress event..scripts are good..
 
 
-Commands that want colons
-
-    things like /topic, /part, /kick, whatever else need to have :'s added in
-the appropriate spots when we send them
-
-
 Format more stuff
 
     Change formatting of tabs, tabs with new text, based on theme

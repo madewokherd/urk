@@ -193,7 +193,8 @@ class StatusWindow(Window):
         self.show_all()
     
 class QueryWindow(StatusWindow):
-    pass
+    def get_title(self):
+        return self.id
 
 class ChannelWindow(StatusWindow):
     def get_title(self):

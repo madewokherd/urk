@@ -36,9 +36,9 @@ def onClick(event):
     
     target = event.text[target_fr:target_to]
     
-    #if type(event.window) == ui.ChannelWindow and \
-    #        target in event.window.network.channels[event.window.id].nicks:
-    #    pass
+    if type(event.window) == ui.ChannelWindow and \
+            target in event.window.network.channels[event.window.id].nicks:
+        events.run_command("query %s" % target, event.window, event.window.network)
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     if (target.startswith("http://") and target.count(".") >= 1) or \
@@ -149,6 +149,8 @@ def handle_raw(event):
     else:
         event.error_text = "We're not connected to a network."
 
+handle_quote = handle_raw
+
 def handle_join(event):
     if event.args:
         if event.network.status >= irc.INITIALIZING:
@@ -200,24 +202,37 @@ def handle_server(event):
     
     event.done = True
 
-command_handlers = {
-    'say': handle_say,
-    'msg': handle_msg,
-    'notice': handle_notice,
-    'echo': handle_echo,
-    'edit': handle_edit,
-    'query': handle_query,
-    'nick': handle_nick,
-    'quit': handle_quit,
-    'raw': handle_raw,
-    'quote': handle_raw,
-    'join': handle_join,
-    'server': handle_server,
+#commands that we need to add a : to but otherwise can send unchanged
+#the dictionary contains the number of arguments we take without adding the :
+trailing = {
+    'away':0,
+    'cnotice':2,
+    'cprivmsg':2,
+    'kick':2,
+    'kill':1,
+    'part':1,
+    'squery':1,
+    'squit':1,
+    'topic':1,
+    'wallops':0,
     }
 
 def defCommand(event):
-    if not event.done and event.name in command_handlers:
-        command_handlers[event.name](event)
+    if not event.done:
+        if 'handle_%s' % event.name in globals():
+            globals()['handle_%s' % event.name](event)
+        elif event.name in trailing:
+            if event.network.status >= irc.INITIALIZING:
+                if len(event.args) > trailing[event.name]:
+                    event.network.raw(
+                        event.name+' '+
+                        ' '.join(event.args[0:trailing[event.name]])+
+                        ' :'+' '.join(event.args[trailing[event.name]:]))
+                else:
+                    event.network.raw(event.name+' '+' '.join(event.args))
+                event.done = True
+            else:
+                event.error_text = "We're not connected to a network."
 
 def postCommand(event):
     if not event.done and event.error_text == 'No such command exists' \

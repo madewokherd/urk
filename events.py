@@ -211,17 +211,8 @@ def handle_scripts(event):
         event.window.write("* %s" % name)
     event.done = True
 
-command_handlers = {
-    'pyeval': handle_pyeval,
-    'pyexec': handle_pyexec,
-    'load': handle_load,
-    'unload': handle_unload,
-    'reload': handle_reload,
-    'scripts': handle_scripts,
-    }
-
 def defCommand(event):
-    if not event.done and event.name in command_handlers:
-        command_handlers[event.name](event)
+    if not event.done and 'handle_%s' % event.name in globals():
+        globals()['handle_%s' % event.name](event)
 
 register('Command', 'def', defCommand, '_events')

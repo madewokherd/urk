@@ -124,7 +124,7 @@ def onNick(event):
     
     for channame in event.network.channels:
         if event.source in event.network.channels[channame].nicks:
-            window = ui.windows[event.network, ui.ChannelWindow, channame]
+            window = ui.windows[ui.ChannelWindow, event.network, channame]
             if window:
                 window.write(to_write)
 
