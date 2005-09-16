@@ -35,7 +35,7 @@ def parse_irc(msg, server):
     return [m for m in msg[:-1] if m] + msg[-1:]
     
     # note: this sucks and makes very little sense, but it matches the BNF
-    #       as far as we'v tested, which seems to be the goal
+    #       as far as we've tested, which seems to be the goal
 
 class Network:
     socket = None               # this network's socket
@@ -44,12 +44,10 @@ class Network:
     
     buffer = ''              # data we've received but not processed yet
     
-    if conf.get("nick"):
-        nicks = [conf.get("nick")]
-    else:
-        # FIXME: it'd be cool if we could use os.expanduser or something
-        #        more cross platform to make up a good nick here
-        nicks = ["mrurk"]                  # desired nicknames
+    # FIXME: it'd be cool if we could use os.expanduser or something
+    #        more cross platform to make up a good nick here
+    nick = conf.get("nick")
+    nicks = nick and [nick] or ["mrurk"]    # desired nicknames
 
     fullname = ""               # our full name
     
@@ -69,7 +67,7 @@ class Network:
         self.server = server
         self.port = port
         
-        self.nicks = nicks or self.nicks
+        self.nicks = nicks or list(self.nicks)
         self.me = self.nicks[0]
             
         self.fullname = fullname or "urk user"
