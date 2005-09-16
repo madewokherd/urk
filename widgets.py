@@ -20,37 +20,38 @@ tag_table.add(link_tag)
 
 #FIXME: MEH hates dictionaries, they remind him of the bad words
 styles = {}
-    
-def get_style(widget):
-    if widget in styles:
-        return styles[widget]
+
+def style_me(widget, style):
+    widget.set_style(styles.get(style))
 
 def set_style(widget, style):
-    def apply_style_fg(wdg, value):
-        wdg.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
-
-    def apply_style_bg(wdg, value):
-        wdg.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
-
-    def apply_style_font(wdg, value):
-        wdg.modify_font(pango.FontDescription(value))
-
-    style_functions = {
-        'fg': apply_style_fg,
-        'bg': apply_style_bg,
-        'font': apply_style_font,
-        }
-
     if style:
         # FIXME: find a better way...
         dummy = gtk.Label()
         dummy.set_style(None)
     
-        for name in style:
-            style_functions[name](dummy, style[name])
-        styles[widget] = dummy.rc_get_style()
-    else:
-        styles[widget] = None
+        def apply_style_fg(value):
+            dummy.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+        def apply_style_bg(value):
+            dummy.modify_base(gtk.STATE_NORMAL, gtk.gdk.color_parse(value))
+
+        def apply_style_font(value):
+            dummy.modify_font(pango.FontDescription(value))
+    
+        style_functions = (
+            ('fg', apply_style_fg),
+            ('bg', apply_style_bg),
+            ('font', apply_style_font),
+            )
+
+        for name, f in style_functions:
+            if name in style:
+                f(style[name])
+
+        style = dummy.rc_get_style()
+    
+    styles[widget] = style
         
 def menu_from_list(alist):
     ui_manager = gtk.UIManager()
@@ -122,7 +123,7 @@ class Nicklist(gtk.VBox):
         view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         view.set_property("fixed-height-mode", True)
         
-        view.set_style(get_style("nicklist"))
+        style_me(view, "nicklist")
         
         win = gtk.ScrolledWindow()
         win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
@@ -244,15 +245,34 @@ class TextInput(gtk.Entry):
         self.history_i = 0
         
         up = gtk.gdk.keyval_from_name("Up")
-        down = gtk.gdk.keyval_from_name("Down")        
+        down = gtk.gdk.keyval_from_name("Down")
+        tab = gtk.gdk.keyval_from_name("Tab")
+        
+        eat = set([up, down, tab])
+                
         def check_history_explore(widget, event):
             if event.keyval == up:
-                self.history_explore(1)
-                return True
+                widget.history_explore(1)
                 
             elif event.keyval == down:
-                self.history_explore(-1)
-                return True
+                widget.history_explore(-1)
+                
+            key = ""
+            for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
+                            (gtk.gdk.SHIFT_MASK, '!'),
+                            (gtk.gdk.MOD1_MASK, '+')):
+                if event.state & k:
+                    key += c
+                
+            if event.string:
+                key += event.string
+            else:
+                key += "{%s}" % gtk.gdk.keyval_name(event.keyval)
+    
+            events.trigger("Keypress", events.data(key=key))
+                
+            if event.keyval in eat:
+                return True            
 
         self.connect("key-press-event", check_history_explore)
         
@@ -442,7 +462,7 @@ class TextOutput(gtk.TextView):
         self.connect("button-release-event", self.mouseup)
         self.connect("leave-notify-event", self.clear_hover)
         
-        self.set_style(get_style("view"))
+        style_me(self, "view")
         
         def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
