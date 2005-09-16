@@ -93,7 +93,10 @@ def urk_about(action):
         
 class Window(gtk.VBox):
     def get_id(self):
-        return self.network.norm_case(self.__id)
+        if self.network:
+            return self.network.norm_case(self.__id)
+        else:
+            return self.__id
 
     id = property(get_id)
 
@@ -114,7 +117,7 @@ class Window(gtk.VBox):
     
     def close(self):
         events.trigger("Close", self)
-        del windows[type(self), self.network, self.id]
+        windows.remove(self)
         
     def focus(self):
         pass
@@ -242,7 +245,7 @@ class ChannelWindow(StatusWindow):
 
         self.show_all()
   
-class WindowTabs(dict):   
+class WindowTabs(list):   
     def window_change(self, notebook, wptr, page_num):
         window = notebook.get_nth_page(page_num)
         
@@ -260,34 +263,23 @@ class WindowTabs(dict):
         events.trigger("Active", window)
         
     def new(self, type, network, id):
-        if (type, network,id) not in self:
-            self[type, network, id] = type(network, id)
+        w = self.get(type, network, id)
+        
+        if not w:
+            w = type(network, id)
+            self.append(w)
               
-        return self[type, network, id]
+        return w
         
-    def __contains__(self, tni):
-        t, n, id = tni
-        
-        if n:
-            id = n.norm_case(id)
+    def get(self, t, network, id):
+        if network:
+            id = network.norm_case(id)
             
-        return dict.__contains__(self, (t, n, id))
-    
-    def __getitem__(self, tni):
-        t, n, id = tni
-        
-        if n:
-            id = n.norm_case(id)
+        for w in self:
+            if (type(w), w.network, w.id) == (t, network, id):
+                return w
 
-        if dict.__contains__(self, (t, n, id)):
-            return dict.__getitem__(self, (t, n, id))
-
-    def __setitem__(self, tni, window):
-        t, n, id = tni
-        
-        if n:
-            id = n.norm_case(id)
-        
+    def append(self, window):
         pos = len(self)
         if window.network:
             for i in reversed(range(pos)):
@@ -295,22 +287,17 @@ class WindowTabs(dict):
                     pos = i+1
                     break
                     
-        dict.__setitem__(self, (t, n, id), window)
+        list.append(self, window)
                     
         self.nb.insert_page(window, None, pos)
         self.nb.set_tab_label(window, window.title)
 
-    def __delitem__(self, tni):
-        t, n, id = tni
-        
-        if n:
-            id = n.norm_case(id)
-
-        self.nb.remove_page(self.nb.page_num(self[t, n, id]))
-        dict.__delitem__(self, (t, n, id))
+    def remove(self, window):
+        self.nb.remove_page(self.nb.page_num(window))
+        list.remove(self, window)
         
     def __init__(self):
-        dict.__init__(self)
+        list.__init__(self)
         
         self.nb = gtk.Notebook()
         
@@ -333,7 +320,6 @@ class UrkUI(gtk.Window):
         gtk.gdk.threads_init()
         
         gtk.Window.__init__(self)
-        self.set_title("urk")
         
         try:
             self.set_icon(
@@ -358,11 +344,6 @@ class UrkUI(gtk.Window):
             self.connect("configure_event", save_xywh)
         register_idle(connect_save)
         
-        ui_manager = gtk.UIManager()
-
-        self.add_accel_group(ui_manager.get_accel_group())
-        ui_manager.add_ui_from_file(urk.path("ui.xml"))
-        
         menus = (
             ("FileMenu", None, "_File"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, self.exit),
@@ -374,7 +355,11 @@ class UrkUI(gtk.Window):
         actions = gtk.ActionGroup("Urk")   
         actions.add_actions(menus)
         
+        ui_manager = gtk.UIManager()        
         ui_manager.insert_action_group(actions, 0)
+        
+        self.add_accel_group(ui_manager.get_accel_group())
+        ui_manager.add_ui_from_file(urk.path("ui.xml"))
         
         menu = ui_manager.get_widget("/MenuBar")
 
@@ -390,12 +375,12 @@ def get_window_for(type=None, network=None, id=None):
     if network and id:
         id = network.norm_case(id)
 
-    for tni in list(windows):
-        for a, b in zip((type, network, id), tni):
+    for w in list(windows):
+        for a, b in zip((type, network, id), (__builtins__['type'](w), w.network, w.id)):
             if a and a != b:
                 break
         else:
-            yield windows[tni]
+            yield w
 
 def get_status_window(network):
     # There can be only one...
@@ -408,6 +393,8 @@ def get_active():
 def start():
     if not windows:
         windows.new(StatusWindow, irc.Network(), "status")
+        
+    #register_idle(ui.exit)
 
     try:
         gtk.threads_enter()

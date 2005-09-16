@@ -28,7 +28,7 @@ def onWindowMenu(event):
     event.menu.append(("WindowMenu", print_blah))
 
 def onExit(event):
-    for n in set(n for t, n, i in ui.windows if n.status):
+    for n in set(w.network for w in ui.windows if w.network.status):
         n.quit()
 
 def onClick(event):
@@ -306,16 +306,16 @@ def preText(event):
         ui.windows.new(ui.QueryWindow, event.network, event.source)
     else:
         event.window = \
-            ui.windows[ui.ChannelWindow, event.network, event.target] or \
-            ui.windows[ui.QueryWindow, event.network, event.source] or \
+            ui.windows.get(ui.ChannelWindow, event.network, event.target) or \
+            ui.windows.get(ui.QueryWindow, event.network, event.source) or \
             event.window
 
 preAction = preText
 
 def preOwnText(event):
     event.window = \
-        ui.windows[ui.ChannelWindow, event.network, event.target] or \
-        ui.windows[ui.QueryWindow, event.network, event.target] or \
+        ui.windows.get(ui.ChannelWindow, event.network, event.target) or \
+        ui.windows.get(ui.QueryWindow, event.network, event.target) or \
         event.window
 
 preOwnAction = preOwnText
@@ -324,25 +324,25 @@ def preJoin(event):
     if event.source == event.network.me:
         ui.windows.new(ui.ChannelWindow, event.network, event.target).activate()
         
-    event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
+    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
 
 def setupPart(event):
-    event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
+    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
 
 def postPart(event):
     if event.source == event.network.me:
-        window = ui.windows[ui.ChannelWindow, event.network, event.target]
+        window = ui.windows.get(ui.ChannelWindow, event.network, event.target)
         if window:
             window.close()
 
 setupTopic = setupPart
 
 def setupKick(event):
-    event.window = ui.windows[ui.ChannelWindow, event.network, event.channel] or event.window
+    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.channel) or event.window
 
 def setupMode(event):
     if event.target != event.network.me:
-        event.window = ui.windows[ui.ChannelWindow, event.network, event.target] or event.window
+        event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
 
 def onClose(window):
     if type(window) == ui.ChannelWindow and window.id in window.network.channels:

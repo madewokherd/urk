@@ -112,7 +112,7 @@ def onQuit(event):
     
     for channame in event.network.channels:
         if event.source in event.network.channels[channame].nicks:
-            window = ui.windows[ui.ChannelWindow, event.network, channame]
+            window = ui.windows.get(ui.ChannelWindow, event.network, channame)
             if window:
                 window.write(to_write)
 
@@ -124,7 +124,7 @@ def onNick(event):
     
     for channame in event.network.channels:
         if event.source in event.network.channels[channame].nicks:
-            window = ui.windows[ui.ChannelWindow, event.network, channame]
+            window = ui.windows.get(ui.ChannelWindow, event.network, channame)
             if window:
                 window.write(to_write)
 
@@ -142,7 +142,7 @@ def onRaw(event):
     if not event.quiet:
         if event.msg[1].isdigit():
             if event.msg[1] == '332':
-                window = ui.windows[ui.ChannelWindow, event.network, event.msg[3]] or event.window
+                window = ui.windows.get(ui.ChannelWindow, event.network, event.msg[3]) or event.window
                 window.write("topic on %s is: %s" % (event.msg[3], event.text))
                 
             else:
