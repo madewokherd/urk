@@ -10,7 +10,6 @@ import os
 def path(filename):
     urkpath = os.path.dirname(inspect.getfile(sys.modules[__name__]))
 
-    return "/home/marc/urk/%s" % filename
     return os.path.join(urkpath, filename)
 
 sys.path = [os.path.expanduser("~/.urk"),".",path] + sys.path
