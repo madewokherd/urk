@@ -116,7 +116,7 @@ class Window(gtk.VBox):
     activity = property(get_activity, set_activity)
     
     def activate(self):
-        windows.nb.set_current_page(windows.nb.page_num(self))
+        windows.manager.set_active(self)
     
     def close(self):
         events.trigger("Close", self)
@@ -249,9 +249,7 @@ class ChannelWindow(StatusWindow):
         self.show_all()
   
 class WindowTabs(list):   
-    def window_change(self, notebook, wptr, page_num):
-        window = notebook.get_nth_page(page_num)
-        
+    def window_change(self, window):
         window.activity = 0
         
         if type(window) != StatusWindow:
@@ -283,35 +281,16 @@ class WindowTabs(list):
                 return w
 
     def append(self, window):
-        pos = len(self)
-        if window.network:
-            for i in reversed(range(pos)):
-                if self.nb.get_nth_page(i).network == window.network:
-                    pos = i+1
-                    break
-                    
         list.append(self, window)
-                    
-        self.nb.insert_page(window, None, pos)
-        self.nb.set_tab_label(window, window.title)
+        self.manager.add(window)    
 
     def remove(self, window):
-        self.nb.remove_page(self.nb.page_num(window))
         list.remove(self, window)
-        
+        self.manager.remove(window)
+
     def __init__(self):
         list.__init__(self)
-        
-        self.nb = gtk.Notebook()
-        
-        tab_pos = conf.get("ui-gtk/tab-pos")
-        if tab_pos is not None:
-            self.nb.set_property("tab-pos", tab_pos)
-        else:
-            self.nb.set_property("tab-pos", gtk.POS_TOP)
-
-        self.nb.set_scrollable(True)
-        self.nb.connect("switch-page", self.window_change)
+        self.manager = widgets.WindowListTabs()
 
 class UrkUI(gtk.Window):
     def exit(self, *args):
@@ -369,7 +348,7 @@ class UrkUI(gtk.Window):
         # widgets
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
-        box.pack_end(windows.nb)
+        box.pack_end(windows.manager)
 
         self.add(box)
         self.show_all()
@@ -391,11 +370,11 @@ def get_status_window(network):
         return window
         
 def get_active():
-    return windows.nb.get_nth_page(windows.nb.get_current_page())
+    return windows.manager.get_active()
 
 def start():
     if not windows:
-        windows.new(StatusWindow, irc.Network(), "status")
+        windows.new(StatusWindow, irc.Network(), "status").activate()
         
     #register_idle(ui.exit)
 
