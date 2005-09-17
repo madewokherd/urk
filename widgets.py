@@ -531,10 +531,8 @@ class WindowListTabs(gtk.Notebook):
     def remove(self, window):
         self.remove_page(self.page_num(window))
 
-    def __init__(self, windows):
+    def __init__(self):
         gtk.Notebook.__init__(self)
-        
-        self.windows = windows
         
         tab_pos = conf.get("ui-gtk/tab-pos")
         if tab_pos is not None:
@@ -543,4 +541,47 @@ class WindowListTabs(gtk.Notebook):
             self.set_property("tab-pos", gtk.POS_TOP)
 
         self.set_scrollable(True)
-        self.connect("switch-page", self.windows.window_change)
+        
+        def window_change(self, wptr, page_num):
+            ui.windows.window_change(self.get_nth_page(page_num))
+        self.connect("switch-page", window_change)
+        
+class WindowListButtons(gtk.VBox):
+    def get_active(self):
+        if self.windows.get_children():
+            return self.windows.get_children()[0]
+        
+    def set_active(self, window):
+        if window != self.get_active():
+            if self.windows.get_children():
+                self.windows.remove(self.windows.get_children()[0])
+            self.windows.add(window)
+            
+            ui.windows.window_change(window)
+       
+    def add(self, window):
+        def activate_window(widget, event):
+            if event.button == 1:
+                self.set_active(widget)
+        window.title.connect("button-press-event", activate_window)
+        
+        self.buttons.add(window.title)
+        self.manager[window] = window.title
+        
+    def remove(self, window):
+        self.buttons.remove(self.manager[window])
+        self.windows.remove(window)
+        del self.manager[window]
+
+    def __init__(self):
+        gtk.VBox.__init__(self)
+        
+        self.manager = {}
+        
+        self.buttons = gtk.HButtonBox()
+        self.buttons.set_layout(gtk.BUTTONBOX_START)
+
+        self.windows = gtk.VBox()
+        
+        self.pack_start(self.buttons, expand=False)
+        self.pack_end(self.windows, expand=True)
