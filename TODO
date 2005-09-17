@@ -3,6 +3,11 @@ Hotlinking
     we need to figure out what to do when you click on nicks
     
 
+Right-click menus of tabs
+    
+    Sometimes when you right-click a tab, there's no close button. I have no idea why.
+
+
 Keyboard Shortcuts
 
     ^B, ^K etc.
@@ -17,12 +22,6 @@ Keyboard Shortcuts
 Format more stuff
 
     Change formatting of tabs, tabs with new text, based on theme
-
-
-Start up Text Editor
-
-    we need a nice way to start a text editor for editing scripts, probably a 
-/edit command
 
 
 Ipv6 etc.

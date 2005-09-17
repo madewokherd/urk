@@ -211,6 +211,25 @@ def handle_scripts(event):
         event.window.write("* %s" % name)
     event.done = True
 
+def handle_echo(event):
+    event.window.write(' '.join(event.args))
+    event.done = True
+
+def handle_edit(event):
+    try:
+        args = find_script(event.args[0])
+    except ImportError:
+        event.error_text = "Couldn't find script: %s" % event.args[0]
+        return
+    if args[1]:
+        args[1].close()
+        import ui
+        ui.open_file(args[2])
+        del ui
+        event.done = True
+    else:
+        event.error_text = "Couldn't find script: %s" % event.args[0]
+
 def defCommand(event):
     if not event.done and 'handle_%s' % event.name in globals():
         globals()['handle_%s' % event.name](event)

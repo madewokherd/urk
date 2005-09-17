@@ -44,10 +44,13 @@ class Network:
     
     buffer = ''              # data we've received but not processed yet
     
-    # FIXME: it'd be cool if we could use os.expanduser or something
-    #        more cross platform to make up a good nick here
-    nick = conf.get("nick")
-    nicks = nick and [nick] or ["mrurk"]    # desired nicknames
+    import getpass
+    try:
+        nick = conf.get("nick") or getpass.getuser()
+    except:
+        nick = "mrurk"
+    nicks = [nick]    # desired nicknames
+    del getpass
 
     fullname = ""               # our full name
     

@@ -181,5 +181,3 @@ def setupRaw(event):
         channel = event.network.channels.get(event.network.norm_case(event.msg[3]))
         if channel:
             channel.topic = event.text
-
-events.load('irc_events_us')

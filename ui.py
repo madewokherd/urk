@@ -17,6 +17,8 @@ import events
 import parse_mirc
 import __main__ as urk
 
+events.load('ui_script')
+
 # IO Type Constants
 IO_IN = gobject.IO_IN
 IO_OUT = gobject.IO_OUT
@@ -79,6 +81,7 @@ def open_file(filename):
                     globals()['open_file_cmd'] = cmd
                     os.popen(cmd % filename)
                     return
+        print "Unable to find a method to open %s." % filename
 
 def urk_about(action):
     about = gtk.AboutDialog()
@@ -405,6 +408,8 @@ def start():
     
 # build our tab widget
 windows = WindowTabs()
+
+print "running ui.py"
 
 # build our overall UI
 ui = UrkUI()

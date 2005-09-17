@@ -41,9 +41,10 @@ long_version = "%s v%s" % (long_name, ".".join(str(x) for x in version))
 website = "http://urk.sf.net/"
 authors = ["Vincent Povirk", "Marc Liddell"]
 copyright = "2005 %s" % ', '.join(authors)
+default_scripts = ['theme','chaninfo', 'ctcp', 'irc_script', 'hotlinking', 'winpol_traditional']
 
 if __name__ == "__main__":
-    for script in conf.get("scripts_to_load") or ['script.py','theme.py','chaninfo.py', 'irc_events_us.py', 'ctcp.py']:
+    for script in conf.get("scripts_to_load") or default_scripts:
         events.load(script)
 
     events.trigger("Start")
