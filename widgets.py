@@ -562,7 +562,7 @@ class WindowListButtons(gtk.VBox):
     def add(self, window):
         def activate_window(widget, event):
             if event.button == 1:
-                self.set_active(widget)
+                self.set_active(window)
         window.title.connect("button-press-event", activate_window)
         
         self.buttons.add(window.title)
