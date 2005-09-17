@@ -543,7 +543,7 @@ class WindowListTabs(gtk.Notebook):
         self.set_scrollable(True)
         
         def window_change(self, wptr, page_num):
-            ui.windows.window_change(self.get_nth_page(page_num))
+            events.trigger("Active", self.get_nth_page(page_num))
         self.connect("switch-page", window_change)
         
 class WindowListButtons(gtk.HBox):
@@ -557,7 +557,7 @@ class WindowListButtons(gtk.HBox):
                 self.windows.remove(self.windows.get_children()[0])
             self.windows.add(window)
             
-            ui.windows.window_change(window)
+            events.trigger("Active", window)
        
     def add(self, window):
         def activate_window(widget, event):

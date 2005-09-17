@@ -148,7 +148,7 @@ class StatusWindow(Window):
         self.input.grab_focus()
 
     def write(self, text, activity_type=EVENT):
-        if get_active() != self:
+        if windows.manager.get_active() != self:
             self.activity |= activity_type
 
         self.output.write(text, activity_type)
@@ -248,21 +248,7 @@ class ChannelWindow(StatusWindow):
 
         self.show_all()
   
-class WindowTabs(list):   
-    def window_change(self, window):
-        window.activity = 0
-        
-        if type(window) != StatusWindow:
-            title = "%s - %s - %s" % (window.network.me, window.network.server, window.title)
-        else:
-            title = "%s - %s" % (window.network.me, window.title)
-        
-        ui.set_title("%s - urk" % title)
-        
-        register_idle(window.focus)
-    
-        events.trigger("Active", window)
-        
+class WindowTabs(list):       
     def new(self, type, network, id):
         w = self.get(type, network, id)
         
@@ -368,9 +354,6 @@ def get_status_window(network):
     # There can be only one...
     for window in get_window_for(type=StatusWindow, network=network):
         return window
-        
-def get_active():
-    return windows.manager.get_active()
 
 def start():
     if not windows:
@@ -392,3 +375,5 @@ print "running ui.py"
 
 # build our overall UI
 ui = UrkUI()
+
+set_title = ui.set_title
