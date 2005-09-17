@@ -290,7 +290,7 @@ class WindowTabs(list):
 
     def __init__(self):
         list.__init__(self)
-        self.manager = widgets.WindowListButtons()
+        self.manager = widgets.WindowListTabs()
 
 class UrkUI(gtk.Window):
     def exit(self, *args):

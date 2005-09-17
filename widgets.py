@@ -546,7 +546,7 @@ class WindowListTabs(gtk.Notebook):
             ui.windows.window_change(self.get_nth_page(page_num))
         self.connect("switch-page", window_change)
         
-class WindowListButtons(gtk.VBox):
+class WindowListButtons(gtk.HBox):
     def get_active(self):
         if self.windows.get_children():
             return self.windows.get_children()[0]
@@ -574,11 +574,11 @@ class WindowListButtons(gtk.VBox):
         del self.manager[window]
 
     def __init__(self):
-        gtk.VBox.__init__(self)
+        gtk.HBox.__init__(self)
         
         self.manager = {}
         
-        self.buttons = gtk.HButtonBox()
+        self.buttons = gtk.VButtonBox()
         self.buttons.set_layout(gtk.BUTTONBOX_START)
 
         self.windows = gtk.VBox()
