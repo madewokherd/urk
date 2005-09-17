@@ -3,6 +3,7 @@ import codecs
 import gtk
 import pango
 
+import conf
 import events
 import parse_mirc
 import ui
@@ -508,3 +509,38 @@ class WindowLabel(gtk.EventBox):
         self.add(self.label)
         
         self.update()
+        
+class WindowListTabs(gtk.Notebook):
+    def get_active(self):
+        return self.get_nth_page(self.get_current_page())
+        
+    def set_active(self, window):
+       self.set_current_page(self.page_num(window))
+       
+    def add(self, window):
+        pos = self.get_n_pages()
+        if window.network:
+            for i in reversed(range(pos)):
+                if self.nb.get_nth_page(i).network == window.network:
+                    pos = i+1
+                    break
+        
+        self.insert_page(window, None, pos)
+        self.set_tab_label(window, window.title)
+        
+    def remove(self, window):
+        self.remove_page(self.page_num(window))
+
+    def __init__(self, windows):
+        gtk.Notebook.__init__(self)
+        
+        self.windows = windows
+        
+        tab_pos = conf.get("ui-gtk/tab-pos")
+        if tab_pos is not None:
+            self.set_property("tab-pos", tab_pos)
+        else:
+            self.set_property("tab-pos", gtk.POS_TOP)
+
+        self.set_scrollable(True)
+        self.connect("switch-page", self.windows.window_change)
