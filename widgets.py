@@ -521,7 +521,7 @@ class WindowListTabs(gtk.Notebook):
         pos = self.get_n_pages()
         if window.network:
             for i in reversed(range(pos)):
-                if self.nb.get_nth_page(i).network == window.network:
+                if self.get_nth_page(i).network == window.network:
                     pos = i+1
                     break
         
