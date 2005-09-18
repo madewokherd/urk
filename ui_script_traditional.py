@@ -1,5 +1,7 @@
 import ui
 
+# FIXME: meh still might want rid of these, I'm not sure yet
+
 def onActive(window):
     window.activity = 0
         
@@ -21,35 +23,44 @@ def onExit(e):
     for w in ui.get_window_for(type=ui.StatusWindow):
         w.close()
         
+# /FIXME
 
-def preJoin(event):
-    if event.source == event.network.me:
-        ui.windows.new(ui.ChannelWindow, event.network, event.target).activate()
+
+def get_status_window(network):
+    # There can be only one...
+    for window in get_window_for(type=ui.StatusWindow, network=network):
+        return window
+
+ui.get_default_window = get_status_window
+
+def preJoin(e):
+    if e.source == e.network.me:
+        ui.windows.new(ui.ChannelWindow, e.network, e.target).activate()
         
-    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
+    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
 
-def preText(event):
-    if event.target == event.network.me:
-        ui.windows.new(ui.QueryWindow, event.network, event.source)
+def preText(e):
+    if e.target == e.network.me:
+        ui.windows.new(ui.QueryWindow, e.network, e.source)
     else:
-        event.window = \
-            ui.windows.get(ui.ChannelWindow, event.network, event.target) or \
-            ui.windows.get(ui.QueryWindow, event.network, event.source) or \
-            event.window
+        e.window = \
+            ui.windows.get(ui.ChannelWindow, e.network, e.target) or \
+            ui.windows.get(ui.QueryWindow, e.network, e.source) or \
+            e.window
 
 preAction = preText
 
-def preOwnText(event):
-    event.window = \
-        ui.windows.get(ui.ChannelWindow, event.network, event.target) or \
-        ui.windows.get(ui.QueryWindow, event.network, event.target) or \
-        event.window
+def preOwnText(e):
+    e.window = \
+        ui.windows.get(ui.ChannelWindow, e.network, e.target) or \
+        ui.windows.get(ui.QueryWindow, e.network, e.target) or \
+        e.window
 
 preOwnAction = preOwnText
 
-def postPart(event):
-    if event.source == event.network.me:
-        window = ui.windows.get(ui.ChannelWindow, event.network, event.target)
+def postPart(e):
+    if e.source == e.network.me:
+        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
         if window:
             window.close()
 
@@ -64,24 +75,24 @@ def onClose(window):
             if w is not window:
                 w.close()   
 
-def onConnect(event):
-    window = ui.get_default_window(event.network)
+def onConnect(e):
+    window = ui.get_default_window(e.network)
     if window:
         window.title.update()
 
-def onDisconnect(event):
-    window = ui.get_default_window(event.network)
+def onDisconnect(e):
+    window = ui.get_default_window(e.network)
     if window:
         window.title.update()
 
-def setupPart(event):
-    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
+def setupPart(e):
+    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
 
 setupTopic = setupPart
 
-def setupKick(event):
-    event.window = ui.windows.get(ui.ChannelWindow, event.network, event.channel) or event.window
+def setupKick(e):
+    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.channel) or e.window
 
-def setupMode(event):
-    if event.target != event.network.me:
-        event.window = ui.windows.get(ui.ChannelWindow, event.network, event.target) or event.window
+def setupMode(e):
+    if e.target != e.network.me:
+        e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
