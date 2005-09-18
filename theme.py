@@ -157,4 +157,4 @@ def onDisconnect(e):
         to_write = '* Disconnected'
 
     for window in ui.get_window_for(network=e.network):
-        window.write(to_write, (type(window) == ui.StatusWindow and ui.TEXT) or ui.e)
+        window.write(to_write, (type(window) == ui.StatusWindow and ui.TEXT) or ui.EVENT)

@@ -17,8 +17,6 @@ import events
 import parse_mirc
 import __main__ as urk
 
-events.load('ui_script')
-
 # IO Type Constants
 IO_IN = gobject.IO_IN
 IO_OUT = gobject.IO_OUT
