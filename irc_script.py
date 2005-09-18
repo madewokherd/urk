@@ -133,27 +133,27 @@ def defInput(e):
         
         e.done = True
 
-def handle_say(e):
+def onCommandSay(e):
     if type(e.window) in (ui.ChannelWindow, ui.QueryWindow):
         e.network.msg(e.window.id, ' '.join(e.args))
         e.done = True
     else:
         e.error_text = "There's no one here to speak to."
 
-def handle_msg(e):
+def onCommandMsg(e):
     e.network.msg(e.args[0], ' '.join(e.args[1:]))
     e.done = True
 
-def handle_notice(e):
+def onCommandNotice(e):
     e.network.notice(e.args[0], ' '.join(e.args[1:]))
     e.done = True
 
-def handle_query(e):
+def onCommandQuery(e):
     ui.windows.new(ui.QueryWindow, e.network, e.args[0]).activate()
     e.done = True
 
 # make /nick work offline
-def handle_nick(e):
+def onCommandNick(e):
     if not e.network.status:
         e_data = events.data()
         e_data.network = e.network
@@ -169,23 +169,23 @@ def handle_nick(e):
             w.nick_label.update()
 
 # make /quit always disconnect us
-def handle_quit(e):
+def onCommandQuit(e):
     if e.network.status:
         e.network.quit(' '.join(e.args))
         e.done = True
     else:
         e.error_text = "We're not connected to a network."
 
-def handle_raw(e):
+def onCommandRaw(e):
     if e.network.status >= irc.INITIALIZING:
         e.network.raw(' '.join(e.args))
         e.done = True
     else:
         e.error_text = "We're not connected to a network."
 
-handle_quote = handle_raw
+onCommandQuote = onCommandRaw
 
-def handle_join(e):
+def onCommandJoin(e):
     if e.args:
         if e.network.status >= irc.INITIALIZING:
             e.network.join(e.args[0])
@@ -195,7 +195,7 @@ def handle_join(e):
     else:
         e.error_text = "You must supply a channel."
 
-def handle_server(e):
+def onCommandServer(e):
     network_info = {}
 
     if len(e.args):
@@ -254,8 +254,8 @@ trailing = {
 
 def defCommand(e):
     if not e.done:
-        if 'handle_%s' % e.name in globals():
-            globals()['handle_%s' % e.name](e)
+        if 'onCommand%s' % e.name.capitalize() in globals():
+            globals()['onCommand%s' % e.name.capitalize()](e)
         elif e.name in trailing:
             if e.network.status >= irc.INITIALIZING:
                 if len(e.args) > trailing[e.name]:

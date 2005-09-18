@@ -157,7 +157,7 @@ def run_command(text, window, network):
     if not c_data.done:
         c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
 
-def handle_pyeval(e):
+def onCommandPyeval(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
     try:
@@ -167,7 +167,7 @@ def handle_pyeval(e):
             e.window.write(line)
     e.done = True
 
-def handle_pyexec(e):
+def onCommandPyexec(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
     try:
@@ -177,7 +177,7 @@ def handle_pyexec(e):
             e.window.write(line)
     e.done = True
 
-def handle_load(e):
+def onCommandLoad(e):
     name = e.args[0]
     try:
         if load(name):
@@ -188,7 +188,7 @@ def handle_load(e):
         traceback.print_exc()
         e.error_text = "Error loading the script"
 
-def handle_unload(e):
+def onCommandUnload(e):
     name = e.args[0]
     if is_loaded(name):
         unload(name)
@@ -196,7 +196,7 @@ def handle_unload(e):
     else:
         e.error_text = "No such script is loaded"
 
-def handle_reload(e):
+def onCommandReload(e):
     name = e.args[0]
     try:
         load(name, reloading=True)
@@ -205,17 +205,17 @@ def handle_reload(e):
         traceback.print_exc()
         e.error_text = "Error loading the script"
 
-def handle_scripts(e):
+def onCommandScripts(e):
     e.window.write("Loaded scripts:")
     for name in loaded:
         e.window.write("* %s" % name)
     e.done = True
 
-def handle_echo(e):
+def onCommandEcho(e):
     e.window.write(' '.join(e.args))
     e.done = True
 
-def handle_edit(e):
+def onCommandEdit(e):
     try:
         args = find_script(e.args[0])
     except ImportError:
@@ -231,7 +231,7 @@ def handle_edit(e):
         e.error_text = "Couldn't find script: %s" % e.args[0]
 
 def defCommand(e):
-    if not e.done and 'handle_%s' % e.name in globals():
-        globals()['handle_%s' % e.name](e)
+    if not e.done and 'onCommand%s' % e.name.capitalize() in globals():
+        globals()['onCommand%s' % e.name.capitalize()](e)
 
 register('Command', 'def', defCommand, '_events')
