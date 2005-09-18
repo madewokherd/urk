@@ -9,6 +9,9 @@ class error(Exception):
 class EventStopError(error):
     pass
 
+class CommandError(error):
+    pass
+
 class data:
     done = False
     quiet = False
@@ -24,6 +27,8 @@ loaded = {} # FIXME: dict for when we need some info on it
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
+    failure = True
+    error = None
     if e_name in events:
         for e_stage in trigger_sequence:
             if e_stage in events[e_name]:
@@ -32,8 +37,14 @@ def trigger(e_name, e_data=None):
                         f_ref(e_data)
                     except EventStopError:
                         return
+                    except CommandError, e:
+                        error = e.args
+                        continue
                     except:
                         traceback.print_exc()
+                    failure = False
+    if failure:
+        return error
 
 # Stop all processing of the current event now!
 def halt():
@@ -150,12 +161,17 @@ def run_command(text, window, network):
     c_data.window = window
     c_data.network = network
 
-    c_data.error_text = 'No such command exists'
-    
-    trigger('Command', c_data)
-    
-    if not c_data.done:
-        c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
+    event_name = "Command"+c_data.name.capitalize()
+    if event_name in events:
+        result = trigger(event_name, c_data)
+        
+        if result:
+            c_data.window.write("* /%s: %s" % (c_data.name, result[0]))
+    else:
+        trigger("Command", c_data)
+        
+        if not c_data.done:
+            c_data.window.write("* /%s: No such command exists" % (c_data.name))
 
 def onCommandPyeval(e):
     loc = sys.modules.copy()
@@ -165,7 +181,6 @@ def onCommandPyeval(e):
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
-    e.done = True
 
 def onCommandPyexec(e):
     loc = sys.modules.copy()
@@ -175,63 +190,54 @@ def onCommandPyexec(e):
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
-    e.done = True
 
 def onCommandLoad(e):
     name = e.args[0]
     try:
-        if load(name):
-            e.done = True
-        else:
-            e.error_text = "The script is already loaded"
+        if not load(name):
+            raise events.CommandError("The script is already loaded")
     except:
         traceback.print_exc()
-        e.error_text = "Error loading the script"
+        raise events.CommandError("Error loading the script")
 
 def onCommandUnload(e):
     name = e.args[0]
     if is_loaded(name):
         unload(name)
-        e.done = True
     else:
-        e.error_text = "No such script is loaded"
+        raise events.CommandError("No such script is loaded")
 
 def onCommandReload(e):
     name = e.args[0]
     try:
         load(name, reloading=True)
-        e.done = True
     except:
         traceback.print_exc()
-        e.error_text = "Error loading the script"
+        raise events.CommandError("Error loading the script")
 
 def onCommandScripts(e):
     e.window.write("Loaded scripts:")
     for name in loaded:
         e.window.write("* %s" % name)
-    e.done = True
 
 def onCommandEcho(e):
     e.window.write(' '.join(e.args))
-    e.done = True
 
 def onCommandEdit(e):
     try:
         args = find_script(e.args[0])
     except ImportError:
-        e.error_text = "Couldn't find script: %s" % e.args[0]
-        return
+        raise events.CommandError("Couldn't find script: %s" % e.args[0])
     if args[1]:
         args[1].close()
         import ui
         ui.open_file(args[2])
         del ui
-        e.done = True
     else:
-        e.error_text = "Couldn't find script: %s" % e.args[0]
+        raise events.CommandError("Couldn't find script: %s" % e.args[0])
 
-def defCommand(e):
-    if not e.done and 'onCommand%s' % e.name.capitalize() in globals():
-        globals()['onCommand%s' % e.name.capitalize()](e)
-
-register('Command', 'def', defCommand, '_events')
+name = ''
+for name in globals():
+    if name.startswith('onCommand'):
+        register(name[2:], "on", globals()[name], '_events')
+del name

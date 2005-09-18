@@ -15,8 +15,6 @@ Keyboard Shortcuts
     ^T for new server window?
     
     tab for nick completion
-    
-    we could just have an onKeypress event..scripts are good..
 
 
 Format more stuff

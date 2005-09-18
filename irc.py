@@ -111,7 +111,7 @@ class Network:
             
             for line in lines.split('\r\n'):
                 if DEBUG:
-                    print ">>> %s" % line
+                    print "<<< %s" % line
 
                 self.got_msg(line)
         else:

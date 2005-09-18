@@ -31,11 +31,14 @@ cross-platform so..yeah..it runs on windows. You need to install some things:
 
 -python version 2.4 or greater from www.python.org
 -pygtk 2.6 or greater from http://www.pcpm.ucl.ac.be/~gustin/win32_ports/
--gtk+ for windows from http://gladewin32.sourceforge.net/
+-gtk+ runtime for windows from http://gladewin32.sourceforge.net/
 
-It's very important that you get gtk+ from the site given. People who have tried
-other installers, such as the one gaim provides, have failed. Also, you'll need
-to restart after you've installed those things.
+It's very important that you get the win32 runtime for gtk+ from the site given.
+Installers from other places, including the gaimgtk+ installer, have failed. 
+Also, you'll need to restart after you've installed those things.
+
+Repeat: THE GTK+ RUNTIME PROVIDED WITH GAIM WILL NOT WORK, AND YOU MUST REBOOT
+AFTER INSTALLING GTK+.
 
 urk currently relies on gconf to save its settings, and gconf isn't available
 for windows. So, uh it won't save your settings (not that it saves much anyway).

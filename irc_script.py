@@ -136,21 +136,17 @@ def defInput(e):
 def onCommandSay(e):
     if type(e.window) in (ui.ChannelWindow, ui.QueryWindow):
         e.network.msg(e.window.id, ' '.join(e.args))
-        e.done = True
     else:
-        e.error_text = "There's no one here to speak to."
+        raise events.CommandError("There's no one here to speak to.")
 
 def onCommandMsg(e):
     e.network.msg(e.args[0], ' '.join(e.args[1:]))
-    e.done = True
 
 def onCommandNotice(e):
     e.network.notice(e.args[0], ' '.join(e.args[1:]))
-    e.done = True
 
 def onCommandQuery(e):
     ui.windows.new(ui.QueryWindow, e.network, e.args[0]).activate()
-    e.done = True
 
 # make /nick work offline
 def onCommandNick(e):
@@ -163,7 +159,6 @@ def onCommandNick(e):
         events.trigger('Nick', e_data)
         e.network.nicks[0] = e.args[0]
         e.network.me = e.args[0]
-        e.done = True
         
         for w in ui.get_window_for(network=e.network):
             w.nick_label.update()
@@ -172,16 +167,14 @@ def onCommandNick(e):
 def onCommandQuit(e):
     if e.network.status:
         e.network.quit(' '.join(e.args))
-        e.done = True
     else:
-        e.error_text = "We're not connected to a network."
+        raise events.CommandError("We're not connected to a network.")
 
 def onCommandRaw(e):
     if e.network.status >= irc.INITIALIZING:
         e.network.raw(' '.join(e.args))
-        e.done = True
     else:
-        e.error_text = "We're not connected to a network."
+        raise events.CommandError("We're not connected to a network.")
 
 onCommandQuote = onCommandRaw
 
@@ -189,11 +182,10 @@ def onCommandJoin(e):
     if e.args:
         if e.network.status >= irc.INITIALIZING:
             e.network.join(e.args[0])
-            e.done = True
         else:
-            e.error_text = "We're not connected."
+            raise events.CommandError("We're not connected.")
     else:
-        e.error_text = "You must supply a channel."
+        raise events.CommandError("You must supply a channel.")
 
 def onCommandServer(e):
     network_info = {}
@@ -234,8 +226,6 @@ def onCommandServer(e):
         e.network.connect()
         ui.get_default_window(e.network).write(
             "* Connecting to %s on port %s" % (e.network.server, e.network.port))
-    
-    e.done = True
 
 #commands that we need to add a : to but otherwise can send unchanged
 #the dictionary contains the number of arguments we take without adding the :
@@ -253,25 +243,19 @@ trailing = {
     }
 
 def defCommand(e):
-    if not e.done:
-        if 'onCommand%s' % e.name.capitalize() in globals():
-            globals()['onCommand%s' % e.name.capitalize()](e)
-        elif e.name in trailing:
-            if e.network.status >= irc.INITIALIZING:
-                if len(e.args) > trailing[e.name]:
-                    e.network.raw(
-                        e.name+' '+
-                        ' '.join(e.args[0:trailing[e.name]])+
-                        ' :'+' '.join(e.args[trailing[e.name]:]))
-                else:
-                    e.network.raw(e.name+' '+' '.join(e.args))
-                e.done = True
+    if not e.done and e.name in trailing:
+        if e.network.status >= irc.INITIALIZING:
+            if len(e.args) > trailing[e.name]:
+                e.network.raw(
+                    e.name+' '+
+                    ' '.join(e.args[0:trailing[e.name]])+
+                    ' :'+' '.join(e.args[trailing[e.name]:]))
             else:
-                e.error_text = "We're not connected to a network."
+                e.network.raw(e.name+' '+' '.join(e.args))
+            e.done = True
 
 def postCommand(e):
-    if not e.done and e.error_text == 'No such command exists' \
-      and e.network.status >= irc.INITIALIZING:
+    if not e.done and e.network.status >= irc.INITIALIZING:
         e.network.raw(e.text)
         e.done = True
         

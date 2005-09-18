@@ -371,8 +371,6 @@ def start():
 # build our tab widget
 windows = WindowTabs()
 
-print "running ui.py"
-
 # build our overall UI
 ui = UrkUI()
 
