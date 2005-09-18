@@ -58,7 +58,7 @@ def onNotice(event):
     if not event.quiet:
         window = ui.windows.manager.get_active()
         if window.network != event.network:
-            window = ui.get_status_window(event.network)
+            window = ui.get_default_window(event.network)
         window.write(to_write, ui.TEXT)
 
 def onOwnNotice(event):
@@ -76,7 +76,7 @@ def onCtcpReply(event):
     
     window = ui.windows.manager.get_active()
     if window.network != event.network:
-        window = ui.get_status_window(event.network)
+        window = ui.get_default_window(event.network)
     window.write(to_write, ui.TEXT)
 
 def onJoin(event):
@@ -129,7 +129,7 @@ def onNick(event):
                 window.write(to_write)
 
     if event.source == event.network.me:
-        window = ui.get_status_window(event.network)
+        window = ui.get_default_window(event.network)
         if window:
             window.write(to_write)
 

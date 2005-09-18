@@ -22,7 +22,7 @@ def emote(network, user, msg):
     e_data.target = str(user)
     e_data.text = msg
     e_data.network = network
-    e_data.window = ui.get_status_window(network)
+    e_data.window = ui.get_default_window(network)
     events.trigger('OwnAction', e_data)
 
 def defCommand(event):

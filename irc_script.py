@@ -157,7 +157,7 @@ def handle_nick(event):
     if not event.network.status:
         e_data = events.data()
         e_data.network = event.network
-        e_data.window = ui.get_status_window(event.network)
+        e_data.window = ui.get_default_window(event.network)
         e_data.source = event.network.me
         e_data.newnick = event.args[0]
         events.trigger('Nick', e_data)
@@ -222,7 +222,7 @@ def handle_server(event):
     if "server" in network_info:
         event.network.server = network_info["server"]
         if not event.network.status:
-            window = ui.get_status_window(event.network)
+            window = ui.get_default_window(event.network)
             if window:
                 window.title.update()
     if "port" in network_info:
@@ -232,7 +232,7 @@ def handle_server(event):
         if event.network.status:
             event.network.quit()
         event.network.connect()
-        ui.get_status_window(event.network).write(
+        ui.get_default_window(event.network).write(
             "* Connecting to %s on port %s" % (event.network.server, event.network.port))
     
     event.done = True

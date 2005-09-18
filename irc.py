@@ -153,7 +153,7 @@ class Network:
         e_data.msg = parse_irc(msg, self.server)
         e_data.text = e_data.msg[-1]
         e_data.network = self
-        e_data.window = ui.get_status_window(self)
+        e_data.window = ui.get_default_window(self)
         
         source = e_data.msg[0].split('!')
         e_data.source = source[0]
@@ -219,7 +219,7 @@ class Network:
         if self.me != self.nicks[0]:
             e_data = events.data()
             e_data.network = self
-            e_data.window = ui.get_status_window(self)
+            e_data.window = ui.get_default_window(self)
             e_data.source = self.me
             e_data.newnick = self.nicks[0]
             events.trigger('Nick', e_data)
@@ -255,7 +255,7 @@ class Network:
         e_data.target = str(target)
         e_data.text = msg
         e_data.network = self
-        e_data.window = ui.get_status_window(self)
+        e_data.window = ui.get_default_window(self)
         events.trigger('OwnText', e_data)
 
     def notice(self, target, msg):
@@ -265,5 +265,5 @@ class Network:
         e_data.target = str(target)
         e_data.text = msg
         e_data.network = self
-        e_data.window = ui.get_status_window(self)
+        e_data.window = ui.get_default_window(self)
         events.trigger('OwnNotice', e_data)

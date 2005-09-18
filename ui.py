@@ -349,10 +349,10 @@ def get_window_for(type=None, network=None, id=None):
                 break
         else:
             yield w
-
-def get_status_window(network):
+            
+def get_default_window(network):
     # There can be only one...
-    for window in get_window_for(type=StatusWindow, network=network):
+    for window in get_window_for(network=network):
         return window
 
 def start():
