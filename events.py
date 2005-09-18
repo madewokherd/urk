@@ -157,81 +157,81 @@ def run_command(text, window, network):
     if not c_data.done:
         c_data.window.write("* /%s: %s" % (c_data.name, c_data.error_text))
 
-def handle_pyeval(event):
+def handle_pyeval(e):
     loc = sys.modules.copy()
-    loc.update(event.__dict__)
+    loc.update(e.__dict__)
     try:
-        event.window.write(repr(eval(' '.join(event.args), globals(), loc)))
+        e.window.write(repr(eval(' '.join(e.args), globals(), loc)))
     except:
         for line in traceback.format_exc().split('\n'):
-            event.window.write(line)
-    event.done = True
+            e.window.write(line)
+    e.done = True
 
-def handle_pyexec(event):
+def handle_pyexec(e):
     loc = sys.modules.copy()
-    loc.update(event.__dict__)
+    loc.update(e.__dict__)
     try:
-        exec ' '.join(event.args) in globals(), loc
+        exec ' '.join(e.args) in globals(), loc
     except:
         for line in traceback.format_exc().split('\n'):
-            event.window.write(line)
-    event.done = True
+            e.window.write(line)
+    e.done = True
 
-def handle_load(event):
-    name = event.args[0]
+def handle_load(e):
+    name = e.args[0]
     try:
         if load(name):
-            event.done = True
+            e.done = True
         else:
-            event.error_text = "The script is already loaded"
+            e.error_text = "The script is already loaded"
     except:
         traceback.print_exc()
-        event.error_text = "Error loading the script"
+        e.error_text = "Error loading the script"
 
-def handle_unload(event):
-    name = event.args[0]
+def handle_unload(e):
+    name = e.args[0]
     if is_loaded(name):
         unload(name)
-        event.done = True
+        e.done = True
     else:
-        event.error_text = "No such script is loaded"
+        e.error_text = "No such script is loaded"
 
-def handle_reload(event):
-    name = event.args[0]
+def handle_reload(e):
+    name = e.args[0]
     try:
         load(name, reloading=True)
-        event.done = True
+        e.done = True
     except:
         traceback.print_exc()
-        event.error_text = "Error loading the script"
+        e.error_text = "Error loading the script"
 
-def handle_scripts(event):
-    event.window.write("Loaded scripts:")
+def handle_scripts(e):
+    e.window.write("Loaded scripts:")
     for name in loaded:
-        event.window.write("* %s" % name)
-    event.done = True
+        e.window.write("* %s" % name)
+    e.done = True
 
-def handle_echo(event):
-    event.window.write(' '.join(event.args))
-    event.done = True
+def handle_echo(e):
+    e.window.write(' '.join(e.args))
+    e.done = True
 
-def handle_edit(event):
+def handle_edit(e):
     try:
-        args = find_script(event.args[0])
+        args = find_script(e.args[0])
     except ImportError:
-        event.error_text = "Couldn't find script: %s" % event.args[0]
+        e.error_text = "Couldn't find script: %s" % e.args[0]
         return
     if args[1]:
         args[1].close()
         import ui
         ui.open_file(args[2])
         del ui
-        event.done = True
+        e.done = True
     else:
-        event.error_text = "Couldn't find script: %s" % event.args[0]
+        e.error_text = "Couldn't find script: %s" % e.args[0]
 
-def defCommand(event):
-    if not event.done and 'handle_%s' % event.name in globals():
-        globals()['handle_%s' % event.name](event)
+def defCommand(e):
+    if not e.done and 'handle_%s' % e.name in globals():
+        globals()['handle_%s' % e.name](e)
 
 register('Command', 'def', defCommand, '_events')

@@ -25,69 +25,69 @@ def emote(network, user, msg):
     e_data.window = ui.get_default_window(network)
     events.trigger('OwnAction', e_data)
 
-def defCommand(event):
-    if not event.done:
-        if event.name == 'me':
-            if type(event.window) in (ui.ChannelWindow, ui.QueryWindow):
-                emote(event.network, event.window.id, ' '.join(event.args))
-                event.done = True
+def defCommand(e):
+    if not e.done:
+        if e.name == 'me':
+            if type(e.window) in (ui.ChannelWindow, ui.QueryWindow):
+                emote(e.network, e.window.id, ' '.join(e.args))
+                e.done = True
             else:
-                event.error_text = "There's no one here to speak to."
-        elif event.name == 'ctcp':
-            ctcp(event.network, event.args[0], ' '.join(event.args[1:]))
-            event.done = True
-        elif event.name == 'ping':
-            ctcp(event.network, event.args[0], 'PING %s' % time.time())
-            event.done = True
-        elif event.name == 'ctcpreply':
-            ctcp_reply(event.network, event.args[0], ' '.join(event.args[1:]))
-            event.done = True
+                e.error_text = "There's no one here to speak to."
+        elif e.name == 'ctcp':
+            ctcp(e.network, e.args[0], ' '.join(e.args[1:]))
+            e.done = True
+        elif e.name == 'ping':
+            ctcp(e.network, e.args[0], 'PING %s' % time.time())
+            e.done = True
+        elif e.name == 'ctcpreply':
+            ctcp_reply(e.network, e.args[0], ' '.join(e.args[1:]))
+            e.done = True
 
-def setupText(event):
-    if event.text[0] == '\x01' and event.text[-1] == '\x01':
-        e_data = copy.copy(event)
-        e_data.text = event.text[1:-1]
+def setupText(e):
+    if e.text[0] == '\x01' and e.text[-1] == '\x01':
+        e_data = copy.copy(e)
+        e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
         e_data.args = tokens[1:]
         events.trigger('Ctcp', e_data)
         events.halt()
 
-def setupNotice(event):
-    if event.text[0] == '\x01' and event.text[-1] == '\x01':
-        e_data = copy.copy(event)
-        e_data.text = event.text[1:-1]
+def setupNotice(e):
+    if e.text[0] == '\x01' and e.text[-1] == '\x01':
+        e_data = copy.copy(e)
+        e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
         e_data.args = tokens[1:]
         events.trigger('CtcpReply', e_data)
         events.halt()
 
-def preCtcpReply(event):
-    if event.name == 'PING':
+def preCtcpReply(e):
+    if e.name == 'PING':
         try:
-            elapsed_time = "%0.2f seconds" % (time.time() - float(event.args[0]))
-            event.old_args = event.args
-            event.args = [elapsed_time]
+            elapsed_time = "%0.2f seconds" % (time.time() - float(e.args[0]))
+            e.old_args = e.args
+            e.args = [elapsed_time]
         except:
             pass
 
-def defCtcp(event):
-    if not event.done:
-        if event.name == 'ACTION':
-            e_data = copy.copy(event)
-            e_data.text = ' '.join(event.args)
+def defCtcp(e):
+    if not e.done:
+        if e.name == 'ACTION':
+            e_data = copy.copy(e)
+            e_data.text = ' '.join(e.args)
             events.trigger('Action', e_data)
-            event.done = True
-            event.quiet = True
-        elif event.name == 'PING':
-            ctcp_reply(event.network, event.source, event.text)
-            event.done = True
-        elif event.name == 'VERSION':
-            ctcp_reply(event.network, event.source, 'VERSION %s' % urk.long_version)
-            event.done = True
-        elif event.name == 'TIME':
-            ctcp_reply(event.network, event.source, 'TIME %s' % time.asctime())
-            event.done = True
+            e.done = True
+            e.quiet = True
+        elif e.name == 'PING':
+            ctcp_reply(e.network, e.source, e.text)
+            e.done = True
+        elif e.name == 'VERSION':
+            ctcp_reply(e.network, e.source, 'VERSION %s' % urk.long_version)
+            e.done = True
+        elif e.name == 'TIME':
+            ctcp_reply(e.network, e.source, 'TIME %s' % time.asctime())
+            e.done = True
 
 events.load(__name__)

@@ -25,11 +25,11 @@ def update_nicks(network, channel):
     for window in ui.get_window_for(network=network, type=ui.ChannelWindow, id=channel.name):
         window.set_nicklist(nicklist)
 
-def setupSocketConnect(event):
-    event.network.channels = {}
+def setupSocketConnect(e):
+    e.network.channels = {}
 
-def postDisconnect(event):
-    event.network.channels = {}
+def postDisconnect(e):
+    e.network.channels = {}
 
 class Channel(object):
     def __init__(self, name):
@@ -40,55 +40,55 @@ class Channel(object):
         self.special_mode = {} #for limits, keys, and anything similar
         self.topic = ''
 
-def setupJoin(event):
-    if event.source == event.network.me:
-        event.network.channels[event.network.norm_case(event.target)] = Channel(event.target)
+def setupJoin(e):
+    if e.source == e.network.me:
+        e.network.channels[e.network.norm_case(e.target)] = Channel(e.target)
     #if we wanted to be paranoid, we'd account for not being on the channel
-    channel = event.network.channels[event.network.norm_case(event.target)]
-    channel.nicks[event.source] = ''
+    channel = e.network.channels[e.network.norm_case(e.target)]
+    channel.nicks[e.source] = ''
     
-    update_nicks(event.network, channel)
+    update_nicks(e.network, channel)
 
-def onJoin(event):
-    if event.source == event.network.me:
-        event.network.raw('MODE '+event.target)
+def onJoin(e):
+    if e.source == e.network.me:
+        e.network.raw('MODE '+e.target)
 
-def postPart(event):
-    if event.source == event.network.me:
-        del event.network.channels[event.network.norm_case(event.target)]
+def postPart(e):
+    if e.source == e.network.me:
+        del e.network.channels[e.network.norm_case(e.target)]
     else:
-        channel = event.network.channels[event.network.norm_case(event.target)]
-        del channel.nicks[event.source]
+        channel = e.network.channels[e.network.norm_case(e.target)]
+        del channel.nicks[e.source]
         
-        update_nicks(event.network, channel)
+        update_nicks(e.network, channel)
 
-def postKick(event):
-    if event.target == event.network.me:
-        del event.network.channels[event.network.norm_case(event.channel)]
+def postKick(e):
+    if e.target == e.network.me:
+        del e.network.channels[e.network.norm_case(e.channel)]
     else:
-        channel = event.network.channels[event.network.norm_case(event.channel)]
-        del channel.nicks[event.target]
+        channel = e.network.channels[e.network.norm_case(e.channel)]
+        del channel.nicks[e.target]
         
-        update_nicks(event.network, channel)
+        update_nicks(e.network, channel)
 
-def postQuit(event):
-    #if paranoid: check if event.source is me
-    for channame in event.network.channels:
-        channel = event.network.channels[channame]
-        if event.source in channel.nicks:
-            del channel.nicks[event.source]
+def postQuit(e):
+    #if paranoid: check if e.source is me
+    for channame in e.network.channels:
+        channel = e.network.channels[channame]
+        if e.source in channel.nicks:
+            del channel.nicks[e.source]
             
-            update_nicks(event.network, channel)
+            update_nicks(e.network, channel)
 
-def setupMode(event):
-    channel = event.network.channels.get(event.network.norm_case(event.channel))
+def setupMode(e):
+    channel = e.network.channels.get(e.network.norm_case(e.channel))
     if channel:
         mode_on = True #are we reading a + section or a - section?
-        params = event.text.split(' ')[::-1]
+        params = e.text.split(' ')[::-1]
         modes = params.pop()
-        user_modes = event.network.isupport['PREFIX'].split(')')[0][1:]
+        user_modes = e.network.isupport['PREFIX'].split(')')[0][1:]
         list_modes, always_parm_modes, set_parm_modes, normal_modes = \
-            event.network.isupport['CHANMODES'].split(',')
+            e.network.isupport['CHANMODES'].split(',')
         list_modes += user_modes
         for char in modes:
             if char == '+':
@@ -121,63 +121,63 @@ def setupMode(event):
                 else:
                     channel.mode = channel.mode.strip(char)
 
-        update_nicks(event.network, channel)
+        update_nicks(e.network, channel)
 
-def postNick(event):
-    for channame in event.network.channels:
-        channel = event.network.channels[channame]
-        if event.source in channel.nicks:
-            channel.nicks[event.newnick] = channel.nicks[event.source]
-            del channel.nicks[event.source]
+def postNick(e):
+    for channame in e.network.channels:
+        channel = e.network.channels[channame]
+        if e.source in channel.nicks:
+            channel.nicks[e.newnick] = channel.nicks[e.source]
+            del channel.nicks[e.source]
 
-        update_nicks(event.network, channel)
+        update_nicks(e.network, channel)
 
-def setupTopic(event):
-    if event.network.norm_case(event.target) in event.network.channels:
-        channel = event.network.channels[event.network.norm_case(event.target)]
-        channel.topic = event.text
+def setupTopic(e):
+    if e.network.norm_case(e.target) in e.network.channels:
+        channel = e.network.channels[e.network.norm_case(e.target)]
+        channel.topic = e.text
 
-def setupRaw(event):
-    if event.msg[1] == '353': #names reply
-        channel = event.network.channels.get(event.network.norm_case(event.msg[4]))
+def setupRaw(e):
+    if e.msg[1] == '353': #names reply
+        channel = e.network.channels.get(e.network.norm_case(e.msg[4]))
         if channel:
             if not channel.getting_names:
                 channel.nicks.clear()
                 channel.getting_names = True
-            for nickname in event.msg[5].split(' '):
+            for nickname in e.msg[5].split(' '):
                 if nickname:
-                    if not nickname[0].isalpha() and nickname[0] in event.network.prefixes:
-                        channel.nicks[nickname[1:]] = event.network.prefixes[nickname[0]]
+                    if not nickname[0].isalpha() and nickname[0] in e.network.prefixes:
+                        channel.nicks[nickname[1:]] = e.network.prefixes[nickname[0]]
                     else:
                         channel.nicks[nickname] = ''
 
-    elif event.msg[1] == '366': #end of names reply
-        channel = event.network.channels.get(event.network.norm_case(event.msg[3]))
+    elif e.msg[1] == '366': #end of names reply
+        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
             channel.getting_names = False
  
-            update_nicks(event.network, channel)
+            update_nicks(e.network, channel)
         
-    elif event.msg[1] == '324': #channel mode is
-        channel = event.network.channels.get(event.network.norm_case(event.msg[3]))
+    elif e.msg[1] == '324': #channel mode is
+        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
-            mode = event.msg[4]
-            params = event.msg[:4:-1]
+            mode = e.msg[4]
+            params = e.msg[:4:-1]
             list_modes, always_parm_modes, set_parm_modes, normal_modes = \
-                event.network.isupport['CHANMODES'].split(',')
+                e.network.isupport['CHANMODES'].split(',')
             parm_modes = always_parm_modes + set_parm_modes
-            channel.mode = event.msg[4]
+            channel.mode = e.msg[4]
             channel.special_mode.clear()
             for char in channel.mode:
                 if char in parm_modes:
                     channel.special_mode[char] = params.pop()
         
-    elif event.msg[1] == '331': #no topic
-        channel = event.network.channels.get(event.network.norm_case(event.msg[3]))
+    elif e.msg[1] == '331': #no topic
+        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
             channel.topic = ''
 
-    elif event.msg[1] == '332': #channel topic is
-        channel = event.network.channels.get(event.network.norm_case(event.msg[3]))
+    elif e.msg[1] == '332': #channel topic is
+        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
-            channel.topic = event.text
+            channel.topic = e.text

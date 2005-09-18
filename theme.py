@@ -15,146 +15,146 @@ textareas = {
 ui.set_style("view", textareas)
 ui.set_style("nicklist", textareas)
 
-def onText(event):
+def onText(e):
     color = "\x02\x040000CC"
-    if event.network.me == event.target:
-        if event.window.id == event.network.norm_case(event.source):
+    if e.network.me == e.target:
+        if e.window.id == e.network.norm_case(e.source):
             format = "%s<\x0F%s%s>\x0F %s"
         else:
             format = "%s*\x0F%s%s*\x0F %s"
-        to_write = format % (color, event.source, color, event.text)
+        to_write = format % (color, e.source, color, e.text)
     else:
-        if event.window.id == event.network.norm_case(event.target):
-            to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
+        if e.window.id == e.network.norm_case(e.target):
+            to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
         else:
-            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, event.source, event.target, color, event.text)
+            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, e.source, e.target, color, e.text)
     
-    event.window.write(to_write, ui.TEXT)
+    e.window.write(to_write, ui.TEXT)
     
-def onOwnText(event):
+def onOwnText(e):
     color = "\x02\x04FF00FF"
-    if event.window.id == event.network.norm_case(event.target):
-        to_write = "%s<\x0F%s%s>\x0F %s" % (color, event.source, color, event.text)
+    if e.window.id == e.network.norm_case(e.target):
+        to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
     else:
-        to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, event.target, color, event.text)
+        to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, e.target, color, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
     
-def onAction(event):
+def onAction(e):
     color = '\x02\x040000CC'
-    to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
+    to_write = "%s*\x0F %s %s" % (color, e.source, e.text)
     
-    event.window.write(to_write, ui.TEXT)
+    e.window.write(to_write, ui.TEXT)
 
-def onOwnAction(event):
+def onOwnAction(e):
     color = '\x02\x04FF00FF'
-    to_write = "%s*\x0F %s %s" % (color, event.source, event.text)
+    to_write = "%s*\x0F %s %s" % (color, e.source, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
 
-def onNotice(event):
-    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (event.source, event.text)
+def onNotice(e):
+    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (e.source, e.text)
     
-    if not event.quiet:
+    if not e.quiet:
         window = ui.windows.manager.get_active()
-        if window.network != event.network:
-            window = ui.get_default_window(event.network)
+        if window.network != e.network:
+            window = ui.get_default_window(e.network)
         window.write(to_write, ui.TEXT)
 
-def onOwnNotice(event):
-    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (event.target, event.text)
+def onOwnNotice(e):
+    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (e.target, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
 
-def onCtcp(event):
-    to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (event.source, event.text)
+def onCtcp(e):
+    to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (e.source, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
 
-def onCtcpReply(event):
-    to_write = "--- %s reply from %s: %s" % (event.name.capitalize(), event.source, ' '.join(event.args))
+def onCtcpReply(e):
+    to_write = "--- %s reply from %s: %s" % (e.name.capitalize(), e.source, ' '.join(e.args))
     
     window = ui.windows.manager.get_active()
-    if window.network != event.network:
-        window = ui.get_default_window(event.network)
+    if window.network != e.network:
+        window = ui.get_default_window(e.network)
     window.write(to_write, ui.TEXT)
 
-def onJoin(event):
-    if event.network.me == event.source:
-        to_write = "\x02You\x02 joined %s" % event.target
+def onJoin(e):
+    if e.network.me == e.source:
+        to_write = "\x02You\x02 joined %s" % e.target
     else:
-        to_write = "\x02%s\x02 (%s) joined %s" % (event.source, event.address, event.target)
+        to_write = "\x02%s\x02 (%s) joined %s" % (e.source, e.address, e.target)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
         
-def onPart(event):
-    if event.network.me == event.source:
-        to_write = "\x02You\x02 left %s" % event.target
+def onPart(e):
+    if e.network.me == e.source:
+        to_write = "\x02You\x02 left %s" % e.target
     else:
-        to_write = "\x02%s\x02 (%s) left %s" % (event.source, event.address, event.target)
-    if event.text:
-        to_write += ' (%s)' % event.text
+        to_write = "\x02%s\x02 (%s) left %s" % (e.source, e.address, e.target)
+    if e.text:
+        to_write += ' (%s)' % e.text
     
-    event.window.write(to_write)
+    e.window.write(to_write)
 
-def onKick(event):
-    to_write = "\x02%s\x02 kicked %s (%s)" % (event.source, event.target, event.text)
+def onKick(e):
+    to_write = "\x02%s\x02 kicked %s (%s)" % (e.source, e.target, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
         
-def onMode(event):
-    to_write = "\x02%s\x02 sets mode: %s" % (event.source, event.text)
+def onMode(e):
+    to_write = "\x02%s\x02 sets mode: %s" % (e.source, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
         
-def onQuit(event):
-    to_write = "\x02%s\x02 quit (%s)" % (event.source, event.text)
+def onQuit(e):
+    to_write = "\x02%s\x02 quit (%s)" % (e.source, e.text)
     
-    for channame in event.network.channels:
-        if event.source in event.network.channels[channame].nicks:
-            window = ui.windows.get(ui.ChannelWindow, event.network, channame)
+    for channame in e.network.channels:
+        if e.source in e.network.channels[channame].nicks:
+            window = ui.windows.get(ui.ChannelWindow, e.network, channame)
             if window:
                 window.write(to_write)
 
-def onNick(event):
-    if event.source == event.network.me:
-        to_write = "\x02You\x02 are now known as %s" % event.newnick
+def onNick(e):
+    if e.source == e.network.me:
+        to_write = "\x02You\x02 are now known as %s" % e.newnick
     else:
-        to_write = "\x02%s\x02 is now known as %s" % (event.source, event.newnick)
+        to_write = "\x02%s\x02 is now known as %s" % (e.source, e.newnick)
     
-    for channame in event.network.channels:
-        if event.source in event.network.channels[channame].nicks:
-            window = ui.windows.get(ui.ChannelWindow, event.network, channame)
+    for channame in e.network.channels:
+        if e.source in e.network.channels[channame].nicks:
+            window = ui.windows.get(ui.ChannelWindow, e.network, channame)
             if window:
                 window.write(to_write)
 
-    if event.source == event.network.me:
-        window = ui.get_default_window(event.network)
+    if e.source == e.network.me:
+        window = ui.get_default_window(e.network)
         if window:
             window.write(to_write)
 
-def onTopic(event):
-    to_write = "\x02%s\x02 set topic on %s: %s" % (event.source, event.target, event.text)
+def onTopic(e):
+    to_write = "\x02%s\x02 set topic on %s: %s" % (e.source, e.target, e.text)
     
-    event.window.write(to_write)
+    e.window.write(to_write)
 
-def onRaw(event):
-    if not event.quiet:
-        if event.msg[1].isdigit():
-            if event.msg[1] == '332':
-                window = ui.windows.get(ui.ChannelWindow, event.network, event.msg[3]) or event.window
-                window.write("topic on %s is: %s" % (event.msg[3], event.text))
+def onRaw(e):
+    if not e.quiet:
+        if e.msg[1].isdigit():
+            if e.msg[1] == '332':
+                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window.write("topic on %s is: %s" % (e.msg[3], e.text))
                 
             else:
-                event.window.write("* %s" % ' '.join(event.msg[3:]))
-        elif event.msg[1] == 'ERROR':
-            event.window.write("Error: %s" % event.text)
+                e.window.write("* %s" % ' '.join(e.msg[3:]))
+        elif e.msg[1] == 'ERROR':
+            e.window.write("Error: %s" % e.text)
 
-def onDisconnect(event):
-    if event.error:
-        to_write = '* Disconnected (%s)' % event.error
+def onDisconnect(e):
+    if e.error:
+        to_write = '* Disconnected (%s)' % e.error
     else:
         to_write = '* Disconnected'
 
-    for window in ui.get_window_for(network=event.network):
-        window.write(to_write, (type(window) == ui.StatusWindow and ui.TEXT) or ui.EVENT)
+    for window in ui.get_window_for(network=e.network):
+        window.write(to_write, (type(window) == ui.StatusWindow and ui.TEXT) or ui.e)

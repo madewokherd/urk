@@ -1,23 +1,30 @@
+import events
 
-def onRightClick(event):
-    def print_blah():
-        print "blah"
+def onCommand(e):
+    if e.name == "flag":
+        e.done = True
         
-    event.menu.append(("RightClick", print_blah))
-    
-def onListRightClick(event):
-    def print_blah():
-        print "blah"
-        
-    event.menu.append(("ListRightClick", print_blah))
-    
-def onWindowMenu(event):
-    def print_blah():
-        print "blah"
-        
-    event.menu.append(("WindowMenu", print_blah))
+        events.run_command("say - %s" % e.switches, e.window, e.network)
 
-def defCommand(event):
-    if not event.done:
-        if 'handle_%s' % event.name in globals():
-            globals()['handle_%s' % event.name](event)
+def onRightClick(e):
+    def print_blah():
+        print "blah"
+        
+    e.menu.append(("RightClick", print_blah))
+    
+def onListRightClick(e):
+    def print_blah():
+        print "blah"
+        
+    e.menu.append(("ListRightClick", print_blah))
+    
+def onWindowMenu(e):
+    def print_blah():
+        print "blah"
+        
+    e.menu.append(("WindowMenu", print_blah))
+
+def defCommand(e):
+    if not e.done:
+        if 'handle_%s' % e.name in globals():
+            globals()['handle_%s' % e.name](e)
