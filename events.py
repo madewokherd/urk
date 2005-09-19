@@ -195,17 +195,17 @@ def onCommandLoad(e):
     name = e.args[0]
     try:
         if not load(name):
-            raise events.CommandError("The script is already loaded")
+            raise CommandError("The script is already loaded")
     except:
         traceback.print_exc()
-        raise events.CommandError("Error loading the script")
+        raise CommandError("Error loading the script")
 
 def onCommandUnload(e):
     name = e.args[0]
     if is_loaded(name):
         unload(name)
     else:
-        raise events.CommandError("No such script is loaded")
+        raise CommandError("No such script is loaded")
 
 def onCommandReload(e):
     name = e.args[0]
