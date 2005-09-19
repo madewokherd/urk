@@ -9,7 +9,7 @@ def valueToPython(value):
         if value.type == gconf.VALUE_STRING:
             data = value.get_string()
             if data.startswith("python:"):
-                return eval(data[7:])
+                return eval(data[7:], __builtins__, {})
             else:
                 return data
         elif value.type == gconf.VALUE_INT:

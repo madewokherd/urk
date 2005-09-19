@@ -1,9 +1,10 @@
+import time
+
 import pango
 import gtk
 
 import ui
 import events
-
 import chaninfo
 
 textareas = {
@@ -69,7 +70,8 @@ def onOwnNotice(e):
 def onCtcp(e):
     to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (e.source, e.text)
     
-    e.window.write(to_write)
+    if not e.quiet:
+        e.window.write(to_write)
 
 def onCtcpReply(e):
     to_write = "--- %s reply from %s: %s" % (e.name.capitalize(), e.source, ' '.join(e.args))
@@ -145,6 +147,13 @@ def onRaw(e):
                 window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
                 window.write("topic on %s is: %s" % (e.msg[3], e.text))
                 
+            elif e.msg[1] == '333':
+                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window.write("topic on %s set by %s at time %s" % (e.msg[3], e.msg[4], time.ctime(int(e.msg[5]))))
+            
+            elif e.msg[1] == '329': #RPL_CREATIONTIME
+                pass
+            
             else:
                 e.window.write("* %s" % ' '.join(e.msg[3:]))
         elif e.msg[1] == 'ERROR':

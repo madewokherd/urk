@@ -39,6 +39,8 @@ class Channel(object):
         self.mode = ''
         self.special_mode = {} #for limits, keys, and anything similar
         self.topic = ''
+        self.got_mode = False   #did we get at least one mode reply?
+        self.got_names = False  #did we get at least one names reply?
 
 def setupJoin(e):
     if e.source == e.network.me:
@@ -144,6 +146,8 @@ def setupRaw(e):
             if not channel.getting_names:
                 channel.nicks.clear()
                 channel.getting_names = True
+            if not channel.got_names:
+                e.quiet = True
             for nickname in e.msg[5].split(' '):
                 if nickname:
                     if not nickname[0].isalpha() and nickname[0] in e.network.prefixes:
@@ -154,6 +158,9 @@ def setupRaw(e):
     elif e.msg[1] == '366': #end of names reply
         channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
+            if not channel.got_names:
+                e.quiet = True
+                channel.got_names = True
             channel.getting_names = False
  
             update_nicks(e.network, channel)
@@ -161,6 +168,9 @@ def setupRaw(e):
     elif e.msg[1] == '324': #channel mode is
         channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
         if channel:
+            if not channel.got_mode:
+                e.quiet = True
+                channel.got_mode = True
             mode = e.msg[4]
             params = e.msg[:4:-1]
             list_modes, always_parm_modes, set_parm_modes, normal_modes = \

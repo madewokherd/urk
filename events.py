@@ -213,7 +213,7 @@ def onCommandReload(e):
         load(name, reloading=True)
     except:
         traceback.print_exc()
-        raise events.CommandError("Error loading the script")
+        raise CommandError("Error loading the script")
 
 def onCommandScripts(e):
     e.window.write("Loaded scripts:")
@@ -227,14 +227,14 @@ def onCommandEdit(e):
     try:
         args = find_script(e.args[0])
     except ImportError:
-        raise events.CommandError("Couldn't find script: %s" % e.args[0])
+        raise CommandError("Couldn't find script: %s" % e.args[0])
     if args[1]:
         args[1].close()
         import ui
         ui.open_file(args[2])
         del ui
     else:
-        raise events.CommandError("Couldn't find script: %s" % e.args[0])
+        raise CommandError("Couldn't find script: %s" % e.args[0])
 
 name = ''
 for name in globals():

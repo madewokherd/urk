@@ -34,11 +34,10 @@ cross-platform so..yeah..it runs on windows. You need to install some things:
 -gtk+ runtime for windows from http://gladewin32.sourceforge.net/
 
 It's very important that you get the win32 runtime for gtk+ from the site given.
-Installers from other places, including the gaimgtk+ installer, have failed. 
+Installers from other places, including the gaim gtk+ installer, have failed. 
 Also, you'll need to restart after you've installed those things.
 
-Repeat: THE GTK+ RUNTIME PROVIDED WITH GAIM WILL NOT WORK, AND YOU MUST REBOOT
-AFTER INSTALLING GTK+.
+Repeat: THE GTK+ RUNTIME PROVIDED WITH GAIM WILL NOT WORK.
 
 urk currently relies on gconf to save its settings, and gconf isn't available
 for windows. So, uh it won't save your settings (not that it saves much anyway).
