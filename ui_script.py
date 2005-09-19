@@ -43,7 +43,7 @@ def preJoin(e):
 
 def preText(e):
     if e.target == e.network.me:
-        ui.windows.new(ui.QueryWindow, e.network, e.source)
+        e.window = ui.windows.new(ui.QueryWindow, e.network, e.source)
     else:
         e.window = \
             ui.windows.get(ui.ChannelWindow, e.network, e.target) or \
