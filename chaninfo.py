@@ -42,11 +42,14 @@ class Channel(object):
         self.got_mode = False   #did we get at least one mode reply?
         self.got_names = False  #did we get at least one names reply?
 
+def getchan(network, channel):
+    return network.channels.get(network.norm_case(channel))
+
 def setupJoin(e):
     if e.source == e.network.me:
         e.network.channels[e.network.norm_case(e.target)] = Channel(e.target)
     #if we wanted to be paranoid, we'd account for not being on the channel
-    channel = e.network.channels[e.network.norm_case(e.target)]
+    channel = getchan(e.network,e.target)
     channel.nicks[e.source] = ''
     
     update_nicks(e.network, channel)
@@ -59,7 +62,7 @@ def postPart(e):
     if e.source == e.network.me:
         del e.network.channels[e.network.norm_case(e.target)]
     else:
-        channel = e.network.channels[e.network.norm_case(e.target)]
+        channel = getchan(e.network,e.target)
         del channel.nicks[e.source]
         
         update_nicks(e.network, channel)
@@ -68,7 +71,7 @@ def postKick(e):
     if e.target == e.network.me:
         del e.network.channels[e.network.norm_case(e.channel)]
     else:
-        channel = e.network.channels[e.network.norm_case(e.channel)]
+        channel = getchan(e.network,e.channel)
         del channel.nicks[e.target]
         
         update_nicks(e.network, channel)
@@ -76,14 +79,14 @@ def postKick(e):
 def postQuit(e):
     #if paranoid: check if e.source is me
     for channame in e.network.channels:
-        channel = e.network.channels[channame]
+        channel = getchan(e.network,channame)
         if e.source in channel.nicks:
             del channel.nicks[e.source]
             
             update_nicks(e.network, channel)
 
 def setupMode(e):
-    channel = e.network.channels.get(e.network.norm_case(e.channel))
+    channel = getchan(e.network,e.channel)
     if channel:
         mode_on = True #are we reading a + section or a - section?
         params = e.text.split(' ')[::-1]
@@ -127,7 +130,7 @@ def setupMode(e):
 
 def postNick(e):
     for channame in e.network.channels:
-        channel = e.network.channels[channame]
+        channel = getchan(e.network,channame)
         if e.source in channel.nicks:
             channel.nicks[e.newnick] = channel.nicks[e.source]
             del channel.nicks[e.source]
@@ -135,13 +138,13 @@ def postNick(e):
         update_nicks(e.network, channel)
 
 def setupTopic(e):
-    if e.network.norm_case(e.target) in e.network.channels:
-        channel = e.network.channels[e.network.norm_case(e.target)]
+    channel = getchan(e.network, e.target)
+    if channel:
         channel.topic = e.text
 
 def setupRaw(e):
     if e.msg[1] == '353': #names reply
-        channel = e.network.channels.get(e.network.norm_case(e.msg[4]))
+        channel = getchan(e.network,e.msg[4])
         if channel:
             if not channel.getting_names:
                 channel.nicks.clear()
@@ -156,7 +159,7 @@ def setupRaw(e):
                         channel.nicks[nickname] = ''
 
     elif e.msg[1] == '366': #end of names reply
-        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
+        channel = getchan(e.network,e.msg[3])
         if channel:
             if not channel.got_names:
                 e.quiet = True
@@ -166,7 +169,7 @@ def setupRaw(e):
             update_nicks(e.network, channel)
         
     elif e.msg[1] == '324': #channel mode is
-        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
+        channel = getchan(e.network,e.msg[3])
         if channel:
             if not channel.got_mode:
                 e.quiet = True
@@ -183,11 +186,11 @@ def setupRaw(e):
                     channel.special_mode[char] = params.pop()
         
     elif e.msg[1] == '331': #no topic
-        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
+        channel = getchan(e.network,e.msg[3])
         if channel:
             channel.topic = ''
 
     elif e.msg[1] == '332': #channel topic is
-        channel = e.network.channels.get(e.network.norm_case(e.msg[3]))
+        channel = getchan(e.network,e.msg[3])
         if channel:
             channel.topic = e.text

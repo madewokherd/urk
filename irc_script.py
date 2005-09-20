@@ -162,6 +162,8 @@ def onCommandNick(e):
         
         for w in ui.get_window_for(network=e.network):
             w.nick_label.update()
+    else:
+        e.network.raw('NICK :%s' % e.args[0])
 
 # make /quit always disconnect us
 def onCommandQuit(e):

@@ -177,7 +177,11 @@ def onCommandPyeval(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
     try:
-        e.window.write(repr(eval(' '.join(e.args), globals(), loc)))
+        result = repr(eval(' '.join(e.args), loc))
+        if 's' in e.switches:
+            run_command('say - %s => %s' %(' '.join(e.args),result), e.window, e.network)
+        else:
+            e.window.write(result)
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
@@ -186,7 +190,7 @@ def onCommandPyexec(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
     try:
-        exec ' '.join(e.args) in globals(), loc
+        exec ' '.join(e.args) in loc
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
