@@ -319,8 +319,12 @@ def get_event_at_iter(view, iter):
     line_end = line_strt.copy()
     line_end.forward_lines(1)
     
-    pos = iter.get_line_offset()        
-    text = buffer.get_text(line_strt, line_end).rstrip("\n")
+    pos = iter.get_line_offset()
+    
+    #Caveat: text must be a unicode string, not utf-8 encoded; otherwise our
+    # offsets will be off when we use anything outside 7-bit ascii
+    #gtk.TextIter.get_text returns unicode but gtk.TextBuffer.get_text does not
+    text = line_strt.get_text(line_end).rstrip("\n")
     
     word, fr, to = word_from_pos(text, pos)
     
