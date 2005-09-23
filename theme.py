@@ -18,7 +18,7 @@ ui.set_style("nicklist", textareas)
 
 def onText(e):
     color = "\x02\x040000CC"
-    if e.network.me == e.target:
+    if e.network.me == e.target:    # this is a pm
         if e.window.id == e.network.norm_case(e.source):
             format = "%s<\x0F%s%s>\x0F %s"
         else:
@@ -56,11 +56,10 @@ def onOwnAction(e):
 def onNotice(e):
     to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (e.source, e.text)
     
-    if not e.quiet:
-        window = ui.windows.manager.get_active()
-        if window.network != e.network:
-            window = ui.get_default_window(e.network)
-        window.write(to_write, ui.TEXT)
+    window = ui.windows.manager.get_active()
+    if window.network != e.network:
+        window = ui.get_default_window(e.network)
+    window.write(to_write, ui.TEXT)
 
 def onOwnNotice(e):
     to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (e.target, e.text)
