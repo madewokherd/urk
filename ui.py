@@ -135,6 +135,24 @@ class Window(gtk.VBox):
         self.title.show_all()
 
 class StatusWindow(Window):
+    def mutate(self, win_type, info):
+        if win_type == ChannelWindow:
+            network, id = info
+            
+            self.output.unparent()
+            self.input.unparent()
+            
+            new_win = ChannelWindow(
+                        network, id, 
+                        output=self.output, input=self.input
+                        )
+                        
+            self.output.win = self.input.win = new_win
+
+            windows.swap(self, new_win)
+            
+            return new_win
+
     def get_title(self):
         # Something about self.network.isupport
         if self.network.status:
@@ -151,7 +169,7 @@ class StatusWindow(Window):
 
         self.output.write(text, activity_type)
 
-    def __init__(self, network, id):
+    def __init__(self, network, id, output=None, input=None):
         Window.__init__(self, network, id)
 
         def transfer_text(widget, event):
@@ -162,7 +180,7 @@ class StatusWindow(Window):
 
         self.connect("key-press-event", transfer_text)
 
-        self.output = widgets.TextOutput(self)
+        self.output = output or widgets.TextOutput(self)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -170,7 +188,7 @@ class StatusWindow(Window):
 
         self.pack_start(topbox)
         
-        self.input = widgets.TextInput(self)
+        self.input = input or widgets.TextInput(self)
         self.nick_label = widgets.NickEdit(self)
 
         botbox = gtk.HBox()
@@ -186,6 +204,24 @@ class QueryWindow(StatusWindow):
         return Window.get_title(self)
 
 class ChannelWindow(StatusWindow):
+    def mutate(self, win_type, info):
+        if win_type == StatusWindow:
+            network, id = info
+            
+            self.output.unparent()
+            self.input.unparent()
+            
+            new_win = StatusWindow(
+                        network, id, 
+                        output=self.output, input=self.input
+                        )
+                        
+            self.output.win = self.input.win = new_win
+
+            windows.swap(self, new_win)
+            
+            return new_win
+
     def get_title(self):
         return Window.get_title(self)
 
@@ -195,7 +231,7 @@ class ChannelWindow(StatusWindow):
         for nick in nicks:
             self.nicklist.userlist.append([nick])
 
-    def __init__(self, network, id):    
+    def __init__(self, network, id, output=None, input=None, nicklist=None):    
         Window.__init__(self, network, id)
     
         def transfer_text(widget, event):
@@ -206,8 +242,8 @@ class ChannelWindow(StatusWindow):
 
         self.connect("key-press-event", transfer_text)
 
-        self.output = widgets.TextOutput(self)
-        self.nicklist = widgets.Nicklist(self)
+        self.output = output or widgets.TextOutput(self)
+        self.nicklist = nicklist or widgets.Nicklist(self)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -235,7 +271,7 @@ class ChannelWindow(StatusWindow):
         
         self.pack_start(pane)
         
-        self.input = widgets.TextInput(self)
+        self.input = input or widgets.TextInput(self)
         self.nick_label = widgets.NickEdit(self)
 
         botbox = gtk.HBox()
@@ -246,7 +282,14 @@ class ChannelWindow(StatusWindow):
 
         self.show_all()
   
-class WindowTabs(list):       
+class WindowTabs(list):     
+    def swap(self, window1, window2):
+        pos = self.index(window1)
+        
+        self[pos] = window2
+        
+        self.manager.swap(window1, window2)
+  
     def new(self, type, network, id):
         w = self.get(type, network, id)
         

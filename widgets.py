@@ -514,26 +514,56 @@ class WindowLabel(gtk.EventBox):
         
         self.update()
         
+class WindowLedge(gtk.VBox):
+    def __init__(self, window):
+        gtk.VBox.__init__(self)
+        self.child = window
+        
+        self.add(self.child)
+        self.show()
+        
 class WindowListTabs(gtk.Notebook):
     def get_active(self):
-        return self.get_nth_page(self.get_current_page())
+        return self.get_nth_page(self.get_current_page()).child
         
     def set_active(self, window):
-       self.set_current_page(self.page_num(window))
+        for window_ledge in self:
+            if window_ledge.child is window:
+                self.set_current_page(self.page_num(window_ledge))
+                break
        
     def add(self, window):
         pos = self.get_n_pages()
         if window.network:
             for i in reversed(range(pos)):
-                if self.get_nth_page(i).network == window.network:
+                if self.get_nth_page(i).child.network == window.network:
                     pos = i+1
                     break
-        
-        self.insert_page(window, None, pos)
-        self.set_tab_label(window, window.title)
+                    
+        wbox = WindowLedge(window)
+
+        self.insert_page(wbox, None, pos)
+        self.set_tab_label(wbox, window.title)
         
     def remove(self, window):
-        self.remove_page(self.page_num(window))
+        for window_ledge in self:
+            if window_ledge.child is window:
+                self.remove_page(self.page_num(window_ledge))
+                break
+        
+    def swap(self, window1, window2):
+        for window_ledge in self:
+            if window_ledge.child is window1:
+                window_ledge.remove(window1)
+                
+                window_ledge.child = window2
+                window_ledge.add(window_ledge.child)
+                
+                self.set_tab_label(window_ledge, window2.title)
+                
+                ui.register_idle(window2.focus)
+                
+                break
 
     def __init__(self):
         gtk.Notebook.__init__(self)
@@ -547,10 +577,10 @@ class WindowListTabs(gtk.Notebook):
         self.set_scrollable(True)
         
         def window_change(self, wptr, page_num):
-            events.trigger("Active", self.get_nth_page(page_num))
+            events.trigger("Active", self.get_nth_page(page_num).child)
         self.connect("switch-page", window_change)
         
-class WindowListButtons(gtk.HBox):
+"""class WindowListButtons(gtk.HBox):
     def get_active(self):
         if self.windows.get_children():
             return self.windows.get_children()[0]
@@ -588,4 +618,4 @@ class WindowListButtons(gtk.HBox):
         self.windows = gtk.VBox()
         
         self.pack_start(self.buttons, expand=False)
-        self.pack_end(self.windows, expand=True)
+        self.pack_end(self.windows, expand=True)"""

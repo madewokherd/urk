@@ -28,17 +28,21 @@ def onExit(e):
 
 def preJoin(e):
     if e.source == e.network.me:
-        windows = list(ui.get_window_for(network=e.network))
+        swindows = list(ui.get_window_for(
+                            network=e.network,
+                            type=ui.StatusWindow
+                            ))
         
-        window = ui.windows.new(ui.ChannelWindow, e.network, e.target)
+        if swindows:
+            status_window = ui.windows.get(ui.StatusWindow, e.network, 'status')
         
-        if len(windows) == 1 and type(windows[0]) == ui.StatusWindow:
-            window.output.set_buffer(windows[0].output.get_buffer())
+            status_window.mutate(
+                ui.ChannelWindow, (e.network, e.target)
+                ).activate()
             
-            windows[0].close()
-            
-        window.activate()
-        
+        else:
+            ui.windows.new(ui.ChannelWindow, e.network, e.target).activate()
+
     e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
 
 def preText(e):
@@ -62,16 +66,38 @@ preOwnAction = preOwnText
 
 def postPart(e):
     if e.source == e.network.me:
-        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
+        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)        
+        
         if window:
-            window.close()
+            cwindows = list(ui.get_window_for(
+                            network=window.network,
+                            type=ui.ChannelWindow
+                            ))
+                            
+            if len(cwindows) == 1:
+                window.mutate(
+                    ui.StatusWindow, (e.network, 'status')
+                    )
+            else:
+                window.close()
 
 def onClose(window):
-    if type(window) == ui.ChannelWindow and window.id in window.network.channels:
-        window.network.part(window.id)
+    if type(window) == ui.ChannelWindow: 
+        if window.id in window.network.channels:
+            window.network.part(window.id) 
+    
+        cwindows = list(ui.get_window_for(
+                            network=window.network,
+                            type=ui.ChannelWindow
+                            ))
+        
+        if len(cwindows) == 1:
+            window.mutate(
+                ui.StatusWindow, (e.network, 'status')
+                )
+        
     elif type(window) == ui.StatusWindow:
-        pass
-         
+        window.network.quit()
 
 def onConnect(e):
     window = ui.get_default_window(e.network)
