@@ -28,7 +28,7 @@ def onExit(e):
 
 def get_status_window(network):
     # There can be only one...
-    for window in get_window_for(type=ui.StatusWindow, network=network):
+    for window in ui.get_window_for(type=ui.StatusWindow, network=network):
         return window
 
 ui.get_default_window = get_status_window
@@ -65,6 +65,8 @@ def postPart(e):
             window.close()
 
 def onClose(window):
+    print window
+
     if type(window) == ui.ChannelWindow and window.id in window.network.channels:
         window.network.part(window.id)
     elif type(window) == ui.StatusWindow:
