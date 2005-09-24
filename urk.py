@@ -12,7 +12,7 @@ def path(filename):
 
     return os.path.join(urkpath, filename)
 
-sys.path = [os.path.expanduser("~/.urk"),".",path] + sys.path
+sys.path = [os.path.join(os.path.expanduser("~"),".urk"),".",path] + sys.path
 
 import events
 

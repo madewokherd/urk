@@ -1,4 +1,17 @@
-fix path thing, nick display thing
+Current components:
+
+Change chaninfo usage
+    
+    Chaninfo should use a more functional approach--scripts import chaninfo and
+use methods from it. Network.channels is great for an internal data structure
+but not so great for users.
+
+
+Clanshells connectivity
+
+    urk doesn't properly connect to GameSurge's clanshells server because it
+doesn't recognize the "MOTD file is missing" raw.
+
 
 Keyboard Shortcuts
 
@@ -12,6 +25,13 @@ Keyboard Shortcuts
 Format more stuff
 
     Change formatting of tabs, tabs with new text, based on theme
+
+
+Fill in the channel name
+
+    Some standard irc commands always require a channel. If the user types one
+of them on a channel window and does not provide a channel, we should use the
+current one.
 
 
 Ipv6 etc.
@@ -34,6 +54,16 @@ Preferences UI
     we want a number of "preflets" rather than one gigantic prefs window
 
 
+Highlighting
+    
+    Provide a means for highlighting. Maybe theme should trigger an event? :/
+
+
+
+
+Things that can be done as separate components:
+
+
 Functional Nicklist
 
     right-clicking the nicklist should do something
@@ -42,11 +72,6 @@ Functional Nicklist
 System Install
 
     a script (probably python) to do a system-wide install
-
-
-Highlighting
-    
-    Provide a means for highlighting. Maybe theme should trigger an event? :/
 
 
 DCC Stuff
@@ -60,12 +85,24 @@ Logging
 in IRCWindow.write().
 
 
+Ignore list
+
+    Possibly doesn't merit a separate component, but this is a "standard irc
+client feature" that's not essential to any current components.
+
+
 Identd
 
     IRC servers appear to expect us to run an identd server for no good reason.
 
         
+Notify
+
+    IRC notify functions and events for scriptors.
+
+
 replacements for stuff
 
     It'd be cool to have alternative ui's and conf's..maybe we could optionally
 get rid of some dependencies by using built-in python things.
+

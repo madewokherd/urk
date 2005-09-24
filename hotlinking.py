@@ -2,11 +2,6 @@ import events
 import ui
 
 def onClick(e):
-    # click on a #channel
-    if e.target.startswith("#"):
-        if e.target not in e.window.network.channels:
-            e.window.network.join(e.target)
-        
     # nick on this channel
     target_l = e.target.lstrip('@+%.(<')
     target_fr = e.target_fr + len(e.target) - len(target_l)
@@ -21,18 +16,19 @@ def onClick(e):
         events.run_command("query %s" % target, e.window, e.window.network)
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
-    if (target.startswith("http://") and target.count(".") >= 1) or \
+    elif (target.startswith("http://") and target.count(".") >= 1) or \
             target.startswith("www") and target.count(".") >= 2:
         if target.startswith("www"):
             target = "http://"+target
         ui.open_file(target)
+    
+    # click on a #channel
+    elif target and e.window.network and \
+            target[0] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
+        if target not in e.window.network.channels:
+            e.window.network.join(target)
 
 def onHover(e):
-    # click on a #channel
-    if e.target.startswith("#"):
-        e.tolink.add((e.target_fr, e.target_to))
-        return
-        
     # nick on this channel
     target_l = e.target.lstrip('@+%.(<')
     target_fr = e.target_fr + len(e.target) - len(target_l)
@@ -50,4 +46,8 @@ def onHover(e):
     elif (target.startswith("http://") and target.count(".") >= 1) or \
             target.startswith("www") and target.count(".") >= 2:
         e.tolink.add((target_fr, target_to))
-
+    
+    # click on a #channel
+    elif target and e.window.network and \
+            target[0] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
+        e.tolink.add((target_fr, target_to))

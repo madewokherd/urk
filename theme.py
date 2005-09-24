@@ -123,16 +123,15 @@ def onNick(e):
     else:
         to_write = "\x02%s\x02 is now known as %s" % (e.source, e.newnick)
     
-    for channame in e.network.channels:
-        if e.source in e.network.channels[channame].nicks:
-            window = ui.windows.get(ui.ChannelWindow, e.network, channame)
-            if window:
-                window.write(to_write)
-
     if e.source == e.network.me:
-        window = ui.get_default_window(e.network)
-        if window:
+        for window in ui.get_window_for(network=e.network):
             window.write(to_write)
+    else:
+        for channame in e.network.channels:
+            if e.source in e.network.channels[channame].nicks:
+                window = ui.windows.get(ui.ChannelWindow, e.network, channame)
+                if window:
+                    window.write(to_write)
 
 def onTopic(e):
     to_write = "\x02%s\x02 set topic on %s: %s" % (e.source, e.target, e.text)

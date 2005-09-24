@@ -216,6 +216,20 @@ class TextInput(gtk.Entry):
         
         self.set_text("")
     
+    def _set_selection(self, s):
+        if s:
+            self.select_region(*s)
+        else:
+            self.select_region(self.cursor, self.cursor)
+
+    #some nice toys for the scriptors
+    text = property(gtk.Entry.get_text, gtk.Entry.set_text)
+    cursor = property(gtk.Entry.get_position, gtk.Entry.set_position)
+    selection=property(gtk.Entry.get_selection_bounds,_set_selection)
+    
+    def insert(self, text):
+        self.do_insert_at_cursor(self, text)
+    
     # Explores the history of this entry box
     #  0 means most recent which is what you're currently typing
     #  anything greater means things you've typed and sent    
@@ -264,16 +278,14 @@ class TextInput(gtk.Entry):
                             (gtk.gdk.MOD1_MASK, '+')):
                 if event.state & k:
                     key += c
-                
-            if event.string:
-                key += event.string
-            else:
-                key += "{%s}" % gtk.gdk.keyval_name(event.keyval)
-    
-            events.trigger("Keypress", events.data(key=key))
-                
-            if event.keyval in eat:
-                return True            
+            
+            key += gtk.gdk.keyval_name(event.keyval)
+            
+            e_data = events.data(key=key,string=event.string,window=self.win)
+            
+            events.trigger("Keypress", e_data)
+            
+            return event.keyval in eat
 
         self.connect("key-press-event", check_history_explore)
         
