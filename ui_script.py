@@ -28,14 +28,9 @@ def onExit(e):
 
 def preJoin(e):
     if e.source == e.network.me:
-        swindows = list(ui.get_window_for(
-                            network=e.network,
-                            type=ui.StatusWindow
-                            ))
+        status_window = ui.windows.get(ui.StatusWindow, e.network, 'status')
         
-        if swindows:
-            status_window = ui.windows.get(ui.StatusWindow, e.network, 'status')
-        
+        if status_window:
             status_window.mutate(
                 ui.ChannelWindow, (e.network, e.target)
                 ).activate()

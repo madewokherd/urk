@@ -591,7 +591,10 @@ class WindowListTabs(gtk.Notebook):
         def window_change(self, wptr, page_num):
             events.trigger("Active", self.get_nth_page(page_num).child)
         self.connect("switch-page", window_change)
-        
+    
+    def __iter__(self):
+        return iter(self.get_children())
+    
 """class WindowListButtons(gtk.HBox):
     def get_active(self):
         if self.windows.get_children():
