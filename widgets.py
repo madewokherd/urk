@@ -400,7 +400,7 @@ class TextOutput(gtk.TextView):
                     return True
     
     def mouseup(self, widget, event):
-        if event.button == 1:
+        if event.button == 1 and not self.get_buffer().get_selection_bounds():
             hover_iter = get_iter_at_event(self, event)
         
             if not hover_iter.ends_line():

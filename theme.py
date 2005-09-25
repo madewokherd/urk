@@ -101,7 +101,7 @@ def onPart(e):
 def onKick(e):
     to_write = "\x02%s\x02 kicked %s (%s)" % (e.source, e.target, e.text)
     
-    e.window.write(to_write)
+    e.window.write(to_write, (e.target == e.network.me and ui.TEXT) or ui.EVENT)
         
 def onMode(e):
     to_write = "\x02%s\x02 sets mode: %s" % (e.source, e.text)

@@ -60,16 +60,18 @@ EVENT = widgets.EVENT
 #opens a file or url using the "right" program
 open_file_cmd = "" #cache results of searching for the os program
 os_commands = ( #list of commands to search for for opening files
-    ('gnome-open', 'gnome-open %s'),
-    ('kfmclient', 'kfmclient exec %s'),
+    ('gnome-open', ('gnome-open',)),
+    ('kfmclient', ('kfmclient','exec')),
     )
 def open_file(filename):
     if conf.get('open-file-command'):
+        #FIXME: we need to make sure no shell evaluates the filename
         os.popen(conf.get('open-file-command') % filename)
     elif hasattr(os, 'startfile'):
         os.startfile(filename)
     elif open_file_cmd:
-        os.popen(open_file_cmd % filename)
+        #Note: we have to use spawn here so that no shell evaluates the filename
+        os.spawnvp(os.P_NOWAIT,open_file_cmd[0], open_file_cmd + (filename,))
     else:
         #look for a command we can use
         paths = os.getenv("PATH") or os.defpath
@@ -77,7 +79,8 @@ def open_file(filename):
             for path in paths.split(os.pathsep):
                 if os.access(os.path.join(path,cmdfile),os.X_OK):
                     globals()['open_file_cmd'] = cmd
-                    os.popen(cmd % filename)
+                    #Note: see above note about spawn
+                    os.spawnvp(os.P_NOWAIT,cmd[0], cmd + (filename,))
                     return
         print "Unable to find a method to open %s." % filename
 
@@ -393,6 +396,9 @@ def get_window_for(type=None, network=None, id=None):
             
 def get_default_window(network):
     # There can be only one...
+    window = windows.manager.get_active()
+    if window.network == network:
+        return window
     for window in get_window_for(network=network):
         return window
 

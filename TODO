@@ -40,12 +40,6 @@ Ipv6 etc.
 ipv4.
 
 
-Cannot send to channel
-    
-    We need to show the various "cannot send to channel" message in the actual
-channel windows.
-
-
 Preferences UI
 
     a preferences ui, probably with a separate sort of 
