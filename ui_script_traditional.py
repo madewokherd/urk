@@ -1,4 +1,5 @@
 import ui
+import chaninfo
 
 # FIXME: meh still might want rid of these, I'm not sure yet
 
@@ -67,7 +68,7 @@ def postPart(e):
 def onClose(window):
     print window
 
-    if type(window) == ui.ChannelWindow and window.id in window.network.channels:
+    if type(window) == ui.ChannelWindow and chaninfo.ischan(window.network, window.id):
         window.network.part(window.id)
     elif type(window) == ui.StatusWindow:
         if window.network.status:

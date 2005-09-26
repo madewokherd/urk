@@ -111,8 +111,8 @@ def onMode(e):
 def onQuit(e):
     to_write = "\x02%s\x02 quit (%s)" % (e.source, e.text)
     
-    for channame in e.network.channels:
-        if e.source in e.network.channels[channame].nicks:
+    for channame in chaninfo.channels(e.network):
+        if chaninfo.ison(e.network, channame, e.source):
             window = ui.windows.get(ui.ChannelWindow, e.network, channame)
             if window:
                 window.write(to_write)
@@ -127,8 +127,8 @@ def onNick(e):
         for window in ui.get_window_for(network=e.network):
             window.write(to_write)
     else:
-        for channame in e.network.channels:
-            if e.source in e.network.channels[channame].nicks:
+        for channame in chaninfo.channels(e.network):
+            if chaninfo.ison(e.network,channame,e.source):
                 window = ui.windows.get(ui.ChannelWindow, e.network, channame)
                 if window:
                     window.write(to_write)

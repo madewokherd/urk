@@ -35,6 +35,7 @@ class Channel(object):
     def __init__(self, name):
         self.name = name
         self.nicks = {}
+        self.normal_nicks = {} # mapping of normal nicks to actual nicks
         self.getting_names = False #are we between lines in a /names reply?
         self.mode = ''
         self.special_mode = {} #for limits, keys, and anything similar
@@ -43,7 +44,42 @@ class Channel(object):
         self.got_names = False  #did we get at least one names reply?
 
 def getchan(network, channel):
-    return network.channels.get(network.norm_case(channel))
+    return hasattr(network, 'channels') and network.channels.get(network.norm_case(channel))
+
+#return a list of channels you're on on the given network
+def channels(network):
+    return list(network.channels)
+
+#return True if you're on the channel
+def ischan(network, channel):
+    return channel in network.channels
+
+#return True if the nick is on the channel
+def ison(network, channel, nickname):
+    channel = getchan(network, channel)
+    return channel and network.norm_case(nickname) in channel.normal_nicks
+
+#return a list of nicks on the given channel
+def nicks(network, channel):
+    channel = getchan(network, channel)
+    return (channel or []) and list(channel.nicks)
+
+#return the mode on the given channel
+def mode(network, channel, nickname=''):
+    channel = getchan(network, channel)
+    if nickname:
+        return channel.nicks[channel.normal_nicks[network.norm_case(nickname)]] \
+                or ''
+    result = channel.mode
+    for m in channel.mode:
+        if m in channel.special_mode:
+            result += ' '+channel.special_mode[m]
+    return result
+
+#return the topic on the given channel
+def topic(network, channel):
+    channel = getchan(network, channel)
+    return (channel or '') and channel.mode
 
 def setupJoin(e):
     if e.source == e.network.me:
@@ -51,6 +87,7 @@ def setupJoin(e):
     #if we wanted to be paranoid, we'd account for not being on the channel
     channel = getchan(e.network,e.target)
     channel.nicks[e.source] = ''
+    channel.normal_nicks[e.network.norm_case(e.source)] = channel.nicks[e.source]
     
     update_nicks(e.network, channel)
 
@@ -64,6 +101,7 @@ def postPart(e):
     else:
         channel = getchan(e.network,e.target)
         del channel.nicks[e.source]
+        del channel.normal_nicks[e.network.norm_case(e.source)]
         
         update_nicks(e.network, channel)
 
@@ -73,6 +111,7 @@ def postKick(e):
     else:
         channel = getchan(e.network,e.channel)
         del channel.nicks[e.target]
+        del channel.normal_nicks[e.network.norm_case(e.target)]
         
         update_nicks(e.network, channel)
 
@@ -82,6 +121,7 @@ def postQuit(e):
         channel = getchan(e.network,channame)
         if e.source in channel.nicks:
             del channel.nicks[e.source]
+            del channel.normal_nicks[e.network.norm_case(e.source)]
             
             update_nicks(e.network, channel)
 
@@ -132,8 +172,10 @@ def postNick(e):
     for channame in e.network.channels:
         channel = getchan(e.network,channame)
         if e.source in channel.nicks:
+            del channel.normal_nicks[e.network.norm_case(e.source)]
             channel.nicks[e.newnick] = channel.nicks[e.source]
             del channel.nicks[e.source]
+            channel.normal_nicks[e.network.norm_case(e.newnick)] = e.newnick
 
         update_nicks(e.network, channel)
 
@@ -148,15 +190,19 @@ def setupRaw(e):
         if channel:
             if not channel.getting_names:
                 channel.nicks.clear()
+                channel.normal_nicks.clear()
                 channel.getting_names = True
             if not channel.got_names:
                 e.quiet = True
             for nickname in e.msg[5].split(' '):
                 if nickname:
                     if not nickname[0].isalpha() and nickname[0] in e.network.prefixes:
-                        channel.nicks[nickname[1:]] = e.network.prefixes[nickname[0]]
+                        n = nickname[1:]
+                        channel.nicks[n] = e.network.prefixes[nickname[0]]
+                        channel.normal_nicks[e.network.norm_case(n)] = n
                     else:
                         channel.nicks[nickname] = ''
+                        channel.normal_nicks[e.network.norm_case(nickname)] = nickname
 
     elif e.msg[1] == '366': #end of names reply
         channel = getchan(e.network,e.msg[3])
@@ -194,3 +240,5 @@ def setupRaw(e):
         channel = getchan(e.network,e.msg[3])
         if channel:
             channel.topic = e.text
+
+events.load(__name__)

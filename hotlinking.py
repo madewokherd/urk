@@ -1,5 +1,6 @@
 import events
 import ui
+import chaninfo
 
 def onClick(e):
     # nick on this channel
@@ -12,7 +13,7 @@ def onClick(e):
     target = e.text[target_fr:target_to]
     
     if type(e.window) == ui.ChannelWindow and \
-            target in e.window.network.channels[e.window.id].nicks:
+            chaninfo.ison(e.window.network, e.window.id, target):
         events.run_command("query %s" % target, e.window, e.window.network)
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
@@ -25,7 +26,7 @@ def onClick(e):
     # click on a #channel
     elif target and e.window.network and \
             target[0] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
-        if target not in e.window.network.channels:
+        if not chaninfo.ischan(e.window.network, target):
             e.window.network.join(target)
 
 def onHover(e):
@@ -39,7 +40,7 @@ def onHover(e):
     target = e.text[target_fr:target_to]
     
     if type(e.window) == ui.ChannelWindow and \
-            target in e.window.network.channels[e.window.id].nicks:
+            chaninfo.ison(e.window.network, e.window.id, target):
         e.tolink.add((target_fr, target_to))        
     
     # url of the form http://xxx.xxx or www.xxx.xxx       

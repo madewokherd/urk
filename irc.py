@@ -75,7 +75,12 @@ class Network:
             
         self.fullname = fullname or "urk user"
 
-        self.channels = {}
+        self.isupport = {
+            'NETWORK': server, 
+            'PREFIX': '(ohv)@%+',
+            'CHANMODES': 'b,k,l,imnpstr',
+        }
+        self.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
     
     #called when we can write to the socket
     def on_writeable(self):

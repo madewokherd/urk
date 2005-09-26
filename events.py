@@ -81,16 +81,20 @@ def load(s_name, reloading = False):
     args = find_script(s_name)
     f = args[1]
     filename = args[2]
+    name = args[0]
     
-    if not reloading and filename in loaded:
+    if not reloading and name in loaded:
         f.close()
         return False
     
-    loaded[filename] = None
+    if reloading:
+        reloading = name in loaded
+    
+    loaded[name] = None
     
     try:
-        if reloading:
-            unload(filename)
+        #if reloading:
+            #unload(filename)
         
         imported = imp.load_module(*args)
     except Exception, e:
@@ -98,6 +102,9 @@ def load(s_name, reloading = False):
         f.close()
         raise e
     f.close()
+    
+    if reloading:
+        unload(filename, True)
     
     # we look through everything defined in the file    
     for f in dir(imported):
@@ -114,7 +121,7 @@ def load(s_name, reloading = False):
                 e_name = f.replace(e_stage, "", 1)
                 
                 # add our function to the right event section
-                register(e_name, e_stage, f_ref, filename)
+                register(e_name, e_stage, f_ref, name)
                 
                 break
     
@@ -128,17 +135,18 @@ def is_loaded(s_name):
     return filename in loaded
 
 # Remove any function which was defined in the given script
-def unload(s_name):
+def unload(s_name, reloading = False):
     name, f, filename, filetype = find_script(s_name)
     f.close()
-
-    del loaded[filename]
+    
+    if not reloading:
+        del loaded[filename]
 
     for e_name in events:
         for e_stage in events[e_name]:
             to_check = events[e_name][e_stage]
         
-            events[e_name][e_stage] = [(f, m) for f, m in to_check if m != filename]
+            events[e_name][e_stage] = [(f, m) for f, m in to_check if m != name]
 
 def run_command(text, window, network):
     if not text:
