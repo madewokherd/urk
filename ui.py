@@ -100,9 +100,6 @@ class Window(gtk.VBox):
     def mutate(self, newrole, data):
         network, id = data
         
-        self.output.unparent()
-        self.input.unparent()
-        
         for child in self.get_children():
             self.remove(child)
             
