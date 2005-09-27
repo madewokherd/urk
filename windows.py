@@ -40,7 +40,8 @@ def StatusWindow(self, output=None, input=None):
     self.write = get_default_write(self)
     self.connect("key-press-event", get_default_transfer_text(self))
 
-    self.output = output or ui.widgets.TextOutput(self)
+    if not hasattr(self, "output"):
+        self.output = output or ui.widgets.TextOutput(self)
 
     topbox = gtk.ScrolledWindow()
     topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -48,7 +49,8 @@ def StatusWindow(self, output=None, input=None):
 
     self.pack_start(topbox)
     
-    self.input = input or ui.widgets.TextInput(self)
+    if not hasattr(self, "input"):
+        self.input = ui.widgets.TextInput(self)
     self.nick_label = ui.widgets.NickEdit(self)
 
     botbox = gtk.HBox()
@@ -87,7 +89,8 @@ def ChannelWindow(self, output=None, input=None):
             self.nicklist.userlist.append([nick])
     self.set_nicklist = set_nicklist
 
-    self.output = output or ui.widgets.TextOutput(self)
+    if not hasattr(self, "output"):
+        self.output = output or ui.widgets.TextOutput(self)
     self.nicklist = ui.widgets.Nicklist(self)
 
     topbox = gtk.ScrolledWindow()
@@ -116,7 +119,8 @@ def ChannelWindow(self, output=None, input=None):
     
     self.pack_start(pane)
     
-    self.input = input or ui.widgets.TextInput(self)
+    if not hasattr(self, "input"):
+        self.input = ui.widgets.TextInput(self)
     self.nick_label = ui.widgets.NickEdit(self)
 
     botbox = gtk.HBox()

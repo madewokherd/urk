@@ -100,9 +100,6 @@ class Window(gtk.VBox):
     def mutate(self, newrole, data):
         network, id = data
         
-        o = self.output
-        i = self.input
-        
         self.output.unparent()
         self.input.unparent()
         
@@ -110,7 +107,7 @@ class Window(gtk.VBox):
             self.remove(child)
             
         self.role = newrole
-        newrole(self, input=i, output=o)
+        newrole(self)
         
         self.network = network
         self.id = id
