@@ -12,7 +12,7 @@ def onClick(e):
     
     target = e.text[target_fr:target_to]
     
-    if type(e.window) == ui.ChannelWindow and \
+    if e.window.role == ui.ChannelWindow and \
             chaninfo.ison(e.window.network, e.window.id, target):
         events.run_command("query %s" % target, e.window, e.window.network)
     
@@ -39,7 +39,7 @@ def onHover(e):
     
     target = e.text[target_fr:target_to]
     
-    if type(e.window) == ui.ChannelWindow and \
+    if e.window.role == ui.ChannelWindow and \
             chaninfo.ison(e.window.network, e.window.id, target):
         e.tolink.add((target_fr, target_to))        
     

@@ -134,7 +134,7 @@ def defInput(e):
         e.done = True
 
 def onCommandSay(e):
-    if type(e.window) in (ui.ChannelWindow, ui.QueryWindow):
+    if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
         e.network.msg(e.window.id, ' '.join(e.args))
     else:
         raise events.CommandError("There's no one here to speak to.")

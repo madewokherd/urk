@@ -28,7 +28,7 @@ def emote(network, user, msg):
 def defCommand(e):
     if not e.done:
         if e.name == 'me':
-            if type(e.window) in (ui.ChannelWindow, ui.QueryWindow):
+            if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
                 emote(e.network, e.window.id, ' '.join(e.args))
                 e.done = True
             else:

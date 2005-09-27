@@ -10,6 +10,7 @@ sys.path = sys.peth
 
 import pango
 
+import windows
 import widgets
 import irc
 import conf
@@ -52,9 +53,9 @@ def unregister(tag):
 set_style = widgets.set_style
 
 # Window activity Constants
-HILIT = widgets.HILIT
-TEXT = widgets.TEXT
-EVENT = widgets.EVENT
+HILIT = 4
+TEXT = 2
+EVENT = 1
 
 #open_file(filename)
 #opens a file or url using the "right" program
@@ -96,13 +97,37 @@ def urk_about(action):
     about.show_all()
         
 class Window(gtk.VBox):
+    def mutate(self, newrole, data):
+        network, id = data
+        
+        o = self.output
+        i = self.input
+        
+        self.output.unparent()
+        self.input.unparent()
+        
+        for child in self.get_children():
+            self.remove(child)
+            
+        self.role = newrole
+        newrole(self, input=i, output=o)
+        
+        self.network = network
+        self.id = id
+        
+        return self
+        
+    def set_id(self, id):
+        self.__id = id
+        self.title.update()
+
     def get_id(self):
         if self.network:
             return self.network.norm_case(self.__id)
         else:
             return self.__id
 
-    id = property(get_id)
+    id = property(get_id, set_id)
 
     def get_title(self):
         return self.__id
@@ -136,154 +161,10 @@ class Window(gtk.VBox):
         
         self.title = widgets.WindowLabel(self)
         self.title.show_all()
-
-class StatusWindow(Window):
-    def mutate(self, win_type, info):
-        if win_type == ChannelWindow:
-            network, id = info
-            
-            self.output.unparent()
-            self.input.unparent()
-            
-            new_win = ChannelWindow(
-                        network, id, 
-                        output=self.output, input=self.input
-                        )
-                        
-            self.output.win = self.input.win = new_win
-
-            windows.swap(self, new_win)
-            
-            return new_win
-
-    def get_title(self):
-        # Something about self.network.isupport
-        if self.network.status:
-            return "%s" % self.network.server
-        else:
-            return "[%s]" % self.network.server
-
-    def focus(self):
-        self.input.grab_focus()
-
-    def write(self, text, activity_type=EVENT):
-        if windows.manager.get_active() != self:
-            self.activity |= activity_type
-
-        self.output.write(text, activity_type)
-
-    def __init__(self, network, id, output=None, input=None):
-        Window.__init__(self, network, id)
-
-        def transfer_text(widget, event):
-            if event.string and not self.input.is_focus():
-                self.input.grab_focus()
-                self.input.set_position(-1)
-                self.input.event(event)
-
-        self.connect("key-press-event", transfer_text)
-
-        self.output = output or widgets.TextOutput(self)
-
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-
-        self.pack_start(topbox)
         
-        self.input = input or widgets.TextInput(self)
-        self.nick_label = widgets.NickEdit(self)
-
-        botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
-
-        self.pack_end(botbox, expand=False)
-
-        self.show_all()
-    
-class QueryWindow(StatusWindow):
-    def get_title(self):
-        return Window.get_title(self)
-
-class ChannelWindow(StatusWindow):
-    def mutate(self, win_type, info):
-        if win_type == StatusWindow:
-            network, id = info
-            
-            self.output.unparent()
-            self.input.unparent()
-            
-            new_win = StatusWindow(
-                        network, id, 
-                        output=self.output, input=self.input
-                        )
-                        
-            self.output.win = self.input.win = new_win
-
-            windows.swap(self, new_win)
-            
-            return new_win
-
-    def get_title(self):
-        return Window.get_title(self)
-
-    def set_nicklist(self, nicks):
-        self.nicklist.userlist.clear()
-        
-        for nick in nicks:
-            self.nicklist.userlist.append([nick])
-
-    def __init__(self, network, id, output=None, input=None, nicklist=None):    
-        Window.__init__(self, network, id)
-    
-        def transfer_text(widget, event):
-            if event.string and not self.input.is_focus():
-                self.input.grab_focus()
-                self.input.set_position(-1)
-                self.input.event(event)
-
-        self.connect("key-press-event", transfer_text)
-
-        self.output = output or widgets.TextOutput(self)
-        self.nicklist = nicklist or widgets.Nicklist(self)
-
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-        
-        pane = gtk.HPaned()
-        pane.pack1(topbox, resize=True, shrink=False)
-        pane.pack2(self.nicklist, resize=False, shrink=True)
-
-        def set_pane_pos():
-            pane.set_position(
-                pane.get_property("max-position") - (conf.get("ui-gtk/nicklist-width") or 0)
-                )
-        register_idle(set_pane_pos)
-
-        def connect_save():
-            def save_nicklist_width(pane, event):
-                conf.set(
-                    "ui-gtk/nicklist-width", 
-                    pane.get_property("max-position") - pane.get_position()
-                    )
-        
-            pane.connect("size-request", save_nicklist_width)
-        register_idle(connect_save)
-        
-        self.pack_start(pane)
-        
-        self.input = input or widgets.TextInput(self)
-        self.nick_label = widgets.NickEdit(self)
-
-        botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
-      
-        self.pack_end(botbox, expand=False)
-
-        self.show_all()
+StatusWindow = windows.StatusWindow
+QueryWindow = windows.QueryWindow
+ChannelWindow = windows.ChannelWindow
   
 class WindowTabs(list):     
     def swap(self, window1, window2):
@@ -293,21 +174,24 @@ class WindowTabs(list):
         
         self.manager.swap(window1, window2)
   
-    def new(self, type, network, id):
-        w = self.get(type, network, id)
+    def new(self, role, network, id):
+        w = self.get(role, network, id)
         
         if not w:
-            w = type(network, id)
+            w = Window(network, id)
+            w.role = role
+            w.role(w)
+            
             self.append(w)
               
         return w
         
-    def get(self, t, network, id):
+    def get(self, r, network, id):
         if network:
             id = network.norm_case(id)
             
         for w in self:
-            if (type(w), w.network, w.id) == (t, network, id):
+            if (w.role, w.network, w.id) == (r, network, id):
                 return w
 
     def append(self, window):
@@ -383,12 +267,12 @@ class UrkUI(gtk.Window):
         self.add(box)
         self.show_all()
         
-def get_window_for(type=None, network=None, id=None):
+def get_window_for(role=None, network=None, id=None):
     if network and id:
         id = network.norm_case(id)
 
     for w in list(windows):
-        for a, b in zip((type, network, id), (__builtins__['type'](w), w.network, w.id)):
+        for a, b in zip((role, network, id), (w.role, w.network, w.id)):
             if a and a != b:
                 break
         else:

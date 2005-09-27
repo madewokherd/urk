@@ -489,14 +489,14 @@ class TextOutput(gtk.TextView):
 class WindowLabel(gtk.EventBox):
     def update(self):
         activity_markup = {
-            HILIT: "<span style='italic' foreground='#00F'>%s</span>",
-            TEXT: "<span foreground='red'>%s</span>",
-            EVENT: "<span foreground='#363'>%s</span>",
+            ui.HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+            ui.TEXT: "<span foreground='red'>%s</span>",
+            ui.EVENT: "<span foreground='#363'>%s</span>",
             }
             
         title = str(self)
     
-        for a_type in (HILIT, TEXT, EVENT):
+        for a_type in (ui.HILIT, ui.TEXT, ui.EVENT):
             if self.win.activity & a_type:
                 title = activity_markup[a_type] % title
                 break
@@ -536,34 +536,26 @@ class WindowLedge(gtk.VBox):
         
 class WindowListTabs(gtk.Notebook):
     def get_active(self):
-        return self.get_nth_page(self.get_current_page()).child
+        return self.get_nth_page(self.get_current_page())
         
     def set_active(self, window):
-        for window_ledge in self:
-            if window_ledge.child is window:
-                self.set_current_page(self.page_num(window_ledge))
-                break
+        self.set_current_page(self.page_num(window))
        
     def add(self, window):
         pos = self.get_n_pages()
         if window.network:
             for i in reversed(range(pos)):
-                if self.get_nth_page(i).child.network == window.network:
+                if self.get_nth_page(i).network == window.network:
                     pos = i+1
                     break
-                    
-        wbox = WindowLedge(window)
 
-        self.insert_page(wbox, None, pos)
-        self.set_tab_label(wbox, window.title)
+        self.insert_page(window, None, pos)
+        self.set_tab_label(window, window.title)
         
     def remove(self, window):
-        for window_ledge in self:
-            if window_ledge.child is window:
-                self.remove_page(self.page_num(window_ledge))
-                break
+        self.remove_page(self.page_num(window))
         
-    def swap(self, window1, window2):
+    """def swap(self, window1, window2):
         for window_ledge in self:
             if window_ledge.child is window1:
                 window_ledge.remove(window1)
@@ -575,7 +567,7 @@ class WindowListTabs(gtk.Notebook):
                 
                 ui.register_idle(window2.focus)
                 
-                break
+                break"""
 
     def __init__(self):
         gtk.Notebook.__init__(self)
@@ -589,7 +581,7 @@ class WindowListTabs(gtk.Notebook):
         self.set_scrollable(True)
         
         def window_change(self, wptr, page_num):
-            events.trigger("Active", self.get_nth_page(page_num).child)
+            events.trigger("Active", self.get_nth_page(page_num))
         self.connect("switch-page", window_change)
     
     def __iter__(self):

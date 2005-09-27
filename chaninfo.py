@@ -22,7 +22,7 @@ def update_nicks(network, channel):
 
     nicklist = [prefix(nick) for nick in sorted(channel.nicks, key=status)]
     
-    for window in ui.get_window_for(network=network, type=ui.ChannelWindow, id=channel.name):
+    for window in ui.get_window_for(network=network, role=ui.ChannelWindow, id=channel.name):
         window.set_nicklist(nicklist)
 
 def setupSocketConnect(e):

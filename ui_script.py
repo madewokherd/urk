@@ -6,7 +6,7 @@ import chaninfo
 def onActive(window):
     window.activity = 0
         
-    if type(window) != ui.StatusWindow:
+    if window.role != ui.StatusWindow:
         title = "%s - %s - %s" % (window.network.me, window.network.server, window.title)
     else:
         title = "%s - %s" % (window.network.me, window.title)
@@ -21,7 +21,7 @@ def onNick(e):
             w.nick_label.update(e.newnick)     
 
 def onExit(e):
-    for w in ui.get_window_for(type=ui.StatusWindow):
+    for w in ui.get_window_for(role=ui.StatusWindow):
         w.close()
         
 # /FIXME
@@ -67,7 +67,7 @@ def postPart(e):
         if window:
             cwindows = list(ui.get_window_for(
                             network=window.network,
-                            type=ui.ChannelWindow
+                            role=ui.ChannelWindow
                             ))
                             
             if len(cwindows) == 1:
@@ -78,13 +78,13 @@ def postPart(e):
                 window.close()
 
 def onClose(window):
-    if type(window) == ui.ChannelWindow: 
-        if chaninfo.ischan(window.network, window.id):
+    if window.role == ui.ChannelWindow: 
+        if chaninfo.ison(window.network, window.id):
             window.network.part(window.id) 
     
         cwindows = list(ui.get_window_for(
                             network=window.network,
-                            type=ui.ChannelWindow
+                            role=ui.ChannelWindow
                             ))
         
         if len(cwindows) == 1:
@@ -92,7 +92,7 @@ def onClose(window):
                 ui.StatusWindow, (e.network, 'status')
                 )
         
-    elif type(window) == ui.StatusWindow:
+    elif window.role == ui.StatusWindow:
         window.network.quit()
 
 def onConnect(e):

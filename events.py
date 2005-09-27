@@ -17,8 +17,11 @@ class data:
     quiet = False
     
     def __init__(self, **kwargs):
+       try:
         for attr in kwargs.items():
             setattr(self, *attr)
+       except:
+        print kwargs
 
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
