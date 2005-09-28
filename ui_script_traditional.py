@@ -67,7 +67,7 @@ def postPart(e):
 
 def onClose(window):
     if window.role == ui.ChannelWindow and \
-            chaninfo.ison(window.network, window.id):
+            chaninfo.ischan(window.network, window.id):
         window.network.part(window.id)
     elif window.role == ui.StatusWindow:
         if window.network.status:

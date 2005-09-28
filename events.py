@@ -93,21 +93,19 @@ def load(s_name, reloading = False):
     if reloading:
         reloading = name in loaded
     
-    loaded[name] = None
+    loaded[name] = filename
     
     try:
-        #if reloading:
-            #unload(filename)
-        
         imported = imp.load_module(*args)
-    except Exception, e:
-        del loaded[filename]
+    finally:
+        if not reloading:
+            del loaded[name]
         f.close()
-        raise e
-    f.close()
     
     if reloading:
-        unload(filename, True)
+        unload(name, True)
+    
+    loaded[name] = filename
     
     # we look through everything defined in the file    
     for f in dir(imported):
@@ -135,7 +133,7 @@ def is_loaded(s_name):
     name, f, filename, filetype = find_script(s_name)
     f.close()
     
-    return filename in loaded
+    return name in loaded
 
 # Remove any function which was defined in the given script
 def unload(s_name, reloading = False):
@@ -143,13 +141,19 @@ def unload(s_name, reloading = False):
     f.close()
     
     if not reloading:
-        del loaded[filename]
+        del loaded[name]
 
-    for e_name in events:
-        for e_stage in events[e_name]:
+    for e_name in list(events):
+        for e_stage in list(events[e_name]):
             to_check = events[e_name][e_stage]
-        
+            
             events[e_name][e_stage] = [(f, m) for f, m in to_check if m != name]
+            
+            if not events[e_name][e_stage]:
+                del events[e_name][e_stage]
+        
+        if not events[e_name]:
+            del events[e_name]
 
 def run_command(text, window, network):
     if not text:

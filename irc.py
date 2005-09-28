@@ -234,15 +234,16 @@ class Network:
         return string.lower()
     
     def quit(self,msg=None):
-        try:
-            if msg == None:
-                msg = conf.get('quitmsg')
+        if self.status:
+            try:
                 if msg == None:
-                    msg = "%s - %s" % (urk.long_version, urk.website)
-            self.raw("QUIT :%s" % msg)
-        except:
-            pass
-        self.disconnect()
+                    msg = conf.get('quitmsg')
+                    if msg == None:
+                        msg = "%s - %s" % (urk.long_version, urk.website)
+                self.raw("QUIT :%s" % msg)
+            except:
+                pass
+            self.disconnect()
         
     def join(self, name):        
         self.raw("JOIN %s" % name)

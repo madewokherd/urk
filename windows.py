@@ -52,7 +52,7 @@ def StatusWindow(self, output=None, input=None):
         self.output = ui.widgets.TextOutput(self)
 
     topbox.add(self.output)
-
+    
     self.pack_start(topbox)
     
     botbox = gtk.HBox()
