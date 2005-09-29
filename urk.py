@@ -41,7 +41,7 @@ long_version = "%s v%s" % (long_name, ".".join(str(x) for x in version))
 website = "http://urk.sf.net/"
 authors = ["Vincent Povirk", "Marc Liddell"]
 copyright = "2005 %s" % ', '.join(authors)
-default_scripts = ['theme','chaninfo', 'ctcp', 'irc_script', 'ui_script', 'hotlinking']
+default_scripts = ['theme','chaninfo', 'ctcp', 'irc_script', 'ui_script', 'hotlinking', 'keys']
 
 if __name__ == "__main__":
     for script in conf.get("scripts_to_load") or default_scripts:
