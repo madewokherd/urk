@@ -76,7 +76,7 @@ Identd
 
     IRC servers appear to expect us to run an identd server for no good reason.
 
-        
+
 Notify
 
     IRC notify functions and events for scriptors.
