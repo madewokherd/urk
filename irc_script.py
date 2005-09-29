@@ -70,7 +70,7 @@ def defRaw(e):
             events.trigger('Topic', e)
             e.done = True
         
-        elif e.msg[1] == "376": #RPL_ENDOFMOTD
+        elif e.msg[1] in ("376", "422"): #RPL_ENDOFMOTD
             if e.network.status == irc.INITIALIZING:
                 e.network.status = irc.CONNECTED
                 e_data = copy.copy(e)

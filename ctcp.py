@@ -84,7 +84,7 @@ def defCtcp(e):
             ctcp_reply(e.network, e.source, e.text)
             e.done = True
         elif e.name == 'VERSION':
-            ctcp_reply(e.network, e.source, 'VERSION %s' % urk.long_version)
+            ctcp_reply(e.network, e.source, 'VERSION %s - %s' % (urk.long_version, urk.website))
             e.done = True
         elif e.name == 'TIME':
             ctcp_reply(e.network, e.source, 'TIME %s' % time.asctime())

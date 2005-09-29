@@ -1,18 +1,5 @@
 Current components:
 
-Change chaninfo usage
-    
-    Chaninfo should use a more functional approach--scripts import chaninfo and
-use methods from it. Network.channels is great for an internal data structure
-but not so great for users.
-
-
-Clanshells connectivity
-
-    urk doesn't properly connect to GameSurge's clanshells server because it
-doesn't recognize the "MOTD file is missing" raw.
-
-
 Keyboard Shortcuts
 
     ^B, ^K etc.
