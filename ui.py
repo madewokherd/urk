@@ -104,10 +104,10 @@ class Window(gtk.VBox):
         self.role = newrole
         newrole(self)
         
+        self.output.scroll_mark_onscreen(self.output.get_buffer().get_mark("end"))
+        
         self.network = network
         self.id = id
-        
-        return self
         
     def set_id(self, id):
         self.__id = id
