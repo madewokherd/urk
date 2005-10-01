@@ -97,9 +97,7 @@ def urk_about(action):
     about.show_all()
         
 class Window(gtk.VBox):
-    def mutate(self, newrole, data):
-        network, id = data
-        
+    def mutate(self, newrole, network, id):
         for child in self.get_children():
             self.remove(child)
             
