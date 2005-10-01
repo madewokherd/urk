@@ -265,7 +265,7 @@ class TextInput(gtk.Entry):
         
         eat = set([up, down, tab])
                 
-        def check_history_explore(widget, event):
+        def keypress(widget, event):
             if event.keyval == up:
                 widget.history_explore(1)
                 
@@ -287,7 +287,7 @@ class TextInput(gtk.Entry):
             
             return event.keyval in eat
 
-        self.connect("key-press-event", check_history_explore)
+        self.connect("key-press-event", keypress)
         
 def prop_to_gtk(prop, val):
     if val == parse_mirc.BOLD:
@@ -525,15 +525,7 @@ class WindowLabel(gtk.EventBox):
         self.add(self.label)
         
         self.update()
-        
-class WindowLedge(gtk.VBox):
-    def __init__(self, window):
-        gtk.VBox.__init__(self)
-        self.child = window
-        
-        self.add(self.child)
-        self.show()
-        
+
 class WindowListTabs(gtk.Notebook):
     def get_active(self):
         return self.get_nth_page(self.get_current_page())
@@ -554,20 +546,6 @@ class WindowListTabs(gtk.Notebook):
         
     def remove(self, window):
         self.remove_page(self.page_num(window))
-        
-    """def swap(self, window1, window2):
-        for window_ledge in self:
-            if window_ledge.child is window1:
-                window_ledge.remove(window1)
-                
-                window_ledge.child = window2
-                window_ledge.add(window_ledge.child)
-                
-                self.set_tab_label(window_ledge, window2.title)
-                
-                ui.register_idle(window2.focus)
-                
-                break"""
 
     def __init__(self):
         gtk.Notebook.__init__(self)
@@ -582,6 +560,7 @@ class WindowListTabs(gtk.Notebook):
         
         def window_change(self, wptr, page_num):
             events.trigger("Active", self.get_nth_page(page_num))
+
         self.connect("switch-page", window_change)
     
     def __iter__(self):
