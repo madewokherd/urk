@@ -51,7 +51,7 @@ def onKeypress(e):
         recent_completion[:] = []
 
 def onActive(window):
-    recent_completion = []
+    recent_completion[:] = []
 
 #the most list of possibilities, search string, text before search string, text after
 recent_completion = []
