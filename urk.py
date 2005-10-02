@@ -7,12 +7,16 @@ import inspect
 import os
 
 #add ~/.urk and path (normally where urk.py is located) to sys.path
-def path(filename):
+def path(filename=""):
     urkpath = os.path.dirname(inspect.getfile(sys.modules[__name__]))
 
     return os.path.join(urkpath, filename)
 
-sys.path = [os.path.join(os.path.expanduser("~"),".urk"),".",path] + sys.path
+sys.path = [
+    os.path.join(os.path.expanduser("~"),".urk"),
+    ".",
+    path()
+    ] + sys.path
 
 import events
 
