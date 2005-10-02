@@ -5,15 +5,12 @@ def update_nicks(network, channel):
     # this sucks
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
-    def prefix(nick, pre=""):
-        modes = channel.nicks[nick]
-        
-        for pos, mode in enumerate(fr):
-            if mode in modes:
-                pre = to[pos]
+    def prefix(nick, prefix=""):
+        for mode, prefix in zip(fr, to):
+            if mode in channel.nicks[nick]:
                 break
 
-        return "%s%s" % (pre, nick)
+        return "%s%s" % (prefix, nick)
     
     def status(nick):
         modes = channel.nicks[nick]
@@ -22,7 +19,8 @@ def update_nicks(network, channel):
 
     nicklist = [prefix(nick) for nick in sorted(channel.nicks, key=status)]
     
-    for window in ui.get_window_for(network=network, role=ui.ChannelWindow, id=channel.name):
+    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
+    if window:
         window.set_nicklist(nicklist)
 
 def setupSocketConnect(e):
@@ -169,6 +167,8 @@ def setupMode(e):
         update_nicks(e.network, channel)
 
 def postNick(e):
+ # FIXME:
+ if e.network.status:
     for channame in e.network.channels:
         channel = getchan(e.network,channame)
         if e.source in channel.nicks:
