@@ -112,7 +112,7 @@ class Window(gtk.VBox):
             self.remove(child)
             
         self.role = newrole
-        newrole(self)
+        self.role(self)
         
         self.output.scroll_mark_onscreen(self.output.get_buffer().get_mark("end"))
         
@@ -143,6 +143,9 @@ class Window(gtk.VBox):
         
     activity = property(get_activity, set_activity)
     
+    def focus(self):
+        pass
+    
     def activate(self):
         windows.manager.set_active(self)
         self.focus()
@@ -150,10 +153,7 @@ class Window(gtk.VBox):
     def close(self):
         events.trigger("Close", self)
         windows.remove(self)
-        
-    def focus(self):
-        pass
-    
+
     def __init__(self, network, id):
         gtk.VBox.__init__(self, False)
         
@@ -163,20 +163,12 @@ class Window(gtk.VBox):
         self.__activity = 0
         
         self.title = widgets.WindowLabel(self)
-        self.title.show_all()
         
 StatusWindow = windows.StatusWindow
 QueryWindow = windows.QueryWindow
 ChannelWindow = windows.ChannelWindow
   
-class WindowTabs(list):     
-    def swap(self, window1, window2):
-        pos = self.index(window1)
-        
-        self[pos] = window2
-        
-        self.manager.swap(window1, window2)
-  
+class Windows(list):     
     def new(self, role, network, id):
         w = self.get(role, network, id)
         
@@ -189,12 +181,12 @@ class WindowTabs(list):
               
         return w
         
-    def get(self, r, network, id):
+    def get(self, role, network, id):
         if network:
             id = network.norm_case(id)
             
         for w in self:
-            if (w.role, w.network, w.id) == (r, network, id):
+            if (w.role, w.network, w.id) == (role, network, id):
                 return w
 
     def append(self, window):
@@ -236,15 +228,13 @@ class UrkUI(gtk.Window):
         self.move(*xy)
         self.set_default_size(*wh)
         
-        def connect_save():
-            def save_xywh(*args):
-                conf.set("xy", self.get_position())
-                conf.set("wh", self.get_size())
-            self.connect("configure_event", save_xywh)
-        register_idle(connect_save)
+        def save_xywh(*args):
+            conf.set("xy", self.get_position())
+            conf.set("wh", self.get_size())
+        self.connect("configure_event", save_xywh)
         
         menus = (
-            ("FileMenu", None, "_File"),
+            ("urkMenu", None, "_urk"),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, self.exit),
         
             ("HelpMenu", None, "_Help"),
@@ -257,19 +247,29 @@ class UrkUI(gtk.Window):
         ui_manager = gtk.UIManager()        
         ui_manager.insert_action_group(actions, 0)
         
-        self.add_accel_group(ui_manager.get_accel_group())
-        ui_manager.add_ui_from_file(urk.path("ui.xml"))
-        
-        menu = ui_manager.get_widget("/MenuBar")
+        ui_manager.add_ui_from_string(
+            """
+            <ui>
+                <menubar name="MenuBar">
+                    <menu action="urkMenu">
+                        <menuitem action="Quit"/>
+                    </menu>
+                
+                    <menu action="HelpMenu">
+                        <menuitem action="About"/>
+                    </menu>
+                </menubar>
+            </ui>
+            """)
 
         # widgets
         box = gtk.VBox(False)
-        box.pack_start(menu, expand=False)
+        box.pack_start(ui_manager.get_widget("/MenuBar"), expand=False)
         box.pack_end(windows.manager)
 
         self.add(box)
         self.show_all()
-        
+
 def get_window_for(role=None, network=None, id=None):
     if network and id:
         id = network.norm_case(id)
@@ -304,7 +304,7 @@ def start():
         ui.exit()
     
 # build our tab widget
-windows = WindowTabs()
+windows = Windows()
 
 # build our overall UI
 ui = UrkUI()
