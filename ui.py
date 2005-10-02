@@ -98,6 +98,8 @@ def urk_about(action):
         
 class Window(gtk.VBox):
     def mutate(self, newrole, network, id):
+        self.hide()
+    
         for child in self.get_children():
             self.remove(child)
             
@@ -135,6 +137,7 @@ class Window(gtk.VBox):
     
     def activate(self):
         windows.manager.set_active(self)
+        self.focus()
     
     def close(self):
         events.trigger("Close", self)
@@ -271,10 +274,11 @@ def get_window_for(role=None, network=None, id=None):
             yield w
             
 def get_default_window(network):
-    # There can be only one...
     window = windows.manager.get_active()
     if window.network == network:
         return window
+
+    # There can be only one...
     for window in get_window_for(network=network):
         return window
 
