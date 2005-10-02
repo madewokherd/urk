@@ -27,7 +27,7 @@ def parse_irc(msg, server):
     # loop through the msg until we find the :blah token
     # once we do, remove it and join the rest of the tokens up as a sentence
     for i, token in enumerate(msg):
-        if token and token[0] == ":":
+        if token.startswith(":"):
             msg = msg[:i] + [" ".join([token[1:]] + msg[i+1:])]
             break
     
@@ -38,32 +38,13 @@ def parse_irc(msg, server):
     #       as far as we've tested, which seems to be the goal
 
 class Network:
-    socket = None               # this network's socket
-    source_id = None         # the id used to disable our callback
-    
-    buffer = ''              # data we've received but not processed yet
-    
-    import getpass
+    # desired nicknames
     try:
-        nick = conf.get("nick") or getpass.getuser()
+        import getpass
+        nicks = (conf.get("nick") or getpass.getuser(),)
+        del getpass
     except:
-        nick = "mrurk"
-    nicks = [nick]    # desired nicknames
-    del getpass
-
-    fullname = ""               # our full name
-    
-    server = None
-    port = 6667
-    password = ''
-    
-    status = DISCONNECTED
-    name = ''
-    
-    me = ''                     # my nickname
-    channels = None             # dictionary of channels we're on on this network
-    
-    channel_prefixes = '&#+$'   # from rfc2812
+        nicks = ("mrurk",)
     
     def __init__(self, server="irc.default.org", port=6667, nicks=[], fullname=""):
         self.server = server
@@ -73,6 +54,7 @@ class Network:
         self.me = self.nicks[0]
         
         self.fullname = fullname or "urk user"
+        self.password = ''
         
         self.isupport = {
             'NETWORK': server, 
@@ -80,6 +62,11 @@ class Network:
             'CHANMODES': 'b,k,l,imnpstr',
         }
         self.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
+        
+        self.status = DISCONNECTED
+        self.channel_prefixes = '&#+$'   # from rfc2812
+        
+        self.buffer = ''
     
     #called when socket.open() returns
     def on_connect(self, result, error):
@@ -103,9 +90,9 @@ class Network:
         elif not result:
             self.disconnect(error="Connection closed by remote host")
         else:
-            self.buffer = self.buffer + result
+            self.buffer += result
             
-            lines, self.buffer = self.buffer.rsplit("\r\n",1)
+            lines, self.buffer = self.buffer.rsplit("\r\n", 1)
             
             for line in lines.split('\r\n'):
                 if DEBUG:
