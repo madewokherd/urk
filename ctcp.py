@@ -44,7 +44,7 @@ def defCommand(e):
             e.done = True
 
 def setupText(e):
-    if e.text[0] == '\x01' and e.text[-1] == '\x01':
+    if e.text.startswith('\x01') and e.text.endswith('\x01'):
         e_data = copy.copy(e)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')

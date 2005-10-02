@@ -39,8 +39,7 @@ def parse_irc(msg, server):
 
 class Network:
     socket = None               # this network's socket
-    socket_id = None            # the list of id's used to disable our callbacks
-    writeable_id = None         # the id used to disable the on_writeable cb
+    source_id = None         # the id used to disable our callback
     
     buffer = ''              # data we've received but not processed yet
     
@@ -72,9 +71,9 @@ class Network:
         
         self.nicks = nicks or list(self.nicks)
         self.me = self.nicks[0]
-            
+        
         self.fullname = fullname or "urk user"
-
+        
         self.isupport = {
             'NETWORK': server, 
             'PREFIX': '(ohv)@%+',
@@ -82,70 +81,40 @@ class Network:
         }
         self.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
     
-    #called when we can write to the socket
-    def on_writeable(self):
-        #test the socket for writeability--we might be disconnected
-        try:
-            self.socket.send('')
-        except socket.error, (number, detail):
-            self.disconnect(error=detail)
-            return True
-        except:
-            self.disconnect(error="Network error!")
-            return True
+    #called when socket.open() returns
+    def on_connect(self, result, error):
+        if error:
+            self.disconnect(error=error[1])
+        else:
+            self.status = INITIALIZING
             
-        self.status = INITIALIZING
-        
-        ui.unregister(self.writeable_id)
-        self.writeable_id = None
+            e_data = events.data()
+            e_data.network = self
+            events.trigger('SocketConnect', e_data)
+            
+            self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
     
-        e_data = events.data()
-        e_data.network = self
-        events.trigger('SocketConnect', e_data)
-        
-        return True
-    
-    #called when we can read from the socket
-    def on_readable(self):
-        reply = self.socket.recv(8192)
-        
-        if reply:
-            self.buffer = self.buffer + reply
+    #called when we read data or failed to read data
+    def on_read(self, result, error):
+        if error:
+            print error[0]
+            print error.args
+            self.disconnect(error=error[1])
+        elif not result:
+            self.disconnect(error="Connection closed by remote host")
+        else:
+            self.buffer = self.buffer + result
             
             lines, self.buffer = self.buffer.rsplit("\r\n",1)
             
             for line in lines.split('\r\n'):
                 if DEBUG:
                     print "<<< %s" % line
+        
+                self.got_msg(line)            
+            
+            self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
 
-                self.got_msg(line)
-        else:
-            try:
-                self.socket.send('')
-            except socket.error, (number, detail):
-                self.disconnect(error=detail)
-            self.disconnect(error="Network error!")
-        
-        return True
-        
-    #called when there's a socket error
-    def on_error(self):
-        #we should get the error from the socket so we can report it, but I
-        # don't know how!
-        try:
-            self.socket.send('')
-        except socket.error, (number, detail):
-            self.disconnect(error=detail)
-        self.disconnect(error="Network error!")
-        
-        return True
-        
-    #called when the socket is disconnected
-    def on_disconnect(self):
-        self.disconnect()
-        
-        return True
-        
     def raw(self, msg):
         if DEBUG:
             print ">>> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
@@ -179,20 +148,9 @@ class Network:
         if not self.status:
             self.status = CONNECTING
             self.socket = socket.socket()
-            self.socket.settimeout(0)
             
-            self.writeable_id = ui.register_io(self.on_writeable,self.socket,ui.IO_OUT)
-            self.socket_id = (
-                ui.register_io(self.on_readable,self.socket,ui.IO_IN),
-                ui.register_io(self.on_error,self.socket,ui.IO_ERR),
-                ui.register_io(self.on_disconnect,self.socket,ui.IO_HUP),
-                )
-            
-            try:
-                self.socket.connect((self.server, self.port))
-            except socket.error:
-                #this is probably telling us we're not connected just yet
-                pass
+            self.source_id = \
+                ui.fork(self.on_connect, self.socket.connect, (self.server, self.port))
             
             e_data = events.data()
             e_data.network = self
@@ -201,13 +159,9 @@ class Network:
     def disconnect(self, error=None):
         self.socket.close()
 
-        if self.writeable_id:
-            ui.unregister(self.writeable_id)
-            self.writeable_id = None
-        if self.socket_id:
-            for socket_id in self.socket_id:
-                ui.unregister(socket_id)
-                self.socket_id = None
+        if self.source_id:
+            ui.unregister(self.source_id)
+            self.source_id = None
         
         self.socket = None
         

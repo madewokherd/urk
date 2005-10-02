@@ -1,5 +1,6 @@
 import sys #only needed for the stupid workaround
 import os
+import thread
 
 import gobject
 
@@ -18,24 +19,12 @@ import events
 import parse_mirc
 import __main__ as urk
 
-# IO Type Constants
-IO_IN = gobject.IO_IN
-IO_OUT = gobject.IO_OUT
-IO_PRI = gobject.IO_PRI
-IO_ERR = gobject.IO_ERR
-IO_HUP = gobject.IO_HUP
-
 # Priority Constants
 PRIORITY_HIGH = gobject.PRIORITY_HIGH
 PRIORITY_DEFAULT = gobject.PRIORITY_DEFAULT
 PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
 PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
 PRIORITY_LOW = gobject.PRIORITY_LOW
-
-def register_io(f, fd, condition, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
-    def callback(source, cb_condition):
-        return f(*args, **kwargs)
-    return gobject.io_add_watch(fd, condition, callback, priority=priority)
 
 def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
     def callback():
@@ -47,8 +36,27 @@ def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
         return f(*args, **kwargs)
     return gobject.timeout_add(time, callback, priority=priority)
 
+def fork(cb, f, *args, **kwargs):
+    is_stopped = [False]
+    def thread_func():
+        result = error = None
+        try:
+            result = f(*args, **kwargs)
+        except Exception, e:
+            error = e
+        if not is_stopped[0]:
+            def callback():
+                if not is_stopped[0]:
+                    cb(result, error)
+            gobject.idle_add(callback)
+    thread.start_new_thread(thread_func, ())
+    return is_stopped
+
 def unregister(tag):
-    gobject.source_remove(tag)
+    if isinstance(tag, list):
+        tag[0] = True
+    else:
+        gobject.source_remove(tag)
     
 set_style = widgets.set_style
 
