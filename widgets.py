@@ -300,24 +300,15 @@ def prop_to_gtk(prop, val):
         return prop, val
         
 def word_from_pos(text, pos):
-    if text[pos] != " ":
-        fr = to = 0
-        for word in text.split(" "):
-            to += len(word)
-            
-            if fr <= pos < to:
-                break
-            
-            fr += len(word)
-            
-            fr += 1
-            to += 1
-
-        return word, fr, to
-        
-    else:
+    if text[pos] == " ":
         return "", 0, 0
-        
+
+    else:
+        fr = text[:pos].split(" ")[-1]
+        to = text[pos:].split(" ")[0]
+
+        return fr + to, pos - len(fr), pos + len(to)
+ 
 def get_iter_at_event(view, event):
     x, y = event.get_coords()       
     x, y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
@@ -468,10 +459,9 @@ class TextOutput(gtk.TextView):
         self.set_property("indent", 0)
 
         self.linking = set()
-        
-        # self.props.events |= gtk.gdk.POINTER_MOTION_HINT_MASK  (pygtk 2.8)
-        self.set_property("events", 
-            self.get_property("events") | gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.LEAVE_NOTIFY_MASK
+
+        self.add_events(
+            gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.LEAVE_NOTIFY_MASK
             )
         
         self.connect("motion-notify-event", self.hover)
@@ -487,18 +477,18 @@ class TextOutput(gtk.TextView):
         self.connect("realize", set_cursor)
 
 class WindowLabel(gtk.EventBox):
+    activity_markup = {
+        HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+        TEXT: "<span foreground='red'>%s</span>",
+        EVENT: "<span foreground='#363'>%s</span>",
+        }
+        
     def update(self):
-        activity_markup = {
-            ui.HILIT: "<span style='italic' foreground='#00F'>%s</span>",
-            ui.TEXT: "<span foreground='red'>%s</span>",
-            ui.EVENT: "<span foreground='#363'>%s</span>",
-            }
-            
         title = str(self)
     
         for a_type in (ui.HILIT, ui.TEXT, ui.EVENT):
             if self.win.activity & a_type:
-                title = activity_markup[a_type] % title
+                title = self.activity_markup[a_type] % title
                 break
             
         self.label.set_markup(title)
@@ -510,7 +500,9 @@ class WindowLabel(gtk.EventBox):
             
             c_data.menu += [None, ("Close", gtk.STOCK_CLOSE, self.win.close)]
             
-            menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+            menu_from_list(
+                c_data.menu
+                ).popup(None, None, None, event.button, event.time)
             
     def __str__(self):
         return self.win.get_title()
@@ -525,6 +517,7 @@ class WindowLabel(gtk.EventBox):
         self.add(self.label)
         
         self.update()
+        self.show_all()
 
 class WindowListTabs(gtk.Notebook):
     def get_active(self):
