@@ -27,7 +27,7 @@ def get_default_transfer_text(self):
             
     return def_f
 
-def StatusWindow(self, output=None, input=None):
+def StatusWindow(self):
     def get_title():
         # Something about self.network.isupport
         if self.network.status:
@@ -77,7 +77,7 @@ def StatusWindow(self, output=None, input=None):
     
     return self
      
-def QueryWindow(self, output=None, input=None):
+def QueryWindow(self):
     StatusWindow(self)
 
     def get_title():
@@ -86,7 +86,7 @@ def QueryWindow(self, output=None, input=None):
     
     return self
 
-def ChannelWindow(self, output=None, input=None):
+def ChannelWindow(self):
     self.focus = get_default_focus(self)
     self.write = get_default_write(self)
 
@@ -122,21 +122,19 @@ def ChannelWindow(self, output=None, input=None):
     self.nicklist = ui.widgets.Nicklist(self)
     pane.pack2(self.nicklist, resize=False, shrink=True)
 
-    def set_pane_pos():
+    def setup_pane():
         pane.set_position(
             pane.get_property("max-position") - (conf.get("ui-gtk/nicklist-width") or 0)
             )
-    ui.register_idle(set_pane_pos)
-
-    def connect_save():
+    
         def save_nicklist_width(pane, event):
             conf.set(
                 "ui-gtk/nicklist-width", 
                 pane.get_property("max-position") - pane.get_position()
                 )
-    
-        pane.connect("size-request", save_nicklist_width)
-    ui.register_idle(connect_save)
+
+        pane.connect_after("size-allocate", save_nicklist_width)
+    ui.register_idle(setup_pane)
     
     self.pack_start(pane)
 
