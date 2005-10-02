@@ -113,25 +113,25 @@ class Network:
         self.socket.send(msg + "\r\n")
         
     def got_msg(self, msg):
-        e_data = events.data()
-        e_data.rawmsg = msg
-        e_data.msg = parse_irc(msg, self.server)
-        e_data.text = e_data.msg[-1]
-        e_data.network = self
-        e_data.window = ui.get_default_window(self)
+        pmsg = parse_irc(msg, self.server)
+    
+        e_data = events.data(
+                    msg=pmsg,
+                    text=pmsg[-1],
+                    network=self,
+                    window=ui.get_default_window(self)
+                    )
         
-        source = e_data.msg[0].split('!')
-        e_data.source = source[0]
-        
-        if len(source) > 1:
-            e_data.address = source[1]
+        if "!" in pmsg[0]:
+            e_data.source, e_data.address = pmsg[0].split('!')
+            
         else:
-            e_data.address = ''
+            e_data.source, e_data.address = pmsg[0], ''
         
-        if len(e_data.msg) > 2:
-            e_data.target = e_data.msg[2]
+        if len(pmsg) > 2:
+            e_data.target = pmsg[2]
         else:
-            e_data.target = e_data.msg[-1]
+            e_data.target = pmsg[-1]
         
         events.trigger('Raw', e_data)
     
@@ -159,19 +159,20 @@ class Network:
         self.status = DISCONNECTED
         
         #note: connecting from onDisconnect is probably a Bad Thing
-        e_data = events.data()
-        e_data.network = self
-        e_data.error = error
-        events.trigger('Disconnect', e_data)
+        events.trigger(
+            'Disconnect', 
+            events.data(network=self, error=error)
+            )
         
         #trigger a nick change if the nick we want is different from the one we
         # had.
         if self.me != self.nicks[0]:
-            e_data = events.data()
-            e_data.network = self
-            e_data.window = ui.get_default_window(self)
-            e_data.source = self.me
-            e_data.newnick = self.nicks[0]
+            e_data = events.data(
+                        network=self,
+                        window=ui.get_default_window(self),
+                        source=self.me,
+                        newnick=self.nicks[0]
+                        )
             events.trigger('Nick', e_data)
             self.me = self.nicks[0]
         
@@ -201,20 +202,24 @@ class Network:
         
     def msg(self, target, msg):
         self.raw("PRIVMSG %s :%s" % (target, msg))
-        e_data = events.data()
-        e_data.source = self.me
-        e_data.target = str(target)
-        e_data.text = msg
-        e_data.network = self
-        e_data.window = ui.get_default_window(self)
+        
+        e_data = events.data(
+                    source=self.me,
+                    target=str(target),
+                    text=msg,
+                    network=self,
+                    window=ui.get_default_window(self)
+                    )
         events.trigger('OwnText', e_data)
 
     def notice(self, target, msg):
         self.raw("NOTICE %s :%s" % (target, msg))
-        e_data = events.data()
-        e_data.source = self.me
-        e_data.target = str(target)
-        e_data.text = msg
-        e_data.network = self
-        e_data.window = ui.get_default_window(self)
+        
+        e_data = events.data(
+                    source=self.me,
+                    target=str(target),
+                    text=msg,
+                    network=self,
+                    window=ui.get_default_window(self)
+                    )
         events.trigger('OwnNotice', e_data)
