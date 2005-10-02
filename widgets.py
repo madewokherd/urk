@@ -557,10 +557,11 @@ class WindowListTabs(gtk.Notebook):
             self.set_property("tab-pos", gtk.POS_TOP)
 
         self.set_scrollable(True)
+        self.set_property("can-focus", False)
         
         def window_change(self, wptr, page_num):
             events.trigger("Active", self.get_nth_page(page_num))
-
+            
         self.connect("switch-page", window_change)
     
     def __iter__(self):
