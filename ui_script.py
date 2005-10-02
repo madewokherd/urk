@@ -12,8 +12,6 @@ def onActive(w):
         title = "%s - %s" % (w.network.me, w.title)
     
     ui.set_title("%s - urk" % title)
-    
-    ui.register_idle(w.focus)
 
 def onNick(e):
     if e.source == e.network.me:
