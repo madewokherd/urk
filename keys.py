@@ -62,7 +62,8 @@ if "recent_speakers" not in globals():
 def onSocketConnect(e):
     recent_speakers[e.network] = {}
 def onDisconnect(e):
-    del recent_speakers[e.network]
+    if e.network in recent_speakers:
+        del recent_speakers[e.network]
 
 def onJoin(e):
     if e.source == e.network.me:
