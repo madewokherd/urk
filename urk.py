@@ -40,7 +40,7 @@ ui_module[0].close()
 
 name = "urk"
 long_name = "urk IRC"
-version = 0, -1, 3
+version = 0, -1, 4
 long_version = "%s v%s" % (long_name, ".".join(str(x) for x in version))
 website = "http://urk.sf.net/"
 authors = ["Vincent Povirk", "Marc Liddell"]
