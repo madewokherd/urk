@@ -10,51 +10,61 @@ shortcuts = {
     '^l': '\x04',
     '^o': '\x0F',
     }
+  
+def completer(window):
+    network = window.network
+    i = window.input
+
+    left, right = i.text[:i.cursor], i.text[i.cursor:]
+            
+    text = left.split(' ')[-1]
+    
+    suffix = (left==text) and ': ' or ' '
+    
+    insert_text = "%s%s%s%s" % (left[:-len(text)], "%s", suffix, right)
+    cursor_pos = len(left[:-len(text)] + suffix)
+
+    candidates = recent_speakers[network][window.id] + \
+                    chaninfo.nicks(network, window.id)
+
+    result = []       
+    for nick in candidates:
+        if network.norm_case(nick).startswith(network.norm_case(text))\
+                and nick not in result and chaninfo.ison(network, window.id, nick):
+            result.append((insert_text % nick, cursor_pos + len(nick)))
+                
+    result.append((i.text, i.cursor))
+            
+    while True:
+        for text, cursor in result:
+            i.text, i.cursor = text, cursor
+            yield None
+            
+#the most list of possibilities, search string, text before search string, text after
+recent_completer = None
 
 def onKeypress(e):
+    global recent_completer
+
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
     elif e.key == '^t':
         events.run_command('server -n',e.window,e.window.network)
     elif e.key == 'Tab' and e.window.role == ui.ChannelWindow and \
             chaninfo.ischan(e.window.network, e.window.id):
-        i = e.window.input
-        network = e.window.network
-        if not i.selection:
-            if recent_completion:
-                result, left, text, right = recent_completion
-            else:
-                text = i.text[:i.cursor]
-                if ' ' in text:
-                    left, text = text.rsplit(' ', 1)
-                    left += ' '
-                else:
-                    left = ''
-                right = i.text[i.cursor:]
-                candidates = recent_speakers[network][e.window.id] + \
-                    chaninfo.nicks(network, e.window.id)
-                result = []
-                for nick in candidates:
-                    if network.norm_case(nick).startswith(network.norm_case(text))\
-                            and nick not in result and chaninfo.ison(network, e.window.id, nick):
-                        result.append(nick)
-            if result:
-                suffix = left and ' ' or ': '
-                i.text = left+result[0]+suffix+right
-                i.cursor = len(left+result[0]+suffix)
-                recent_completion[:] = result[1:], left, text, right
-            else:
-                i.text = left+text+right
-                i.cursor = len(left+text)
-                recent_completion[:] = []
+
+        if not recent_completer:
+            recent_completer = completer(e.window)
+
+        recent_completer.next()
+            
     if e.key != 'Tab':
-        recent_completion[:] = []
+        recent_completer = None
 
 def onActive(window):
-    recent_completion[:] = []
-
-#the most list of possibilities, search string, text before search string, text after
-recent_completion = []
+    global recent_completer
+    
+    recent_completer = None
 
 #keep track of who recently spoke on each channel
 if "recent_speakers" not in globals():
@@ -79,7 +89,15 @@ def onKick(e):
         leftChan(e.network, e.channel)
 
 def onText(e):
-    nicklist = recent_speakers[e.network].get(e.network.norm_case(e.target))
-    if nicklist is not None:
-        nicklist[:] = [e.source] + [nick for nick in nicklist if nick != e.source and chaninfo.ison(e.network, e.target, nick)]
+    if chaninfo.ischan(e.network, e.target):
+        channel = e.network.norm_case(e.target)
+    
+        if channel not in recent_speakers[e.network]:
+            recent_speakers[e.network][channel] = []
+
+        for nick in recent_speakers[e.network][channel]:
+            if nick == e.source or not chaninfo.ison(e.network, e.target, nick):
+                recent_speakers[e.network][channel].remove(nick)
+
+        recent_speakers[e.network][channel].insert(0, e.source)
 onAction = onText
