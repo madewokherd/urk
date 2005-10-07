@@ -36,7 +36,7 @@ def onKeypress(e):
                 result = []
                 for nick in candidates:
                     if network.norm_case(nick).startswith(network.norm_case(text))\
-                            and nick not in result:
+                            and nick not in result and chaninfo.ison(network, e.window.id, nick):
                         result.append(nick)
             if result:
                 suffix = left and ' ' or ': '
@@ -69,6 +69,7 @@ def onJoin(e):
         recent_speakers[e.network][e.network.norm_case(e.target)] = []
 def leftChan(network, channel):
     del recent_speakers[network][network.norm_case(channel)]
+
 def onPart(e):
     if e.source == e.network.me:
         leftChan(e.network, e.target)
@@ -79,5 +80,5 @@ def onKick(e):
 def onText(e):
     nicklist = recent_speakers[e.network].get(e.network.norm_case(e.target))
     if nicklist is not None:
-        nicklist[:] = [e.source] + [nick for nick in nicklist if nick != e.source]
+        nicklist[:] = [e.source] + [nick for nick in nicklist if nick != e.source and chaninfo.ison(e.network, e.target, nick)]
 onAction = onText
