@@ -40,7 +40,7 @@ def completer(window):
             i.text, i.cursor = text, cursor
             yield None
             
-#the most list of possibilities, search string, text before search string, text after
+#generator--use recent_completer.next() to continue cycling through nicks
 recent_completer = None
 
 def onKeypress(e):

@@ -5,12 +5,11 @@ def update_nicks(network, channel):
     # this sucks
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
-    def prefix(nick, prefix=""):
+    def prefix(nick):
         for mode, prefix in zip(fr, to):
             if mode in channel.nicks[nick]:
-                break
-
-        return "%s%s" % (prefix, nick)
+                return prefix+nick
+        return nick
     
     def status(nick):
         modes = channel.nicks[nick]
@@ -85,7 +84,7 @@ def setupJoin(e):
     #if we wanted to be paranoid, we'd account for not being on the channel
     channel = getchan(e.network,e.target)
     channel.nicks[e.source] = ''
-    channel.normal_nicks[e.network.norm_case(e.source)] = channel.nicks[e.source]
+    channel.normal_nicks[e.network.norm_case(e.source)] = e.source
     
     update_nicks(e.network, channel)
 
