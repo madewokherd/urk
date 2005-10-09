@@ -17,9 +17,9 @@ def path(filename=""):
 
 sys.path = [
     os.path.join(os.path.expanduser("~"), ".urk"),
-    os.path.join(os.path.expanduser("~"), ".urk/scripts"),
+    os.path.join(os.path.expanduser("~"), ".urk", "scripts"),
     ".",
-    "./scripts",
+    os.path.join(".", "scripts"),
     path(),
     path("scripts")
     ] + sys.path
