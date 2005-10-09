@@ -16,8 +16,8 @@ def path(filename=""):
         return urkpath
 
 sys.path = [
-    os.path.expanduser("~/.urk"),
-    os.path.expanduser("~/.urk/scripts"),
+    os.path.join(os.path.expanduser("~"), ".urk"),
+    os.path.join(os.path.expanduser("~"), ".urk/scripts"),
     ".",
     "./scripts",
     path(),
@@ -40,7 +40,11 @@ def main():
     for script_path in set(sys.path[1:6:2]):
         try:
             for script in os.listdir(script_path):
-                events.load(script)
+                for suffix in imp.get_suffixes():
+                    if script.endswith(suffix[0]):
+                        events.load(script)
+                        break
+                    
         except OSError:
             pass
 
