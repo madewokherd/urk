@@ -74,8 +74,6 @@ def StatusWindow(self):
     self.pack_end(botbox, expand=False)
 
     self.show_all()
-    
-    return self
      
 def QueryWindow(self):
     StatusWindow(self)
@@ -83,8 +81,6 @@ def QueryWindow(self):
     def get_title():
         return ui.Window.get_title(self)
     self.get_title = get_title
-    
-    return self
 
 def ChannelWindow(self):
     self.focus = get_default_focus(self)

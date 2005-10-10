@@ -154,14 +154,17 @@ class Window(gtk.VBox):
         events.trigger("Close", self)
         windows.remove(self)
 
-    def __init__(self, network, id):
+    def __init__(self, role, network, id):
         gtk.VBox.__init__(self, False)
         
+        self.role = role
         self.network = network
         self.__id = id
         
         self.__activity = 0
         
+        self.role(self)
+ 
         self.title = widgets.WindowLabel(self)
         
 StatusWindow = windows.StatusWindow
@@ -173,12 +176,10 @@ class Windows(list):
         w = self.get(role, network, id)
         
         if not w:
-            w = Window(network, id)
-            w.role = role
-            w.role(w)
-            
+            w = Window(role, network, id)
             self.append(w)
-              
+
+        w.activate()              
         return w
         
     def get(self, role, network, id):
@@ -292,7 +293,7 @@ def get_default_window(network):
 
 def start():
     if not windows:
-        windows.new(StatusWindow, irc.Network(), "status").activate()
+        windows.new(StatusWindow, irc.Network(), "status")
         
     #register_idle(ui.exit)
 

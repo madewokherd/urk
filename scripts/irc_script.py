@@ -211,7 +211,7 @@ def onCommandServer(e):
     new_window = ("n" in e.switches or "m" in e.switches)
     if new_window or not e.network:    
         e.network = irc.Network(**network_info)
-        ui.windows.new(ui.StatusWindow, e.network, "status").activate()
+        ui.windows.new(ui.StatusWindow, e.network, "status")
         
     if "server" in network_info:
         e.network.server = network_info["server"]
@@ -227,7 +227,8 @@ def onCommandServer(e):
             e.network.quit()
         e.network.connect()
         ui.get_default_window(e.network).write(
-            "* Connecting to %s on port %s" % (e.network.server, e.network.port))
+            "* Connecting to %s on port %s" % (e.network.server, e.network.port)
+            )
 
 #commands that we need to add a : to but otherwise can send unchanged
 #the dictionary contains the number of arguments we take without adding the :

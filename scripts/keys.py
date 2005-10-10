@@ -43,13 +43,18 @@ def completer(window):
 #generator--use recent_completer.next() to continue cycling through nicks
 recent_completer = None
 
-def onKeypress(e):
+def onKeyPress(e):
     global recent_completer
 
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
+
     elif e.key == '^t':
-        events.run_command('server -n',e.window,e.window.network)
+        def new_tab():
+            events.run_command('server -n', e.window, e.window.network)
+            
+        ui.register_idle(new_tab)
+
     elif e.key == 'Tab' and e.window.role == ui.ChannelWindow and \
             chaninfo.ischan(e.window.network, e.window.id):
 
@@ -57,7 +62,7 @@ def onKeypress(e):
             recent_completer = completer(e.window)
 
         recent_completer.next()
-            
+     
     if e.key != 'Tab':
         recent_completer = None
 

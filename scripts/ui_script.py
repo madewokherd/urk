@@ -31,7 +31,7 @@ def preJoin(e):
             window.focus()
             
         else:
-            ui.windows.new(ui.ChannelWindow, e.network, e.target).activate()
+            ui.windows.new(ui.ChannelWindow, e.network, e.target)
 
     e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
 

@@ -281,9 +281,13 @@ class TextInput(gtk.Entry):
             
             key += gtk.gdk.keyval_name(event.keyval)
             
-            e_data = events.data(key=key,string=event.string,window=self.win)
+            e_data = events.data(
+                        key=key,
+                        string=event.string,
+                        window=self.win
+                        )
             
-            events.trigger("Keypress", e_data)
+            events.trigger("KeyPress", e_data)
             
             return event.keyval in eat
 
@@ -291,13 +295,12 @@ class TextInput(gtk.Entry):
         
 def prop_to_gtk(prop, val):
     if val == parse_mirc.BOLD:
-        return prop, pango.WEIGHT_BOLD
+        val = pango.WEIGHT_BOLD
 
     elif val == parse_mirc.UNDERLINE:
-        return prop, pango.UNDERLINE_SINGLE
+        val = pango.UNDERLINE_SINGLE
         
-    else:
-        return prop, val
+    return prop, val
         
 def word_from_pos(text, pos):
     if text[pos] == " ":
@@ -498,7 +501,10 @@ class WindowLabel(gtk.EventBox):
             c_data = events.data(window=self.win, menu=[])
             events.trigger("WindowMenu", c_data)
             
-            c_data.menu += [None, ("Close", gtk.STOCK_CLOSE, self.win.close)]
+            c_data.menu += [
+                None,
+                ("Close", gtk.STOCK_CLOSE, self.win.close)
+                ]
             
             menu_from_list(
                 c_data.menu
@@ -515,7 +521,7 @@ class WindowLabel(gtk.EventBox):
         
         self.label = gtk.Label()        
         self.add(self.label)
-        
+
         self.update()
         self.show_all()
 
@@ -525,16 +531,15 @@ class WindowListTabs(gtk.Notebook):
         
     def set_active(self, window):
         self.set_current_page(self.page_num(window))
-       
+        
     def add(self, window):
-        pos = self.get_n_pages()
-        if window.network:
-            for i in reversed(range(pos)):
-                if self.get_nth_page(i).network == window.network:
-                    pos = i+1
-                    break
-
-        self.insert_page(window, None, pos)
+        for pos in reversed(range(self.get_n_pages())):
+            if self.get_nth_page(pos).network == window.network:
+                break
+        else:
+            pos = self.get_n_pages() - 1
+ 
+        self.insert_page(window, None, pos+1)   
         self.set_tab_label(window, window.title)
         
     def remove(self, window):
