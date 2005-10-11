@@ -2,6 +2,8 @@ import sys #only needed for the stupid workaround
 import os
 import thread
 
+import commands
+
 import gobject
 
 #stupid workaround
@@ -13,6 +15,7 @@ import pango
 
 import windows
 import widgets
+import servers
 import irc
 import conf
 import events
@@ -39,16 +42,18 @@ def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
 def fork(cb, f, *args, **kwargs):
     is_stopped = [False]
     def thread_func():
-        result = error = None
         try:
-            result = f(*args, **kwargs)
+            result, error = f(*args, **kwargs), None
         except Exception, e:
-            error = e
+            result, error = None, e
+            
         if not is_stopped[0]:
-            def callback():
+            def callback():           
                 if not is_stopped[0]:
                     cb(result, error)
+
             gobject.idle_add(callback)
+
     thread.start_new_thread(thread_func, ())
     return is_stopped
 
@@ -113,11 +118,13 @@ class Window(gtk.VBox):
             
         self.role = newrole
         self.role(self)
-        
-        self.output.scroll_mark_onscreen(self.output.get_buffer().get_mark("end"))
-        
+
         self.network = network
         self.id = id
+        
+        self.output.scroll_mark_onscreen(
+            self.output.get_buffer().get_mark("end")
+            )
         
     def set_id(self, id):
         self.__id = id
@@ -234,7 +241,8 @@ class UrkUI(gtk.Window):
         self.connect("configure_event", save_xywh)
         
         menus = (
-            ("urkMenu", None, "_urk"),
+            ("UrkMenu", None, "_urk"),
+            ("Servers", None, "_servers", "<control>S", None, servers.ServerWidget),
             ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, self.exit),
         
             ("HelpMenu", None, "_Help"),
@@ -251,7 +259,8 @@ class UrkUI(gtk.Window):
             """
             <ui>
                 <menubar name="MenuBar">
-                    <menu action="urkMenu">
+                    <menu action="UrkMenu">
+                        <menuitem action="Servers"/>
                         <menuitem action="Quit"/>
                     </menu>
                 
