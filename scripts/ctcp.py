@@ -1,6 +1,5 @@
 import time
 import events
-import copy
 
 import __main__ as urk
 import ui
@@ -45,7 +44,7 @@ def defCommand(e):
 
 def setupText(e):
     if e.text.startswith('\x01') and e.text.endswith('\x01'):
-        e_data = copy.copy(e)
+        e_data = events.data(e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
@@ -55,7 +54,7 @@ def setupText(e):
 
 def setupNotice(e):
     if e.text[0] == '\x01' and e.text[-1] == '\x01':
-        e_data = copy.copy(e)
+        e_data = events.data(e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
@@ -75,7 +74,7 @@ def preCtcpReply(e):
 def defCtcp(e):
     if not e.done:
         if e.name == 'ACTION':
-            e_data = copy.copy(e)
+            e_data = events.data(**e.__dict__)
             e_data.text = ' '.join(e.args)
             events.trigger('Action', e_data)
             e.done = True

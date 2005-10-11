@@ -1,5 +1,3 @@
-import copy
-
 import events
 import conf
 import ui
@@ -73,8 +71,7 @@ def defRaw(e):
         elif e.msg[1] in ("376", "422"): #RPL_ENDOFMOTD
             if e.network.status == irc.INITIALIZING:
                 e.network.status = irc.CONNECTED
-                e_data = copy.copy(e)
-                events.trigger('Connect', e_data)
+                events.trigger('Connect', e)
             e.done = True
     
         elif e.msg[1] == "005": #RPL_ISUPPORT
