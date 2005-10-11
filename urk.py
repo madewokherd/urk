@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
 import imp
-import getopt
-import sys
-import inspect
 import os
+import sys
 
 #add ~/.urk and path (normally where urk.py is located) to sys.path
+urkpath = os.path.dirname(__file__)
 def path(filename=""):
-    urkpath = os.path.dirname(inspect.getfile(sys.modules[__name__]))
-    
     if filename:
         return os.path.join(urkpath, filename)
     else:
