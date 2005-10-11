@@ -44,7 +44,7 @@ def defCommand(e):
 
 def setupText(e):
     if e.text.startswith('\x01') and e.text.endswith('\x01'):
-        e_data = events.data(e.__dict__)
+        e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
@@ -54,7 +54,7 @@ def setupText(e):
 
 def setupNotice(e):
     if e.text[0] == '\x01' and e.text[-1] == '\x01':
-        e_data = events.data(e.__dict__)
+        e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
