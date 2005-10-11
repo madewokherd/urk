@@ -179,7 +179,6 @@ class Windows(list):
             w = Window(role, network, id)
             self.append(w)
 
-        w.activate()              
         return w
         
     def get(self, role, network, id):
@@ -293,7 +292,7 @@ def get_default_window(network):
 
 def start():
     if not windows:
-        windows.new(StatusWindow, irc.Network(), "status")
+        windows.new(StatusWindow, irc.Network(), "status").activate()
         
     #register_idle(ui.exit)
 

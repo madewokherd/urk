@@ -211,7 +211,7 @@ def onCommandServer(e):
     new_window = ("n" in e.switches or "m" in e.switches)
     if new_window or not e.network:    
         e.network = irc.Network(**network_info)
-        ui.windows.new(ui.StatusWindow, e.network, "status")
+        ui.windows.new(ui.StatusWindow, e.network, "status").activate()
         
     if "server" in network_info:
         e.network.server = network_info["server"]
