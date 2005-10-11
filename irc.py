@@ -109,8 +109,9 @@ class Network:
     def raw(self, msg):
         if DEBUG:
             print ">>> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
-    
-        self.socket.send(msg + "\r\n")
+        
+        if self.status >= INITIALIZING:
+            self.socket.send(msg + "\r\n")
         
     def got_msg(self, msg):
         pmsg = parse_irc(msg, self.server)
