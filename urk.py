@@ -12,11 +12,24 @@ def path(filename=""):
     else:
         return urkpath
 
+if os.access(path('profile'),os.F_OK) or os.path.expanduser("~") == "~":
+    userpath = path('profile')
+    if not os.access(userpath,os.F_OK):
+        os.mkdir(userpath)
+    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+        os.mkdir(os.path.join(userpath,'scripts'))
+else:
+    userpath = os.path.join(os.path.expanduser("~"), ".urk")
+    if not os.access(userpath,os.F_OK):
+        os.mkdir(userpath, 0700)
+    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+        os.mkdir(os.path.join(userpath,'scripts'), 0700)
+
 sys.path = [
-    os.path.join(os.path.expanduser("~"), ".urk"),
-    os.path.join(os.path.expanduser("~"), ".urk", "scripts"),
-    ".",
-    os.path.join(".", "scripts"),
+    userpath,
+    os.path.join(userpath, "scripts"),
+    os.curdir,
+    os.path.join(os.curdir, "scripts"),
     path(),
     path("scripts")
     ] + sys.path

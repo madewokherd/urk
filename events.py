@@ -252,13 +252,13 @@ def onCommandEdit(e):
     except ImportError:
         pass
     if not filename:
-        filename = os.path.join(sys.path[0],e.args[0])
+        import __main__ as urk
+        filename = os.path.join(urk.userpath,'scripts',e.args[0])
         if not filename.endswith('.py'):
             filename += ".py"
         open(filename,'a').close()
     import ui
     ui.open_file(filename)
-    del ui
 
 name = ''
 for name in globals():
