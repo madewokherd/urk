@@ -1,10 +1,11 @@
 import gtk
 import gtk.glade
 import conf
+import __main__ as urk
 
 class ServerWidget(gtk.Window):
     def __init__(self, action):
-        ui = gtk.glade.XML("servers.glade")
+        ui = gtk.glade.XML(urk.path("servers.glade"))
 
         network_list = gtk.ListStore(str)
         
