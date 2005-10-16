@@ -79,9 +79,6 @@ To see the current value, type
 
 Setting:            Description:
 
-'scripts_to_load'   A list of scripts urk should load on startup. Defaults to
-    ['script.py', 'theme.py', 'chaninfo.py', 'irc_events_us.py']
-
 'nick'              The nickname urk should use. Defaults to None (if this is
     set to None, urk tries to get a username from the os)
 
@@ -110,7 +107,7 @@ Not yet implemented.
 
 About scripting:
 
-urk scripts are python programs that contain definitions of functions with 
+urk scripts are python modules that contain definitions of functions with 
 certain "magic" names, like onText (for when someone sends a channel or private 
 message). See www.python.org for help on writing python code. The format for 
 onText is:
