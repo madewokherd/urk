@@ -1,7 +1,7 @@
 import socket
 import sys
 
-import conf
+from conf import conf
 import events
 import __main__ as urk
 import ui
@@ -45,7 +45,7 @@ class Network:
     # desired nicknames
     try:
         import getpass
-        nicks = (conf.get("nick") or getpass.getuser(),)
+        nicks = (conf["nick"] or getpass.getuser(),)
         del getpass
     except:
         nicks = ("mrurk",)
@@ -78,10 +78,8 @@ class Network:
             self.disconnect(error=error[1])
         else:
             self.status = INITIALIZING
-            
-            e_data = events.data()
-            e_data.network = self
-            events.trigger('SocketConnect', e_data)
+
+            events.trigger('SocketConnect', events.data(network=self))
             
             self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
     
@@ -141,12 +139,13 @@ class Network:
             self.status = CONNECTING
             self.socket = socket.socket()
             
-            self.source_id = \
-                ui.fork(self.on_connect, self.socket.connect, (self.server, self.port))
+            self.source_id = ui.fork(
+                                self.on_connect,
+                                self.socket.connect,
+                                (self.server, self.port)
+                                )
             
-            e_data = events.data()
-            e_data.network = self
-            events.trigger('Connecting', e_data)
+            events.trigger('Connecting', events.data(network=self))
     
     def disconnect(self, error=None):
         self.socket.close()
@@ -184,7 +183,7 @@ class Network:
         if self.status:
             try:
                 if msg == None:
-                    msg = conf.get('quitmsg')
+                    msg = conf['quitmsg']
                     if msg == None:
                         msg = "%s - %s" % (urk.long_version, urk.website)
                 self.raw("QUIT :%s" % msg)

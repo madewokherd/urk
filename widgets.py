@@ -3,7 +3,7 @@ import codecs
 import gtk
 import pango
 
-import conf
+from conf import conf
 import events
 import parse_mirc
 import ui
@@ -548,11 +548,10 @@ class WindowListTabs(gtk.Notebook):
     def __init__(self):
         gtk.Notebook.__init__(self)
         
-        tab_pos = conf.get("ui-gtk/tab-pos")
-        if tab_pos is not None:
-            self.set_property("tab-pos", tab_pos)
-        else:
-            self.set_property("tab-pos", gtk.POS_TOP)
+        tab_pos = conf["ui-gtk/tab-pos"]
+        if tab_pos is None:
+            tab_pos = gtk.POS_TOP
+        self.set_property("tab-pos", tab_pos)
 
         self.set_scrollable(True)
         self.set_property("can-focus", False)

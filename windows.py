@@ -1,7 +1,7 @@
 import gtk
 
 import ui
-import conf
+from conf import conf
 
 def get_default_focus(self):
     def def_f():
@@ -120,14 +120,11 @@ def ChannelWindow(self):
 
     def setup_pane():
         pane.set_position(
-            pane.get_property("max-position") - (conf.get("ui-gtk/nicklist-width") or 0)
+            pane.get_property("max-position") - (conf["ui-gtk/nicklist-width"] or 0)
             )
     
         def save_nicklist_width(pane, event):
-            conf.set(
-                "ui-gtk/nicklist-width", 
-                pane.get_property("max-position") - pane.get_position()
-                )
+            conf["ui-gtk/nicklist-width"] = pane.get_property("max-position") - pane.get_position()
 
         pane.connect_after("size-allocate", save_nicklist_width)
     ui.register_idle(setup_pane)

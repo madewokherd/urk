@@ -17,7 +17,7 @@ import windows
 import widgets
 import servers
 import irc
-import conf
+from conf import conf
 import events
 import parse_mirc
 import __main__ as urk
@@ -78,9 +78,9 @@ os_commands = ( #list of commands to search for for opening files
     ('kfmclient', ('kfmclient','exec')),
     )
 def open_file(filename):
-    if conf.get('open-file-command'):
+    if conf['open-file-command']:
         #FIXME: we need to make sure no shell evaluates the filename
-        os.popen(conf.get('open-file-command') % filename)
+        os.popen(conf['open-file-command'] % filename)
     elif hasattr(os, 'startfile'):
         os.startfile(filename)
     elif open_file_cmd:
@@ -229,15 +229,15 @@ class UrkUI(gtk.Window):
         self.connect("delete_event", self.exit)
 
         # layout
-        xy = conf.get("xy") or (-1, -1)
-        wh = conf.get("wh") or (500, 500)
+        xy = conf["xy"] or (-1, -1)
+        wh = conf["wh"] or (500, 500)
 
         self.move(*xy)
         self.set_default_size(*wh)
         
         def save_xywh(*args):
-            conf.set("xy", self.get_position())
-            conf.set("wh", self.get_size())
+            conf["xy"] = self.get_position()
+            conf["wh"] = self.get_size()
         self.connect("configure_event", save_xywh)
         
         menus = (

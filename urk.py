@@ -35,7 +35,6 @@ sys.path = [
     ] + sys.path
 
 import events
-import conf
 import ui
 
 name = "urk"

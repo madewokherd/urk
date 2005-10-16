@@ -1,9 +1,9 @@
 import events
-import conf
+from conf import conf
 import ui
 import irc
 
-COMMAND_PREFIX = conf.get("command_prefix") or "/"
+COMMAND_PREFIX = conf["command_prefix"] or "/"
 
 def defRaw(e):
     if not e.done:
@@ -260,7 +260,7 @@ def postCommand(e):
         e.done = True
         
 def get_network_info(network, network_info):
-    conf_info = conf.get("networks/%s/" % network)
+    conf_info = conf.get("networks", {}).get(network)
 
     if conf_info:
         network_info["server"] = conf_info["server"] or network
@@ -270,9 +270,7 @@ def get_network_info(network, network_info):
                 network_info[info] = conf_info[info]
 
 def onStart(e):
-    on_start_networks = conf.get("start_networks") or []
-
-    for network in on_start_networks:
+    for network in (conf["start_networks"] or []):
         network_info = {"server": network}
         get_network_info(network, network_info)
             
@@ -284,6 +282,6 @@ def onStart(e):
 
 def onConnect(e):
     if 'NETWORK' in e.network.isupport:
-        perform = conf.get('perform/'+str(e.network.isupport['NETWORK'])) or []
+        perform = conf['perform/'+str(e.network.isupport['NETWORK'])] or []
         for command in perform:
             events.run_command(command, e.window, e.network)

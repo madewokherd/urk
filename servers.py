@@ -1,6 +1,6 @@
 import gtk
 import gtk.glade
-import conf
+from conf import conf
 import __main__ as urk
 
 class ServerWidget(gtk.Window):
@@ -16,7 +16,7 @@ class ServerWidget(gtk.Window):
         combobox.pack_start(cell, True)
         combobox.add_attribute(cell, 'text', 0)
         
-        for network in conf.get("networks/"):
+        for network in conf["networks"]:
             if network.endswith("/"):
                 network_list.append([network[:-1]])
                 
