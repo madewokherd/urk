@@ -14,11 +14,6 @@ urk requires the following packages (and should run on any os that can provide
 them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
-optional (needed to save):
--gnome-python 2.10 or greater (www.pygtk.org)
-
-It's possible to make things work without gnome-python, but any changes urk 
-makes to your settings will not be preserved across sessions.
 
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
@@ -38,17 +33,6 @@ Installers from other places, including the gaim gtk+ installer, have failed.
 Also, you'll need to restart after you've installed those things.
 
 Repeat: THE GTK+ RUNTIME PROVIDED WITH GAIM WILL NOT WORK.
-
-urk currently relies on gconf to save its settings, and gconf isn't available
-for windows. So, uh it won't save your settings (not that it saves much anyway).
-
-Since you won't be using conf.py, the manual configuration method described
-below won't work for you. You should copy conf_dummy.py to your user 
-configuration directory (type '/pyeval sys.path[0]' in urk to determine where
-this is; it should be in some generic settings folder\urk). Then you can modify
-it, using the list of settings defined below. conf_dummy.py is not expected to
-change much (though we expect to provide a way to actually save settings later,
-when it becomes more meaningful), so you should be safe overriding it.
 
 
 Getting started:
@@ -81,18 +65,17 @@ on an irc client.
 
 Configuration:
 
-Most configuration has to be done manually. This can be done using gconf-editor,
-but we recommend using python in interactive mode with conf.py:
+Most configuration has to be done manually. If urk is running, you can configure
+it using commands. You can also edit urk.conf, which you can locate by typing
+'/pyeval __main__.userpath' in urk.
 
-$ python -i conf.py
+To set a value in urk, type
 
-Python will give you a '>>>' prompt. Press ctrl+d to exit. To set a value, use
+/pyexec conf['setting'] = value
 
->>> set('setting', value)
+To see the current value, type
 
-To see the current value, use
-
->>> get('setting')
+/pyeval conf['setting']
 
 Setting:            Description:
 
