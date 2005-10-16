@@ -1,3 +1,4 @@
+import irc
 import ui
 import chaninfo
 
@@ -60,9 +61,9 @@ def postPart(e):
         
         if window:
             cwindows = list(ui.get_window_for(
-                            network=window.network,
-                            role=ui.ChannelWindow
-                            ))
+                                network=window.network,
+                                role=ui.ChannelWindow
+                                ))
                             
             if len(cwindows) == 1:
                 window.mutate(ui.StatusWindow, e.network, 'status')
@@ -84,6 +85,9 @@ def onClose(window):
         
     elif window.role == ui.StatusWindow:
         window.network.quit()
+        
+    if len(ui.windows) == 1:
+        ui.windows.new(ui.StatusWindow, irc.Network(), "status")
 
 def onConnect(e):
     window = ui.get_default_window(e.network)
