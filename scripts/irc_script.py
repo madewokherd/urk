@@ -215,7 +215,7 @@ def onCommandServer(e):
         if not e.network.status:
             window = ui.get_default_window(e.network)
             if window:
-                window.title.update()
+                window.update()
     if "port" in network_info:
         e.network.port = network_info["port"]
 

@@ -87,12 +87,9 @@ def onClose(window):
 def onConnect(e):
     window = ui.get_default_window(e.network)
     if window:
-        window.title.update()
+        window.update()
 
-def onDisconnect(e):
-    window = ui.get_default_window(e.network)
-    if window:
-        window.title.update()
+onDisconnect = onConnect
 
 def setupPart(e):
     e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window

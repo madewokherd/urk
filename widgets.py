@@ -487,7 +487,7 @@ class WindowLabel(gtk.EventBox):
         }
         
     def update(self):
-        title = str(self)
+        title = self.win.title
     
         for a_type in (ui.HILIT, ui.TEXT, ui.EVENT):
             if self.win.activity & a_type:
@@ -512,9 +512,6 @@ class WindowLabel(gtk.EventBox):
             menu_from_list(
                 c_data.menu
                 ).popup(None, None, None, event.button, event.time)
-            
-    def __str__(self):
-        return self.win.get_title()
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)
@@ -542,11 +539,13 @@ class WindowListTabs(gtk.Notebook):
         else:
             pos = self.get_n_pages() - 1
  
-        self.insert_page(window, None, pos+1)   
-        self.set_tab_label(window, window.title)
+        self.insert_page(window, WindowLabel(window), pos+1)   
         
     def remove(self, window):
         self.remove_page(self.page_num(window))
+        
+    def update(self, window):
+        self.get_tab_label(window).update()
 
     def __init__(self):
         gtk.Notebook.__init__(self)

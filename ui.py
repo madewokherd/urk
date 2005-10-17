@@ -126,27 +126,35 @@ class Window(gtk.VBox):
             self.output.get_buffer().get_mark("end")
             )
         
-    def set_id(self, id):
-        self.__id = id
-        self.title.update()
-
     def get_id(self):
         if self.network:
             return self.network.norm_case(self.__id)
         else:
             return self.__id
+            
+    def set_id(self, id):
+        self.__id = id
+        self.update()
 
     id = property(get_id, set_id)
-
-    def get_title(self):
-        return self.__id
     
+    def get_title(self):
+        return self.id
+
+    def __get_title(self):
+        return self.get_title()
+    
+    def set_title(self, title):
+        self.update()
+        
+    title = property(__get_title, set_title)
+
     def get_activity(self):
         return self.__activity
     
     def set_activity(self, value):
         self.__activity = value
-        self.title.update()
+        self.update()
         
     activity = property(get_activity, set_activity)
     
@@ -160,6 +168,9 @@ class Window(gtk.VBox):
     def close(self):
         events.trigger("Close", self)
         windows.remove(self)
+        
+    def update(self):
+        windows.manager.update(self)
 
     def __init__(self, role, network, id):
         gtk.VBox.__init__(self, False)
@@ -168,11 +179,9 @@ class Window(gtk.VBox):
         self.network = network
         self.__id = id
         
-        self.__activity = 0
-        
         self.role(self)
- 
-        self.title = widgets.WindowLabel(self)
+        
+        self.__activity = 0
         
 StatusWindow = windows.StatusWindow
 QueryWindow = windows.QueryWindow
