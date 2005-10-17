@@ -495,6 +495,9 @@ class WindowLabel(gtk.EventBox):
                 break
             
         self.label.set_markup(title)
+        
+        if self.win == ui.windows.manager.get_active():
+            ui.set_title()
 
     def tab_popup(self, widget, event):
         if event.button == 3: # right click

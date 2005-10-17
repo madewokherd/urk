@@ -6,13 +6,8 @@ import chaninfo
 
 def onActive(w):
     w.activity = 0
-        
-    if w.role != ui.StatusWindow:
-        title = "%s - %s - %s" % (w.network.me, w.network.server, w.title)
-    else:
-        title = "%s - %s" % (w.network.me, w.title)
-    
-    ui.set_title("%s - urk" % title)
+
+    ui.register_idle(ui.set_title)
 
 def onNick(e):
     if e.source == e.network.me:

@@ -298,6 +298,17 @@ def get_default_window(network):
     # There can be only one...
     for window in get_window_for(network=network):
         return window
+        
+def set_title(title=None):
+    if not title:
+        w = windows.manager.get_active()
+        
+        if w.role != StatusWindow:
+            title = "%s - %s - %s" % (w.network.me, w.network.server, w.title)
+        else:
+            title = "%s - %s" % (w.network.me, w.title)
+    
+    ui.set_title("%s - urk" % title)
 
 def start():
     if not windows:
@@ -317,5 +328,3 @@ windows = Windows()
 
 # build our overall UI
 ui = UrkUI()
-
-set_title = ui.set_title
