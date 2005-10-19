@@ -122,9 +122,10 @@ class Window(gtk.VBox):
         self.network = network
         self.id = id
         
-        self.output.scroll_mark_onscreen(
-            self.output.get_buffer().get_mark("end")
-            )
+        gobject.idle_add(
+            self.output.scroll_mark_onscreen,
+            self.output.get_buffer().get_mark("end"), priority=PRIORITY_LOW)
+            
         
     def get_id(self):
         if self.network:
