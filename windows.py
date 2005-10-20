@@ -67,11 +67,11 @@ def StatusWindow(self):
     self.show_all()
      
 def QueryWindow(self):
+    StatusWindow(self)
+    
     def get_title():
         return ui.Window.get_title(self)
     self.get_title = get_title
-    
-    StatusWindow(self)
 
 def ChannelWindow(self):
     if hasattr(self, "output"):
