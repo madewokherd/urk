@@ -358,9 +358,9 @@ class TextOutput(gtk.TextView):
     
         buffer = self.get_buffer()
         
-        cc, end = buffer.get_char_count(), buffer.get_end_iter()
+        cc = buffer.get_char_count()
 
-        buffer.insert(end, text + "\n")
+        buffer.insert(buffer.get_end_iter(), text + "\n")
 
         for tag_props, start_i, end_i in tag_data:
             tag_props = tuple(prop_to_gtk(*p) for p in tag_props)
