@@ -319,8 +319,8 @@ def start():
     if not windows:
         windows.new(ChannelWindow, irc.Network(), "status").activate()
 
-    for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
-    register_idle(ui.exit)
+    #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
+    #register_idle(ui.exit)
 
     try:
         gtk.threads_enter()
