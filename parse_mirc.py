@@ -1,36 +1,37 @@
 BOLD = '\x02'
 UNDERLINE = '\x1F'
-REVERSE = '\x16'
 MIRC_COLOR = '\x03'
 BERS_COLOR = '\x04'
 RESET = '\x0F'
+
+TAGS = BOLD, UNDERLINE, MIRC_COLOR, BERS_COLOR, RESET
 
 colors = (
   'white', 'black', '#00007F', '#009300', 
   'red', '#7F0000', '#9C009C', '#FF7F00',
   'yellow', 'green', '#009393', '#00FFFF',
-  '#0000FF', '#FF00FF', '#7F7F7F', '#D2D2D2')
+  '#0000FF', '#FF00FF', '#7F7F7F', '#D2D2D2'
+  )
 
 def get_mirc_color(number):
-    return colors[int(number) % len(colors)]
+    return colors[int(number) & 15]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
 
-def ishex(string):
-    return set(string) < HEX_DIGITS
-
-def parse_mirc(string):
-    out, looking, tags, pos = "", {}, [], 0
-    
+def parse_mirc2(string):
     string += RESET
 
-    while string:
-        c = string[0]
+    out = ""
+    looking = {}
+    tags = []
+    pos = 0
 
-        if c == MIRC_COLOR:
-            if c in looking:
-                tags.append(looking[c] + (pos,))
-                del looking[c]
+    while string:
+        tag = string[0]
+
+        if tag == MIRC_COLOR:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
             
             if string[1:2] in DEC_DIGITS:
                 if string[2:3] in DEC_DIGITS:
@@ -46,49 +47,133 @@ def parse_mirc(string):
                     else:
                         bg, string = get_mirc_color(string[2:3]), string[2:]
                         
-                    looking[c] = [("foreground", fg), ("background", bg)], pos
+                    looking[tag] = [("foreground", fg), ("background", bg)], pos
                         
                 else:
-                    looking[c] = [("foreground", fg)], pos 
+                    looking[tag] = [("foreground", fg)], pos 
 
-        elif c == BERS_COLOR:
-            if c in looking:
-                tags.append(looking[c] + (pos,))
-                del looking[c]
+        elif tag == BERS_COLOR:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
 
-            if ishex(string[1:7]):
-                fg, string = "#" + string[1:7], string[6:]
+            if HEX_DIGITS.issuperset(string[1:7]):
+                fg = "#" + string[1:7]
 
-                if string[1:2] == "," and ishex(string[2:8]):
-                    bg, string = "#" + string[2:8], string[7:]
+                if string[7:8] == "," and HEX_DIGITS.issuperset(string[8:14]):
+                    bg = "#" + string[8:14]
 
-                    looking[c] = [("foreground", fg), ("background", bg)], pos
+                    looking[tag] = [("foreground", fg), ("background", bg)], pos
+                    
+                    string = string[13:]
                     
                 else:
-                    looking[c] = [("foreground", fg)], pos
+                    looking[tag] = [("foreground", fg)], pos
                     
-        elif c in (BOLD, UNDERLINE):
-            if c in looking:
-                tags.append(looking[c] + (pos,))
-                del looking[c]
-        
+                    string = string[6:]
+
+        elif tag in (BOLD, UNDERLINE):
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
             else:
-                if c == BOLD:
-                    looking[c] = [("weight", BOLD)], pos
+                if tag == BOLD:
+                    looking[tag] = [("weight", BOLD)], pos
                 else:
-                    looking[c] = [("underline", UNDERLINE)], pos
+                    looking[tag] = [("underline", UNDERLINE)], pos
         
-        elif c == RESET:
+        elif tag == RESET:
             for look in looking:
-                tags.append(looking[look] + (pos,))
+                tags += [looking[look] + (pos,)]
             looking = {}
                 
         else:
-            out += c
+            out += tag
             pos += 1
             
         string = string[1:]
+        
+    return tags, out
 
+def parse_mirc(string):
+    string += RESET
+
+    out = ''
+    looking = {}
+    tags = []
+    last_place = pos = 0
+
+    for tag_place, tag in [(i, s) for i, s in enumerate(string) if s in TAGS]:
+        out += string[last_place:tag_place]
+
+        pos += tag_place - last_place
+        
+        last_place = tag_place + 1
+
+        if tag == MIRC_COLOR:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
+                
+            m_string = string[last_place:]
+            
+            if m_string[:1] in DEC_DIGITS:
+                if m_string[1:2] in DEC_DIGITS:
+                    fg = get_mirc_color(m_string[:2])
+                    m_string = m_string[2:]
+                    last_place += 2
+
+                else:
+                    fg = get_mirc_color(m_string[:1])
+                    m_string = m_string[1:]
+                    last_place += 1
+                    
+                if m_string[:1] == "," and m_string[1:2] in DEC_DIGITS:
+                    if m_string[2:3] in DEC_DIGITS:
+                        bg = get_mirc_color(m_string[1:3])
+                        last_place += 3
+
+                    else:
+                        bg = get_mirc_color(m_string[1:2])
+                        last_place += 2
+                        
+                    looking[tag] = [("foreground", fg), ("background", bg)], pos
+                        
+                else:
+                    looking[tag] = [("foreground", fg)], pos 
+
+        elif tag == BERS_COLOR:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
+                
+            b_string = string[last_place:]
+            
+            fg, bg = b_string[:6], b_string[7:13]        
+            if HEX_DIGITS.issuperset(fg):
+                if b_string[6:7] == "," and HEX_DIGITS.issuperset(bg):
+                    looking[tag] = [("foreground", "#" + fg), ("background", "#" + bg)], pos
+                    last_place += 13
+                    
+                else:
+                    looking[tag] = [("foreground", "#" + fg)], pos
+                    last_place += 6
+
+        elif tag == BOLD:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
+        
+            else:
+                looking[tag] = [("weight", BOLD)], pos
+
+        elif tag == UNDERLINE:
+            if tag in looking:
+                tags += [looking.pop(tag) + (pos,)]
+        
+            else:
+                looking[tag] = [("underline", UNDERLINE)], pos
+        
+        elif tag == RESET:
+            for look in looking:
+                tags += [looking[look] + (pos,)]
+            looking = {}
+        
     return tags, out
 
 if __name__ == "__main__":
@@ -103,6 +188,8 @@ if __name__ == "__main__":
         "\x040000CC<\x04nick\x040000CC>\x04 text",
         
         '\x04770077,FFFFFFbersirc color with background! \x04000077setting foreground! \x04reset!',
+        
+        '\x047700,FFFFbersirc',
         
         "\x03123Hello",
         
@@ -127,24 +214,27 @@ if __name__ == "__main__":
         ]
         
     """
-        
-    for test in tests:
-        print parse_mirc2(test)
-
-    """
-
-    to_test = {
-        #1: parse_mirc1, 
-        2: parse_mirc2,
-        #3: parse_mirc3,
-        }
     
     r = range(5000)    
-    for i, f in to_test.items():
-        print "parse_mirc%s" % i 
-           
-        for i in r:
-            for test in tests:
-                f(test)
+    for i in r:
+        for test in tests:
+            parse_mirc(test)
+            parse_mirc2(test)
+            
+    """
+    
+    r = range(1)    
+    for i in r:
+        for test in tests:
+            print test
+            print parse_mirc(test)
+            print parse_mirc2(test)
+            print
+            pass
+            
+            
                 
    #"""
+   
+#import dis
+#dis.dis(parse_mirc)
