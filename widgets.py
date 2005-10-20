@@ -111,6 +111,12 @@ class Nicklist(gtk.VBox):
         
         self.win = window
         
+        self.set_size_request(conf["ui-gtk/nicklist-width"] or 0, -1)
+    
+        def save_nicklist_width(w, rectangle):
+            conf["ui-gtk/nicklist-width"] = rectangle.width
+        self.connect("size-allocate", save_nicklist_width)
+        
         self.userlist = gtk.ListStore(str)
         
         view = gtk.TreeView(self.userlist)
@@ -198,14 +204,15 @@ class NickEdit(gtk.EventBox):
 class TextInput(gtk.Entry):
     # Generates an input event
     def entered_text(self, *args):
-        lines = self.get_text().split("\n")
+        lines = self.text.split("\n")
 
         for line in lines:
             if line:
-                e_data = events.data()
-                e_data.window = self.win
-                e_data.text = line
-                e_data.network = self.win.network
+                e_data = events.data(
+                            window=self.win,
+                            text=line,
+                            network=self.win.network
+                            )
                 events.trigger('Input', e_data)
                 
                 if not e_data.done:
@@ -214,7 +221,7 @@ class TextInput(gtk.Entry):
                 self.history.insert(1, line)
                 self.history_i = 0
         
-        self.set_text("")
+        self.text = ""
     
     def _set_selection(self, s):
         if s:
@@ -246,8 +253,8 @@ class TextInput(gtk.Entry):
         if self.history_i + di in range(len(self.history)):
             self.history_i += di
 
-        self.set_text(self.history[self.history_i])
-        self.set_position(-1)
+        self.text = self.history[self.history_i]
+        self.cursor = -1
 
     def __init__(self, window):
         gtk.Entry.__init__(self)
@@ -352,17 +359,6 @@ class TextOutput(gtk.TextView):
         buffer = self.get_buffer()
         
         cc, end = buffer.get_char_count(), buffer.get_end_iter()
-        
-        end_rect, vis_rect = self.get_iter_location(end), self.get_visible_rect()
-        
-        # this means we're scrolled down right to the bottom
-        # we interpret this to mean we should scroll down after we've
-        # inserted more text into the buffer
-        if end_rect.y + end_rect.height <= vis_rect.y + vis_rect.height:
-            def scroll():
-                self.scroll_mark_onscreen(buffer.get_mark("end"))
-                
-            ui.register_idle(scroll)
 
         buffer.insert(end, text + "\n")
 
@@ -448,14 +444,13 @@ class TextOutput(gtk.TextView):
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
         
-        buffer = self.get_buffer()        
-        buffer.create_mark("end", buffer.get_end_iter(), False)
-        
         self.win = window
         
         self.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.set_editable(False)
         self.set_cursor_visible(False)
+        
+        self.set_pixels_above_lines(1)
         
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
@@ -463,21 +458,43 @@ class TextOutput(gtk.TextView):
 
         self.linking = set()
 
-        self.add_events(
-            gtk.gdk.POINTER_MOTION_HINT_MASK | gtk.gdk.LEAVE_NOTIFY_MASK
-            )
-        
+        self.add_events(gtk.gdk.POINTER_MOTION_HINT_MASK)
+        self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
+
         self.connect("motion-notify-event", self.hover)
         self.connect("button-press-event", self.mousedown)
         self.connect("button-release-event", self.mouseup)
         self.connect("leave-notify-event", self.clear_hover)
         
-        style_me(self, "view")
+        self.set_size_request(0, -1)
+
+        self.to_scroll = True
+
+        buffer = self.get_buffer()
+        buffer.create_mark("end", buffer.get_end_iter(), False)
+        def scroll(*args):
+            if self.to_scroll:
+                self.scroll_mark_onscreen(buffer.get_mark("end"))
+
+        self.connect("size-allocate", scroll)
         
+        def connect_adjustments(self, hadj, vadj):
+            if vadj:
+                def set_scroll(adj):
+                    def really_set_scroll():
+                        self.to_scroll = adj.value + adj.page_size >= adj.upper
+                    ui.register_idle(really_set_scroll)
+            
+                vadj.connect("value-changed", set_scroll)
+
+        self.connect("set-scroll-adjustments", connect_adjustments)
+
         def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
 
         self.connect("realize", set_cursor)
+        
+        style_me(self, "view")
 
 class WindowLabel(gtk.EventBox):
     activity_markup = {

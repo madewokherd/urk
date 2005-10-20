@@ -120,12 +120,7 @@ class Window(gtk.VBox):
         self.role(self)
 
         self.network = network
-        self.id = id
-        
-        gobject.idle_add(
-            self.output.scroll_mark_onscreen,
-            self.output.get_buffer().get_mark("end"), priority=PRIORITY_LOW)
-            
+        self.id = id           
         
     def get_id(self):
         if self.network:
@@ -322,9 +317,10 @@ def set_title(title=None):
 
 def start():
     if not windows:
-        windows.new(StatusWindow, irc.Network(), "status").activate()
-        
-    #register_idle(ui.exit)
+        windows.new(ChannelWindow, irc.Network(), "status").activate()
+
+    for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
+    register_idle(ui.exit)
 
     try:
         gtk.threads_enter()
