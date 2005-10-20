@@ -19,7 +19,6 @@ import servers
 import irc
 from conf import conf
 import events
-import parse_mirc
 import __main__ as urk
 
 # Priority Constants
