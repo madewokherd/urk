@@ -96,36 +96,35 @@ def parse_mirc2(string):
 def parse_mirc_color(string, pos, looking, tags):
     if MIRC_COLOR in looking:
         tags += [looking.pop(MIRC_COLOR) + (pos,)]
-        
-    last_place = 1
+    
+    color_chars = 1
 
-    if string[:1] in DEC_DIGITS:
+    if string[0] in DEC_DIGITS:
         if string[1:2] in DEC_DIGITS:
             fg = get_mirc_color(string[:2])
-            string = string[2:]
-            last_place += 2
+            string = string[1:]
+            color_chars += 2
 
         else:
             fg = get_mirc_color(string[:1])
-            string = string[1:]
-            last_place += 1
+            color_chars += 1
             
-        if string[:1] == "," and string[1:2] in DEC_DIGITS:
-            if string[2:3] in DEC_DIGITS:
-                bg = get_mirc_color(string[1:3])
-                last_place += 3
+        if string[1:2] == "," and string[2:3] in DEC_DIGITS:
+            if string[3:4] in DEC_DIGITS:
+                bg = get_mirc_color(string[2:4])
+                color_chars += 3
 
             else:
-                bg = get_mirc_color(string[1:2])
-                last_place += 2
+                bg = get_mirc_color(string[2:3])
+                color_chars += 2
                 
             looking[MIRC_COLOR] = [("foreground", fg), ("background", bg)], pos
                 
         else:
             looking[MIRC_COLOR] = [("foreground", fg)], pos 
                     
-    return last_place
-    
+    return color_chars
+
 def parse_bersirc_color(string, pos, looking, tags):
     if BERS_COLOR in looking:
         tags += [looking.pop(BERS_COLOR) + (pos,)]
@@ -184,7 +183,7 @@ def parse_mirc(string):
         RESET: parse_reset
         }
 
-    for tag_place, tag in [(i, s) for i, s in enumerate(string) if s in TAGS]:
+    for tag_place, tag in [(i, s) for i, s in enumerate(string) if s in tag_fs]:
         out += string[last_place:tag_place]
 
         pos += tag_place - last_place
