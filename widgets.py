@@ -16,8 +16,13 @@ EVENT = 1
 tag_table = gtk.TextTagTable()
 
 link_tag = gtk.TextTag('link')
-link_tag.set_property('underline',pango.UNDERLINE_SINGLE)
+link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
+
+indent_tag = gtk.TextTag('indent')
+indent_tag.set_property('indent', -20)
+
 tag_table.add(link_tag)
+tag_table.add(indent_tag)
 
 #FIXME: MEH hates dictionaries, they remind him of the bad words
 styles = {}
@@ -359,6 +364,12 @@ class TextOutput(gtk.TextView):
         cc = buffer.get_char_count()
 
         buffer.insert(buffer.get_end_iter(), text + "\n")
+        
+        buffer.apply_tag_by_name(
+            'indent', 
+            buffer.get_iter_at_offset(cc),
+            buffer.get_end_iter()
+            )
 
         for tag_props, start_i, end_i in tag_data:
             tag_props = tuple(prop_to_gtk(*p) for p in tag_props)
@@ -452,7 +463,6 @@ class TextOutput(gtk.TextView):
         
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
-        self.set_property("indent", 0)
 
         self.linking = set()
 
