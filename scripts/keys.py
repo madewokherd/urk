@@ -51,7 +51,7 @@ def onKeyPress(e):
 
     elif e.key == '^t':
         def new_tab():
-            events.run_command('server -n', e.window, e.window.network)
+            events.run('server -n', e.window, e.window.network)
             
         ui.register_idle(new_tab)
 

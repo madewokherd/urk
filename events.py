@@ -17,11 +17,8 @@ class data:
     quiet = False
     
     def __init__(self, **kwargs):
-       try:
         for attr in kwargs.items():
             setattr(self, *attr)
-       except:
-        print kwargs
 
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
@@ -155,28 +152,19 @@ def unload(s_name, reloading = False):
         if not events[e_name]:
             del events[e_name]
 
-def run_command(text, window, network):
-    if not text:
-        return
+def run(text, window, network):
+    split = text.split(' ')
 
-    split = text.split(" ")
+    c_data = data(name=split[0], text=text, window=window, network=network)
 
-    c_data = data()
-    c_data.text = text
-    
-    c_data.name = split[0]
-
-    if len(split) > 1 and split[1].startswith("-"):
+    if len(split) > 1 and split[1].startswith('-'):
         c_data.switches = set(split[1][1:])
         c_data.args = split[2:]
     else:
         c_data.switches = set()
         c_data.args = split[1:]
 
-    c_data.window = window
-    c_data.network = network
-
-    event_name = "Command"+c_data.name.capitalize()
+    event_name = "Command" + c_data.name.capitalize()    
     if event_name in events:
         result = trigger(event_name, c_data)
         
@@ -194,7 +182,11 @@ def onCommandPyeval(e):
     try:
         result = repr(eval(' '.join(e.args), loc))
         if 's' in e.switches:
-            run_command('say - %s => %s' %(' '.join(e.args),result), e.window, e.network)
+            run(
+                'say - %s => %s' % (' '.join(e.args),result),
+                e.window,
+                e.network
+                )
         else:
             e.window.write(result)
     except:

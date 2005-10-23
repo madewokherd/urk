@@ -14,7 +14,7 @@ def onClick(e):
     
     if e.window.role == ui.ChannelWindow and \
             chaninfo.ison(e.window.network, e.window.id, target):
-        events.run_command("query %s" % target, e.window, e.window.network)
+        events.run("query %s" % target, e.window, e.window.network)
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     elif (target.startswith("http://") and target.count(".") >= 1) or \

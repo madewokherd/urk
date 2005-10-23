@@ -184,7 +184,7 @@ class NickEdit(gtk.EventBox):
             oldnick, newnick = self.label.get_text(), self.edit.get_text()
         
             if newnick and newnick != oldnick:
-                events.run_command('nick %s' % newnick, self.win, self.win.network)
+                events.run('nick %s' % newnick, self.win, self.win.network)
 
             self.win.input.grab_focus()
                 
@@ -204,9 +204,7 @@ class NickEdit(gtk.EventBox):
 class TextInput(gtk.Entry):
     # Generates an input event
     def entered_text(self, *args):
-        lines = self.text.split("\n")
-
-        for line in lines:
+        for line in self.text.split("\n"):
             if line:
                 e_data = events.data(
                             window=self.win,
@@ -216,7 +214,7 @@ class TextInput(gtk.Entry):
                 events.trigger('Input', e_data)
                 
                 if not e_data.done:
-                    events.run_command(line, self.win, self.win.network)
+                    events.run(line, self.win, self.win.network)
                 
                 self.history.insert(1, line)
                 self.history_i = 0
@@ -246,8 +244,8 @@ class TextInput(gtk.Entry):
             
             # when we travel back in time, we need to remember
             # where we were, so we can go back to the future
-            if self.history_i == 0 and self.get_text():
-                self.history.insert(1, self.get_text())
+            if self.history_i == 0 and self.text:
+                self.history.insert(1, self.text)
                 self.history_i = 1
 
         if self.history_i + di in range(len(self.history)):
