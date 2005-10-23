@@ -124,9 +124,9 @@ def defInput(e):
         if e.text.startswith(COMMAND_PREFIX):
             command = e.text[len(COMMAND_PREFIX):]
         else:
-            command = 'say - '+e.text
+            command = 'say - %s' % e.text
 
-        events.run_command(command, e.window, e.network)
+        events.run(command, e.window, e.network)
         
         e.done = True
 
@@ -242,17 +242,29 @@ trailing = {
     'wallops':0,
     }
 
+needschan = {
+    'part': 0,
+    }
+    
 def defCommand(e):
-    if not e.done and e.name in trailing:
-        if e.network.status >= irc.INITIALIZING:
-            if len(e.args) > trailing[e.name]:
-                e.network.raw(
-                    e.name+' '+
-                    ' '.join(e.args[0:trailing[e.name]])+
-                    ' :'+' '.join(e.args[trailing[e.name]:]))
+    if not e.done: 
+        if e.name in needschan and e.window.role == ui.ChannelWindow:
+            valid_chan_prefixes = e.network.isupport.get('CHANTYPES','#&+')
+            chan_pos = needschan[e.name]
+            
+            if len(e.args) > chan_pos:    
+                if e.args[chan_pos][0] not in valid_chan_prefixes:
+                    e.args.insert(chan_pos, e.window.id)
             else:
-                e.network.raw(e.name+' '+' '.join(e.args))
-            e.done = True
+                e.args.append(e.window.id)
+                
+        if e.name in trailing:
+            trailing_pos = trailing[e.name]
+        
+            if len(e.args) > trailing_pos:
+                e.args[trailing_pos] = ':%s' % e.args[trailing_pos]
+                
+        e.text = '%s %s' % (e.name, ' '.join(e.args))
 
 def postCommand(e):
     if not e.done and e.network.status >= irc.INITIALIZING:
@@ -284,4 +296,4 @@ def onConnect(e):
     if 'NETWORK' in e.network.isupport:
         perform = conf['perform/'+str(e.network.isupport['NETWORK'])] or []
         for command in perform:
-            events.run_command(command, e.window, e.network)
+            events.run(command, e.window, e.network)
