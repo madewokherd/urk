@@ -1,10 +1,6 @@
 import time
 
-import pango
-import gtk
-
 import ui
-import events
 import chaninfo
 
 textareas = {
