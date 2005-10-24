@@ -92,17 +92,17 @@ def menu_from_list(alist):
     ui_manager.insert_action_group(actions, 0) 
     return ui_manager.get_widget("/Menu")
 
-class Nicklist(gtk.VBox):
-    def click(self, widget, event, view):
+class Nicklist(list):
+    def click(self, widget, event):
         if event.button == 3:
             x, y = event.get_coords()
             x, y = int(x), int(y)
     
-            (data,), path, x, y = view.get_path_at_pos(x, y)
+            (data,), path, x, y = self.view.get_path_at_pos(x, y)
         
             c_data = events.data(
-                        win=self.win,
-                        data=data,
+                        window=self.win,
+                        data=self[data],
                         menu=[]
                         )
         
@@ -110,40 +110,59 @@ class Nicklist(gtk.VBox):
             
             if c_data.menu:
                 menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+                
+    def __getitem__(self, pos):
+        return self.view.get_model()[pos][0]
+        
+    def __setitem__(self, pos, item):
+        self.view.get_model()[pos] = [item]
+        
+    def index(self, item):
+        return list(self).index(item)
+        
+    def append(self, item):
+        self.view.get_model().append([item])
+ 
+    def insert(self, pos, item):
+        self.view.get_model().insert(pos, [item])
+        
+    def extend(self, items):
+        for i in items:
+            self.append(i)
+            
+    def __iadd__(self, items):
+        self.extend(items)
+        
+    def remove(self, item):
+        if isinstance(item, str):
+            item = self.index(item)
+    
+        self.view.get_model().remove(
+            self.view.get_model().iter_nth_child(None, item)
+            )
+            
+    def __getslice__(self, *args):
+        return list(self).__getslice__(*args)
+        
+    def __iter__(self):
+        return (r[0] for r in self.view.get_model())
 
     def __init__(self, window):
-        gtk.VBox.__init__(self)
-        
         self.win = window
         
-        self.set_size_request(conf["ui-gtk/nicklist-width"] or 0, -1)
-    
-        def save_nicklist_width(w, rectangle):
-            conf["ui-gtk/nicklist-width"] = rectangle.width
-        self.connect("size-allocate", save_nicklist_width)
-        
-        self.userlist = gtk.ListStore(str)
-        
-        view = gtk.TreeView(self.userlist)
-        view.set_size_request(0, -1)
-        view.set_headers_visible(False)
+        self.view = gtk.TreeView(gtk.ListStore(str))
+        self.view.set_size_request(0, -1)
+        self.view.set_headers_visible(False)
 
-        view.insert_column_with_attributes(
+        self.view.insert_column_with_attributes(
             0, "", gtk.CellRendererText(), text=0
             )
             
-        view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-        view.set_property("fixed-height-mode", True)
+        self.view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        self.view.set_property("fixed-height-mode", True)
+        self.view.connect("button-press-event", self.click)
         
-        style_me(view, "nicklist")
-        
-        win = gtk.ScrolledWindow()
-        win.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
-        win.add(view)
-
-        view.connect("button-press-event", self.click, view)
-
-        self.pack_end(win)
+        style_me(self.view, "nicklist")
 
 # Label used to display/edit your current nick on a network
 class NickEdit(gtk.EventBox):

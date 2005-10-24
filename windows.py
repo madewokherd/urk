@@ -92,11 +92,6 @@ def ChannelWindow(self):
 
     self.nicklist = ui.widgets.Nicklist(self)
     self.nick_label = ui.widgets.NickEdit(self)
-    
-    def set_nicklist(nicks):
-        self.nicklist.userlist.clear()
-        [self.nicklist.userlist.append([nick]) for nick in nicks]
-    self.set_nicklist = set_nicklist
 
     self.focus = self.input.grab_focus
     self.write = get_default_write(self)
@@ -111,9 +106,19 @@ def ChannelWindow(self):
     topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
     topbox.add(self.output)
     
+    nlbox = gtk.ScrolledWindow()
+    nlbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
+    nlbox.add(self.nicklist.view)
+    
+    nlbox.set_size_request(conf["ui-gtk/nicklist-width"] or 0, -1)
+
+    def save_nicklist_width(w, rectangle):
+        conf["ui-gtk/nicklist-width"] = rectangle.width
+    nlbox.connect("size-allocate", save_nicklist_width)
+    
     pane = gtk.HPaned()  
     pane.pack1(topbox, resize=True, shrink=False)
-    pane.pack2(self.nicklist, resize=False, shrink=True)
+    pane.pack2(nlbox, resize=False, shrink=True)
     
     self.pack_start(pane)
     
