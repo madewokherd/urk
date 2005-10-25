@@ -92,7 +92,7 @@ def menu_from_list(alist):
     ui_manager.insert_action_group(actions, 0) 
     return ui_manager.get_widget("/Menu")
 
-class Nicklist(list):
+class Nicklist:
     def click(self, widget, event):
         if event.button == 3:
             x, y = event.get_coords()
@@ -110,13 +110,16 @@ class Nicklist(list):
             
             if c_data.menu:
                 menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
-                
+    
     def __getitem__(self, pos):
         return self.view.get_model()[pos][0]
         
     def __setitem__(self, pos, item):
         self.view.get_model()[pos] = [item]
-        
+    
+    def __len__(self):
+        return len(list(self))
+    
     def index(self, item):
         return list(self).index(item)
         
@@ -134,13 +137,26 @@ class Nicklist(list):
         self.extend(items)
         
     def remove(self, item):
-        if isinstance(item, str):
-            item = self.index(item)
+        item = self.index(item)
     
         self.view.get_model().remove(
             self.view.get_model().iter_nth_child(None, item)
             )
             
+    def pop(self, item=-1):
+        if item < 0:
+            item += len(self)
+        
+        result = self[item]
+        
+        self.view.get_model().remove(
+            self.view.get_model().iter_nth_child(None, item)
+            )
+        return result
+    
+    def clear(self):
+        self.view.get_model().clear()
+    
     def __getslice__(self, *args):
         return list(self).__getslice__(*args)
         
@@ -228,7 +244,7 @@ class NickEdit(gtk.EventBox):
 class TextInput(gtk.Entry):
     # Generates an input event
     def entered_text(self, *args):
-        for line in self.text.split("\n"):
+        for line in self.text.splitlines():
             if line:
                 e_data = events.data(
                             window=self.win,

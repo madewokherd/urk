@@ -22,6 +22,43 @@ def update_nicks(network, channel):
     if window:
         window.set_nicklist(nicklist)
 
+def prefix(network, channel, nick):
+    fr, to = network.isupport["PREFIX"][1:].split(")")
+
+    for mode, prefix in zip(fr, to):
+        if mode in channel.nicks[nick]:
+            return prefix+nick
+    return nick
+
+def sort_key(network, channel, nick):
+    fr, to = network.isupport["PREFIX"][1:].split(")")
+    if nick[0] in to:
+        nick = nick[1:]
+    
+    modes = channel.nicks[nick]
+    
+    return [mode not in modes for mode in fr] + [network.norm_case(nick)]
+
+def nicklist_add(network, channel, nick):
+    p = prefix(network, channel, nick)
+    k = sort_key(network, channel, nick)
+    
+    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
+    lower_limit , upper_limit = 0, len(window.nicklist)
+    while lower_limit < upper_limit:
+        midpoint = (lower_limit+upper_limit)/2
+        if sort_key(network, channel, window.nicklist[midpoint]) < k:
+            lower_limit = midpoint+1
+        else:
+            upper_limit = midpoint
+    window.nicklist.insert(lower_limit, p)
+
+def nicklist_del(network, channel, nick):
+    p = prefix(network, channel, nick)
+    
+    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
+    window.nicklist.remove(p)
+
 def setupSocketConnect(e):
     e.network.channels = {}
 
@@ -86,7 +123,7 @@ def setupJoin(e):
     channel.nicks[e.source] = ''
     channel.normal_nicks[e.network.norm_case(e.source)] = e.source
     
-    update_nicks(e.network, channel)
+    nicklist_add(e.network, channel, e.source)
 
 def onJoin(e):
     if e.source == e.network.me:
@@ -100,7 +137,7 @@ def postPart(e):
         del channel.nicks[e.source]
         del channel.normal_nicks[e.network.norm_case(e.source)]
         
-        update_nicks(e.network, channel)
+        nicklist_del(e.network, channel, e.source)
 
 def postKick(e):
     if e.target == e.network.me:
@@ -110,7 +147,7 @@ def postKick(e):
         del channel.nicks[e.target]
         del channel.normal_nicks[e.network.norm_case(e.target)]
         
-        update_nicks(e.network, channel)
+        nicklist_del(e.network, channel, e.target)
 
 def postQuit(e):
     #if paranoid: check if e.source is me
@@ -120,7 +157,7 @@ def postQuit(e):
             del channel.nicks[e.source]
             del channel.normal_nicks[e.network.norm_case(e.source)]
             
-            update_nicks(e.network, channel)
+            nicklist_del(e.network, channel, e.source)
 
 def setupMode(e):
     channel = getchan(e.network,e.channel)
@@ -140,10 +177,12 @@ def setupMode(e):
             elif char in user_modes:
                 #these are modes like op and voice
                 nickname = params.pop()
+                nicklist_del(e.network, channel, nickname)
                 if mode_on:
                     channel.nicks[nickname] += char
                 else:
                     channel.nicks[nickname] = channel.nicks[nickname].strip(char)
+                nicklist_add(e.network, channel, nickname)
             elif char in always_parm_modes:
                 #these always have a parameter
                 if mode_on:
@@ -163,20 +202,16 @@ def setupMode(e):
                 else:
                     channel.mode = channel.mode.strip(char)
 
-        update_nicks(e.network, channel)
-
 def postNick(e):
- # FIXME:
- if e.network.status:
-    for channame in e.network.channels:
+    for channame in channels(e.network):
         channel = getchan(e.network,channame)
+        nicklist_del(e.network, channel, e.source)
         if e.source in channel.nicks:
             del channel.normal_nicks[e.network.norm_case(e.source)]
             channel.nicks[e.newnick] = channel.nicks[e.source]
             del channel.nicks[e.source]
             channel.normal_nicks[e.network.norm_case(e.newnick)] = e.newnick
-
-        update_nicks(e.network, channel)
+        nicklist_add(e.network, channel, e.newnick)
 
 def setupTopic(e):
     channel = getchan(e.network, e.target)
@@ -210,8 +245,15 @@ def setupRaw(e):
                 e.quiet = True
                 channel.got_names = True
             channel.getting_names = False
- 
-            update_nicks(e.network, channel)
+            
+            window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3])
+            if window:
+                window.nicklist.clear()
+                nicks = list(channel.nicks)
+                def key(nick):
+                    return sort_key(e.network, channel, nick)
+                nicks.sort(key=key)
+                window.nicklist.extend(prefix(e.network, channel, nick) for nick in nicks)
         
     elif e.msg[1] == '324': #channel mode is
         channel = getchan(e.network,e.msg[3])

@@ -4,7 +4,7 @@ def onCommand(e):
     if e.name == "flag":
         e.done = True
         
-        events.run_command("say - %s" % e.switches, e.window, e.network)
+        events.run_command("say - %s" % e.switches, e.window, e.window.network)
 
 def onRightClick(e):
     def print_blah():
