@@ -190,13 +190,13 @@ def setupMode(e):
 def postNick(e):
     for channame in channels(e.network):
         channel = getchan(e.network,channame)
-        nicklist_del(e.network, channel, e.source)
         if e.source in channel.nicks:
+            nicklist_del(e.network, channel, e.source)
             del channel.normal_nicks[e.network.norm_case(e.source)]
             channel.nicks[e.newnick] = channel.nicks[e.source]
             del channel.nicks[e.source]
             channel.normal_nicks[e.network.norm_case(e.newnick)] = e.newnick
-        nicklist_add(e.network, channel, e.newnick)
+            nicklist_add(e.network, channel, e.newnick)
 
 def setupTopic(e):
     channel = getchan(e.network, e.target)
