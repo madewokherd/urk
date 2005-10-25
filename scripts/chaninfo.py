@@ -23,20 +23,22 @@ def nicklist_add(network, channel, nick):
     k = sort_key(network, channel, nick)
     
     window = ui.windows.get(ui.ChannelWindow, network, channel.name)
-    lower_limit , upper_limit = 0, len(window.nicklist)
-    while lower_limit < upper_limit:
-        midpoint = (lower_limit+upper_limit)/2
-        if sort_key(network, channel, window.nicklist[midpoint]) < k:
-            lower_limit = midpoint+1
-        else:
-            upper_limit = midpoint
-    window.nicklist.insert(lower_limit, p)
+    if window:
+        lower_limit , upper_limit = 0, len(window.nicklist)
+        while lower_limit < upper_limit:
+            midpoint = (lower_limit+upper_limit)/2
+            if sort_key(network, channel, window.nicklist[midpoint]) < k:
+                lower_limit = midpoint+1
+            else:
+                upper_limit = midpoint
+        window.nicklist.insert(lower_limit, p)
 
 def nicklist_del(network, channel, nick):
     p = prefix(network, channel, nick)
     
     window = ui.windows.get(ui.ChannelWindow, network, channel.name)
-    window.nicklist.remove(p)
+    if window:
+        window.nicklist.remove(p)
 
 def setupListRightClick(e):
     if e.window.role == ui.ChannelWindow:

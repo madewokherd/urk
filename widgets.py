@@ -118,7 +118,7 @@ class Nicklist:
         self.view.get_model()[pos] = [item]
     
     def __len__(self):
-        return len(list(self))
+        return self.view.get_model().iter_n_children(None)
     
     def index(self, item):
         return list(self).index(item)
