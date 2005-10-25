@@ -1,27 +1,6 @@
 import events
 import ui
 
-def update_nicks(network, channel):
-    # this sucks
-    fr, to = network.isupport["PREFIX"][1:].split(")")
-
-    def prefix(nick):
-        for mode, prefix in zip(fr, to):
-            if mode in channel.nicks[nick]:
-                return prefix+nick
-        return nick
-    
-    def status(nick):
-        modes = channel.nicks[nick]
-
-        return [mode not in modes for mode in fr] + [nick.lower()]
-
-    nicklist = [prefix(nick) for nick in sorted(channel.nicks, key=status)]
-    
-    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
-    if window:
-        window.set_nicklist(nicklist)
-
 def prefix(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
@@ -58,6 +37,13 @@ def nicklist_del(network, channel, nick):
     
     window = ui.windows.get(ui.ChannelWindow, network, channel.name)
     window.nicklist.remove(p)
+
+def setupListRightClick(e):
+    if e.window.role == ui.ChannelWindow:
+        if e.data[0] in e.window.network.isupport["PREFIX"].split(")")[1]:
+            e.nick = e.data[1:]
+        else:
+            e.nick = e.data
 
 def setupSocketConnect(e):
     e.network.channels = {}
@@ -134,30 +120,27 @@ def postPart(e):
         del e.network.channels[e.network.norm_case(e.target)]
     else:
         channel = getchan(e.network,e.target)
+        nicklist_del(e.network, channel, e.source)
         del channel.nicks[e.source]
         del channel.normal_nicks[e.network.norm_case(e.source)]
-        
-        nicklist_del(e.network, channel, e.source)
 
 def postKick(e):
     if e.target == e.network.me:
         del e.network.channels[e.network.norm_case(e.channel)]
     else:
         channel = getchan(e.network,e.channel)
+        nicklist_del(e.network, channel, e.target)
         del channel.nicks[e.target]
         del channel.normal_nicks[e.network.norm_case(e.target)]
-        
-        nicklist_del(e.network, channel, e.target)
 
 def postQuit(e):
     #if paranoid: check if e.source is me
-    for channame in e.network.channels:
+    for channame in channels(e.network):
         channel = getchan(e.network,channame)
         if e.source in channel.nicks:
+            nicklist_del(e.network, channel, e.source)
             del channel.nicks[e.source]
             del channel.normal_nicks[e.network.norm_case(e.source)]
-            
-            nicklist_del(e.network, channel, e.source)
 
 def setupMode(e):
     channel = getchan(e.network,e.channel)
