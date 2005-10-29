@@ -90,7 +90,7 @@ class Network:
                 if (f, t, p, c, a) not in self.failedhosts:
                     self.socket = socket.socket(f, t, p)
                     self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
-                    self.failedhosts.append(f, t, p, c, a)
+                    self.failedhosts.append((f, t, p, c, a))
                     break
             else:
                 if len(result):
