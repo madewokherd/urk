@@ -1,11 +1,5 @@
 Current components:
 
-Ipv6 etc.
-
-    We should have ipv6 support. Automatically and not to the detriment of
-ipv4.
-
-
 Highlighting
     
     Provide a means for highlighting. Maybe theme should trigger an event? :/

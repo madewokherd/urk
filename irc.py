@@ -68,9 +68,37 @@ class Network:
         self.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
         
         self.status = DISCONNECTED
+        self.failedhosts = [] #hosts we've tried and failed to connect to
         self.channel_prefixes = '&#+$'   # from rfc2812
         
         self.buffer = ''
+    
+    #called when we get a result from the dns lookup
+    def on_dns(self, result, error):
+        if error:
+            self.disconnect(error=error[1])
+        else:
+            import os
+            #import random
+            #random.shuffle(result, os.urandom)
+            if socket.has_ipv6: #prefer ipv6
+                result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f == socket.AF_INET6]+result
+            else: #ignore ipv6
+                result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f != socket.AF_INET6]
+            
+            for f, t, p, c, a in result:
+                if (f, t, p, c, a) not in self.failedhosts:
+                    self.socket = socket.socket(f, t, p)
+                    self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
+                    break
+            else:
+                if len(result):
+                    self.failedhosts[:] = ()
+                    f, t, p, c, a = result[0]
+                    self.socket = socket.socket(f, t, p)
+                    self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
+                else:
+                    self.disconnect(error="Couldn't find a host we can connect to")
     
     #called when socket.open() returns
     def on_connect(self, result, error):
@@ -78,6 +106,7 @@ class Network:
             self.disconnect(error=error[1])
         else:
             self.status = INITIALIZING
+            self.failedhosts[:] = ()
 
             events.trigger('SocketConnect', events.data(network=self))
             
@@ -137,18 +166,14 @@ class Network:
     def connect(self):
         if not self.status:
             self.status = CONNECTING
-            self.socket = socket.socket()
             
-            self.source_id = ui.fork(
-                                self.on_connect,
-                                self.socket.connect,
-                                (self.server, self.port)
-                                )
+            self.source_id = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port)
             
             events.trigger('Connecting', events.data(network=self))
     
     def disconnect(self, error=None):
-        self.socket.close()
+        if self.socket:
+            self.socket.close()
 
         if self.source_id:
             ui.unregister(self.source_id)
