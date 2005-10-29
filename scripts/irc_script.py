@@ -183,6 +183,8 @@ def onCommandJoin(e):
             e.network.join(e.args[0])
         else:
             raise events.CommandError("We're not connected.")
+    elif e.window.role == ui.ChannelWindow:
+        e.window.network.join(e.window.id)
     else:
         raise events.CommandError("You must supply a channel.")
 
@@ -243,7 +245,12 @@ trailing = {
     }
 
 needschan = {
-    'part': 0,
+    'part':0,
+    'topic':0,
+    'invite':1,
+    'kick':0,
+#    'mode':0, #this is commonly used for channels, but can apply to users
+#    'names':0, #with no parameters, this is supposed to give a list of all users; we may be able to safely ignore that.
     }
     
 def defCommand(e):
@@ -252,18 +259,18 @@ def defCommand(e):
             valid_chan_prefixes = e.network.isupport.get('CHANTYPES','#&+')
             chan_pos = needschan[e.name]
             
-            if len(e.args) > chan_pos:    
-                if e.args[chan_pos][0] not in valid_chan_prefixes:
+            if len(e.args) > chan_pos:
+                if not e.args[chan_pos] or e.args[chan_pos][0] not in valid_chan_prefixes:
                     e.args.insert(chan_pos, e.window.id)
             else:
                 e.args.append(e.window.id)
-                
+        
         if e.name in trailing:
             trailing_pos = trailing[e.name]
         
             if len(e.args) > trailing_pos:
                 e.args[trailing_pos] = ':%s' % e.args[trailing_pos]
-                
+        
         e.text = '%s %s' % (e.name, ' '.join(e.args))
 
 def postCommand(e):

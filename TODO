@@ -1,12 +1,5 @@
 Current components:
 
-Fill in the channel name
-
-    Some standard irc commands always require a channel. If the user types one
-of them on a channel window and does not provide a channel, we should use the
-current one.
-
-
 Ipv6 etc.
 
     We should have ipv6 support. Automatically and not to the detriment of
