@@ -62,7 +62,7 @@ def onKeyPress(e):
             recent_completer = completer(e.window)
 
         recent_completer.next()
-     
+    
     if e.key != 'Tab':
         recent_completer = None
 

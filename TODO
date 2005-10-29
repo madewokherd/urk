@@ -1,15 +1,4 @@
-Urgent:
-
-    Fix conf and /edit for windows users and people who don't have the paths we
-have.
-
-
 Current components:
-
-Format more stuff
-
-    Change formatting of tabs, tabs with new text, based on theme
-
 
 Fill in the channel name
 
@@ -24,17 +13,27 @@ Ipv6 etc.
 ipv4.
 
 
+Highlighting
+    
+    Provide a means for highlighting. Maybe theme should trigger an event? :/
+
+
+Partial SDI
+
+    (Optionally) allow one main window per network.
+
+
+Format more stuff
+
+    Change formatting of tabs, tabs with new text, based on theme
+
+
 Preferences UI
 
     a preferences ui, probably with a separate sort of 
 "connect or edit connection" dialog
 
     we want a number of "preflets" rather than one gigantic prefs window
-
-
-Highlighting
-    
-    Provide a means for highlighting. Maybe theme should trigger an event? :/
 
 
 
@@ -52,11 +51,6 @@ System Install
     a script (probably python) to do a system-wide install
 
 
-DCC Stuff
-
-    DCC server, sends, chat, etc. We should support mIRC's "passive" DCC.
-
-
 Logging
 
     We'll need this at some point. Most likely we'll just put logging code
@@ -67,6 +61,11 @@ Ignore list
 
     Possibly doesn't merit a separate component, but this is a "standard irc
 client feature" that's not essential to any current components.
+
+
+DCC Stuff
+
+    DCC server, sends, chat, etc. We should support mIRC's "passive" DCC.
 
 
 Identd

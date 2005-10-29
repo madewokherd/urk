@@ -78,12 +78,13 @@ os_commands = ( #list of commands to search for for opening files
     )
 def open_file(filename):
     if conf['open-file-command']:
-        #FIXME: we need to make sure no shell evaluates the filename
-        os.popen(conf['open-file-command'] % filename)
+        command = (conf['open-file-command'] % filename).split(' ')
+        #Note: we have to use spawn here so that no shell evaluates the filename
+        os.spawnvp(os.P_NOWAIT,command[0], command)
     elif hasattr(os, 'startfile'):
         os.startfile(filename)
     elif open_file_cmd:
-        #Note: we have to use spawn here so that no shell evaluates the filename
+        #Note: see above note about spawn
         os.spawnvp(os.P_NOWAIT,open_file_cmd[0], open_file_cmd + (filename,))
     else:
         #look for a command we can use
