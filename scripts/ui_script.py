@@ -62,6 +62,7 @@ def postPart(e):
                             
             if len(cwindows) == 1:
                 window.mutate(ui.StatusWindow, e.network, 'status')
+                window.focus()
             else:
                 window.close()
 
