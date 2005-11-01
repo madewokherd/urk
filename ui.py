@@ -317,7 +317,7 @@ def set_title(title=None):
 
 def start():
     if not windows:
-        windows.new(ChannelWindow, irc.Network(), "status").activate()
+        windows.new(StatusWindow, irc.Network(), "status").activate()
 
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
     #register_idle(ui.exit)
