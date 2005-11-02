@@ -441,6 +441,8 @@ class TextOutput(gtk.TextView):
                 c_data = get_event_at_iter(self, hover_iter)
 
                 events.trigger("Click", c_data)
+                
+            self.win.focus()
 
     def clear_hover(self, *args):
         buffer = self.get_buffer()
