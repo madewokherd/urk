@@ -48,6 +48,12 @@ def onKeyPress(e):
 
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
+        
+    elif e.key == 'F6':
+        w = [w for w in ui.windows if w.activity > ui.EVENT]
+        
+        if w:
+            ui.windows.manager.set_active(w[0])
 
     elif e.key == '^t':
         def new_tab():
