@@ -197,6 +197,7 @@ def onCommandServer(e):
             server, port = server.rsplit(':', 1)
             network_info["port"] = int(port)
             
+        network_info["name"] = server
         network_info["server"] = server
 
     if len(e.args) > 1:
@@ -279,28 +280,28 @@ def postCommand(e):
         e.done = True
         
 def get_network_info(network, network_info):
-    conf_info = conf.get("networks", {}).get(network)
+    conf_info = conf.get('networks', {}).get(network)
 
     if conf_info:
-        network_info["server"] = conf_info["server"] or network
+        network_info['"server'] = conf_info['server'] or network
         
         for info in conf_info:
             if info not in network_info:
                 network_info[info] = conf_info[info]
 
 def onStart(e):
-    for network in (conf["start_networks"] or []):
-        network_info = {"server": network}
+    for network in conf.get('start_networks', []):
+        network_info = {'name': network, 'server': network}
         get_network_info(network, network_info)
+        
+        print network_info
             
         nw = irc.Network(**network_info)
         
-        ui.windows.new(ui.StatusWindow, nw, "status").activate()
+        ui.windows.new(ui.StatusWindow, nw, 'status').activate()
 
         nw.connect()
 
 def onConnect(e):
-    if 'NETWORK' in e.network.isupport:
-        perform = conf['perform/'+str(e.network.isupport['NETWORK'])] or []
-        for command in perform:
-            events.run(command, e.window, e.network)
+    for command in conf.get('networks', {}).get(e.network.name, []):
+        events.run(command, e.window, e.network)

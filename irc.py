@@ -50,9 +50,12 @@ class Network:
     except:
         nicks = ("mrurk",)
     
-    def __init__(self, server="irc.default.org", port=6667, nicks=[], fullname=""):
+    def __init__(self, server="irc.default.org", port=6667, nicks=[], 
+                    fullname="", name=None, **kwargs):
         self.server = server
         self.port = port
+        
+        self.name = name or server
         
         self.nicks = nicks or list(self.nicks)
         self.me = self.nicks[0]

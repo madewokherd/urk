@@ -14,18 +14,16 @@ if not os.access(LOG_DIR, os.F_OK):
     os.mkdir(LOG_DIR)
     
 def log_file(network, name, new=False):
-    network = network.isupport['NETWORK']
-
-    network_dir = os.path.join(LOG_DIR, network)
+    network_dir = os.path.join(LOG_DIR, network.name)
     if not os.access(network_dir, os.F_OK):
         os.mkdir(network_dir)
     
-    name_dir = os.path.join(LOG_DIR, network, name)    
+    name_dir = os.path.join(LOG_DIR, network.name, name)    
     if not os.access(name_dir, os.F_OK):
         os.mkdir(name_dir)
        
     if new:
-        recent_log = time.strftime('%Y-%m-%d.%H%M%S.txt')
+        recent_log = time.strftime('%Y-%m-%d.%H%M%S.log')
     else:
         try:
             recent_log = sorted(os.listdir(name_dir))[-1]
