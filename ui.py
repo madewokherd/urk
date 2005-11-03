@@ -309,7 +309,12 @@ def set_title(title=None):
         w = windows.manager.get_active()
         
         if w.role != StatusWindow:
-            title = "%s - %s - %s" % (w.network.me, w.network.server, w.title)
+            if w.network.status:
+                server = w.network.server
+            else:
+                server = "[%s]" % w.network.server
+                
+            title = "%s - %s - %s" % (w.network.me, server, w.title)
         else:
             title = "%s - %s" % (w.network.me, w.title)
     
