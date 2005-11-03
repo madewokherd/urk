@@ -57,8 +57,6 @@ def main():
         except OSError:
             pass
 
-    events.trigger("Start")
-    
     ui.start()
 
 if __name__ == "__main__":

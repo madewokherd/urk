@@ -321,11 +321,16 @@ def set_title(title=None):
     ui.set_title("%s - urk" % title)
 
 def start():
-    if not windows:
-        windows.new(StatusWindow, irc.Network(), "status").activate()
-
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
     #register_idle(ui.exit)
+    
+    def trigger_start():
+        events.trigger("Start")
+        
+        if not windows:
+            windows.new(StatusWindow, irc.Network(), "status").activate()
+        
+    register_idle(trigger_start)
 
     try:
         gtk.threads_enter()
