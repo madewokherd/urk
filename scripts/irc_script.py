@@ -283,7 +283,7 @@ def get_network_info(network, network_info):
     conf_info = conf.get('networks', {}).get(network)
 
     if conf_info:
-        network_info['"server'] = conf_info['server'] or network
+        network_info['server'] = conf_info['server'] or network
         
         for info in conf_info:
             if info not in network_info:
@@ -303,5 +303,5 @@ def onStart(e):
         nw.connect()
 
 def onConnect(e):
-    for command in conf.get('networks', {}).get(e.network.name, []):
+    for command in conf.get('networks', {}).get(e.network.name, {}).get('perform', []):
         events.run(command, e.window, e.network)
