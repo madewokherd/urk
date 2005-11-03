@@ -18,6 +18,7 @@ def onClick(e):
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     elif (target.startswith("http://") and target.count(".") >= 1) or \
+         (target.startswith("https://") and target.count(".") >= 1) or \
             target.startswith("www") and target.count(".") >= 2:
         if target.startswith("www"):
             target = "http://"+target
@@ -45,6 +46,7 @@ def onHover(e):
     
     # url of the form http://xxx.xxx or www.xxx.xxx       
     elif (target.startswith("http://") and target.count(".") >= 1) or \
+         (target.startswith("https://") and target.count(".") >= 1) or \
             target.startswith("www") and target.count(".") >= 2:
         e.tolink.add((target_fr, target_to))
     
