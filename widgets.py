@@ -348,8 +348,8 @@ def prop_to_gtk(prop, val):
     return prop, val
         
 def word_from_pos(text, pos):
-    if text[pos] == " ":
-        return "", 0, 0
+    if text[pos] == ' ':
+        return ' ', pos, pos+1
 
     else:
         fr = text[:pos].split(" ")[-1]
@@ -458,7 +458,8 @@ class TextOutput(gtk.TextView):
         self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)
 
     def hover(self, widget, event):
-        self.clear_hover()
+        if self.linking:
+            self.clear_hover()
 
         hover_iter = get_iter_at_event(self, event)
 
@@ -614,7 +615,7 @@ class WindowListTabs(gtk.Notebook):
         
         tab_pos = conf["ui-gtk/tab-pos"]
         if tab_pos is None:
-            tab_pos = gtk.POS_TOP
+            tab_pos = gtk.POS_BOTTOM
         self.set_property("tab-pos", tab_pos)
 
         self.set_scrollable(True)
