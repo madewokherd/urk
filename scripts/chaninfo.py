@@ -116,7 +116,8 @@ def setupJoin(e):
         #didn't clear out the nicklist when we left. That means we have to clear
         #it out now.
         window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
-        window.nicklist.clear()
+        if window:
+            window.nicklist.clear()
     nicklist_add(e.network, channel, e.source)
 
 def onJoin(e):
