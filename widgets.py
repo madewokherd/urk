@@ -255,9 +255,6 @@ class TextInput(gtk.Entry):
                 
                 if not e_data.done:
                     events.run(line, self.win, self.win.network)
-                
-                self.history.insert(1, line)
-                self.history_i = 0
         
         self.text = ""
     
@@ -274,25 +271,6 @@ class TextInput(gtk.Entry):
     
     def insert(self, text):
         self.do_insert_at_cursor(self, text)
-    
-    # Explores the history of this entry box
-    #  0 means most recent which is what you're currently typing
-    #  anything greater means things you've typed and sent    
-    def history_explore(self, di): # assume we're going forward in history 
-        if di == 1:
-            # we're going back in history
-            
-            # when we travel back in time, we need to remember
-            # where we were, so we can go back to the future
-            if self.history_i == 0 and self.text:
-                self.history.insert(1, self.text)
-                self.history_i = 1
-
-        if self.history_i + di in range(len(self.history)):
-            self.history_i += di
-
-        self.text = self.history[self.history_i]
-        self.cursor = -1
 
     def __init__(self, window):
         gtk.Entry.__init__(self)
@@ -300,9 +278,6 @@ class TextInput(gtk.Entry):
         self.win = window
 
         self.connect("activate", self.entered_text)
-   
-        self.history = [""]
-        self.history_i = 0
         
         up = gtk.gdk.keyval_from_name("Up")
         down = gtk.gdk.keyval_from_name("Down")
