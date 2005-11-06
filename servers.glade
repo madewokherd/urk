@@ -8,7 +8,7 @@
                 <property name="events"></property>
                 <property name="visible">True</property>
                 <child>
-                    <widget class="GtkComboBox" id="network_list">
+                    <widget class="GtkComboBox" id="networks">
                         <property name="events"></property>
                         <property name="visible">True</property>
                     </widget>
@@ -19,87 +19,11 @@
                     </packing>
                 </child>
                 <child>
-                    <widget class="GtkExpander" id="expander1">
-                        <property name="label">Info</property>
+                    <widget class="GtkVBox" id="infobox">
                         <property name="events"></property>
-                        <property name="can_focus">True</property>
                         <property name="visible">True</property>
                         <child>
-                            <widget class="GtkTable" id="table1">
-                                <property name="homogeneous">True</property>
-                                <property name="border_width">1</property>
-                                <property name="events"></property>
-                                <property name="n_rows">3</property>
-                                <property name="n_columns">2</property>
-                                <property name="visible">True</property>
-                                <child>
-                                    <widget class="GtkLabel" id="label1">
-                                        <property name="label" context="True" translatable="True">label</property>
-                                        <property name="events"></property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing/>
-                                </child>
-                                <child>
-                                    <widget class="GtkLabel" id="label2">
-                                        <property name="label" context="True" translatable="True">label</property>
-                                        <property name="events"></property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing>
-                                        <property name="bottom_attach">2</property>
-                                        <property name="top_attach">1</property>
-                                    </packing>
-                                </child>
-                                <child>
-                                    <widget class="GtkLabel" id="label3">
-                                        <property name="label" context="True" translatable="True">label</property>
-                                        <property name="events"></property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing>
-                                        <property name="bottom_attach">3</property>
-                                        <property name="top_attach">2</property>
-                                    </packing>
-                                </child>
-                                <child>
-                                    <widget class="GtkEntry" id="entry1">
-                                        <property name="events"></property>
-                                        <property name="can_focus">True</property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="right_attach">2</property>
-                                    </packing>
-                                </child>
-                                <child>
-                                    <widget class="GtkEntry" id="entry2">
-                                        <property name="events"></property>
-                                        <property name="can_focus">True</property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="bottom_attach">2</property>
-                                        <property name="top_attach">1</property>
-                                        <property name="right_attach">2</property>
-                                    </packing>
-                                </child>
-                                <child>
-                                    <widget class="GtkEntry" id="entry3">
-                                        <property name="events"></property>
-                                        <property name="can_focus">True</property>
-                                        <property name="visible">True</property>
-                                    </widget>
-                                    <packing>
-                                        <property name="left_attach">1</property>
-                                        <property name="bottom_attach">3</property>
-                                        <property name="top_attach">2</property>
-                                        <property name="right_attach">2</property>
-                                    </packing>
-                                </child>
-                            </widget>
+                            <placeholder/>
                         </child>
                     </widget>
                     <packing>
@@ -109,32 +33,12 @@
                     </packing>
                 </child>
                 <child>
-                    <widget class="GtkHButtonBox" id="hbuttonbox1">
-                        <property name="events"></property>
-                        <property name="layout_style">spread</property>
+                    <widget class="GtkButton" id="connect">
+                        <property name="label" translatable="True">Connect</property>
+                        <property name="resize_mode">queue</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
                         <property name="visible">True</property>
-                        <child>
-                            <widget class="GtkButton" id="button1">
-                                <property name="receives_default">True</property>
-                                <property name="label" context="True" translatable="True">button</property>
-                                <property name="events"></property>
-                                <property name="can_focus">True</property>
-                                <property name="visible">True</property>
-                            </widget>
-                            <packing/>
-                        </child>
-                        <child>
-                            <widget class="GtkButton" id="button2">
-                                <property name="receives_default">True</property>
-                                <property name="label" context="True" translatable="True">button</property>
-                                <property name="events"></property>
-                                <property name="can_focus">True</property>
-                                <property name="visible">True</property>
-                            </widget>
-                            <packing>
-                                <property name="position">1</property>
-                            </packing>
-                        </child>
                     </widget>
                     <packing>
                         <property name="position">2</property>
