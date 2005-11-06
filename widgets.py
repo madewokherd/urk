@@ -307,8 +307,6 @@ class TextInput(gtk.Entry):
         up = gtk.gdk.keyval_from_name("Up")
         down = gtk.gdk.keyval_from_name("Down")
         tab = gtk.gdk.keyval_from_name("Tab")
-        
-        eat = set([up, down, tab])
                 
         def keypress(widget, event):
             if event.keyval == up:
@@ -317,6 +315,15 @@ class TextInput(gtk.Entry):
             elif event.keyval == down:
                 widget.history_explore(-1)
                 
+            elif event.keyval == tab:
+                pass
+                
+            else:
+                return
+                
+            return True
+        
+        def keyrelease(widget, event):
             key = ""
             for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
                             (gtk.gdk.SHIFT_MASK, '+'),
@@ -334,9 +341,10 @@ class TextInput(gtk.Entry):
             
             events.trigger("KeyPress", e_data)
             
-            return event.keyval in eat
+            return event.keyval in (up, down, tab)
 
         self.connect("key-press-event", keypress)
+        self.connect("key-release-event", keyrelease)
         
 def prop_to_gtk(prop, val):
     if val == parse_mirc.BOLD:

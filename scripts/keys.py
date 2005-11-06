@@ -57,10 +57,7 @@ def onKeyPress(e):
             ui.windows.manager.set_active(w[0])
 
     elif e.key == '^t':
-        def new_tab():
-            ui.windows.new(ui.StatusWindow, irc.Network(), 'status').activate()
-            
-        ui.register_idle(new_tab)
+        ui.windows.new(ui.StatusWindow, irc.Network(), 'status').activate()
 
     elif e.key == 'Tab' and e.window.role == ui.ChannelWindow and \
             chaninfo.ischan(e.window.network, e.window.id):
