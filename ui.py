@@ -188,7 +188,7 @@ class Windows(list):
         w = self.get(role, network, id)
         
         if not w:
-            w = Window(role, network, id)
+            w = Window(role, network or irc.Network(), id)
             self.append(w)
 
         return w
