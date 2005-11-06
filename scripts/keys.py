@@ -49,7 +49,7 @@ def onKeyPress(e):
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
         
-    elif e.key == 'F6':
+    elif e.key == '!a':
         w = [w for w in ui.windows if w.activity > ui.EVENT]
         
         if w:

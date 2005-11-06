@@ -319,8 +319,8 @@ class TextInput(gtk.Entry):
                 
             key = ""
             for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
-                            (gtk.gdk.SHIFT_MASK, '!'),
-                            (gtk.gdk.MOD1_MASK, '+')):
+                            (gtk.gdk.SHIFT_MASK, '+'),
+                            (gtk.gdk.MOD1_MASK, '!')):
                 if event.state & k:
                     key += c
             

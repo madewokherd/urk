@@ -119,8 +119,6 @@ class Network:
     #called when we read data or failed to read data
     def on_read(self, result, error):
         if error:
-            print error[0]
-            print error.args
             self.disconnect(error=error[1])
         elif not result:
             self.disconnect(error="Connection closed by remote host")
@@ -178,7 +176,7 @@ class Network:
     def disconnect(self, error=None):
         if self.socket:
             self.socket.close()
-
+        
         if self.source_id:
             ui.unregister(self.source_id)
             self.source_id = None

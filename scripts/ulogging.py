@@ -99,7 +99,7 @@ def onJoin(e):
 
     else:
         f = log_file(e.network, e.window.id)
-        to_write = '\x02%s\x02 (%s) joined %s' % (e.source, e.address, e.target)
+        to_write = '%s (%s) joined %s' % (e.source, e.address, e.target)
         
     f.write(to_write)
 
@@ -142,6 +142,8 @@ def onNick(e):
         to_write = 'You are now known as %s' % e.newnick
     
         for window in ui.get_window_for(network=e.network):
+            f = log_file(e.network, window.id)
+            
             f.write(to_write)
     else:
         to_write = '%s is now known as %s' % (e.source, e.newnick)

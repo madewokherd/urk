@@ -1,5 +1,15 @@
 Current components:
 
+Alternate nicks
+    
+    We need to do better when nicks are taken.
+
+
+//commands
+
+    Make the //commands evaluate python.
+
+
 Highlighting
     
     Provide a means for highlighting. Maybe theme should trigger an event? :/
@@ -23,6 +33,11 @@ Preferences UI
     we want a number of "preflets" rather than one gigantic prefs window
 
 
+Right-click links
+
+    (11:55:54) Marc: we need to be able to right click urls
+    (11:55:56) Marc: and say Copy
+
 
 
 Things that can be done as separate components:
@@ -36,12 +51,6 @@ Functional Nicklist
 System Install
 
     a script (probably python) to do a system-wide install
-
-
-Logging
-
-    We'll need this at some point. Most likely we'll just put logging code
-in IRCWindow.write().
 
 
 Ignore list

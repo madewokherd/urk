@@ -111,6 +111,12 @@ def setupJoin(e):
     channel.nicks[e.source] = ''
     channel.normal_nicks[e.network.norm_case(e.source)] = e.source
     
+    if e.source == e.network.me:
+        #If the channel window already existed, and we're joining, then we 
+        #didn't clear out the nicklist when we left. That means we have to clear
+        #it out now.
+        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
+        window.nicklist.clear()
     nicklist_add(e.network, channel, e.source)
 
 def onJoin(e):
