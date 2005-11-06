@@ -1,6 +1,7 @@
 import events
 import ui
 import chaninfo
+import irc
 
 shortcuts = {
     '^b': '\x02',
@@ -57,7 +58,7 @@ def onKeyPress(e):
 
     elif e.key == '^t':
         def new_tab():
-            events.run('server -n', e.window, e.window.network)
+            ui.windows.new(ui.StatusWindow, irc.Network(), 'status').activate()
             
         ui.register_idle(new_tab)
 
