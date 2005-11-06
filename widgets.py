@@ -256,7 +256,7 @@ class TextInput(gtk.Entry):
                 if not e_data.done:
                     events.run(line, self.win, self.win.network)
         
-        self.text = ""
+        self.text = ''
     
     def _set_selection(self, s):
         if s:
@@ -267,7 +267,7 @@ class TextInput(gtk.Entry):
     #some nice toys for the scriptors
     text = property(gtk.Entry.get_text, gtk.Entry.set_text)
     cursor = property(gtk.Entry.get_position, gtk.Entry.set_position)
-    selection=property(gtk.Entry.get_selection_bounds,_set_selection)
+    selection = property(gtk.Entry.get_selection_bounds, _set_selection)
     
     def insert(self, text):
         self.do_insert_at_cursor(self, text)
@@ -277,29 +277,17 @@ class TextInput(gtk.Entry):
         
         self.win = window
 
-        self.connect("activate", self.entered_text)
+        self.connect('activate', self.entered_text)
         
         up = gtk.gdk.keyval_from_name("Up")
         down = gtk.gdk.keyval_from_name("Down")
         tab = gtk.gdk.keyval_from_name("Tab")
                 
         def keypress(widget, event):
-            if event.keyval == up:
-                widget.history_explore(1)
-                
-            elif event.keyval == down:
-                widget.history_explore(-1)
-                
-            elif event.keyval == tab:
-                pass
-                
-            else:
-                return
-                
-            return True
+            return event.keyval in (up, down, tab)
         
         def keyrelease(widget, event):
-            key = ""
+            key = ''
             for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
                             (gtk.gdk.SHIFT_MASK, '+'),
                             (gtk.gdk.MOD1_MASK, '!')):
@@ -314,12 +302,12 @@ class TextInput(gtk.Entry):
                         window=self.win
                         )
             
-            events.trigger("KeyPress", e_data)
+            events.trigger('KeyPress', e_data)
             
             return event.keyval in (up, down, tab)
 
-        self.connect("key-press-event", keypress)
-        self.connect("key-release-event", keyrelease)
+        self.connect('key-press-event', keypress)
+        self.connect('key-release-event', keyrelease)
         
 def prop_to_gtk(prop, val):
     if val == parse_mirc.BOLD:
