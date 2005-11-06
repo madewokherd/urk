@@ -9,7 +9,7 @@ shortcuts = {
     '^o': '\x0F',
     }
 
-def onKeyPress(e):
+def onKeyPressed(e):
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
         
