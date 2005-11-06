@@ -197,32 +197,31 @@ def onCommandServer(e):
             server, port = server.rsplit(':', 1)
             network_info["port"] = int(port)
             
+        elif len(e.args) > 1:
+            port = e.args[1]
+        
+            network_info["port"] = int(port)
+            
         network_info["name"] = server
         network_info["server"] = server
 
-    if len(e.args) > 1:
-        port = e.args[1]
-        
-        network_info["port"] = int(port)
-    
-    if 'server' in network_info:
-        get_network_info(network_info["server"], network_info)
+        get_network_info(server, network_info)
 
-    new_window = ("n" in e.switches or "m" in e.switches)
-    if new_window or not e.network:    
+    if 'm' in e.switches or not e.network:    
         e.network = irc.Network(**network_info)
         ui.windows.new(ui.StatusWindow, e.network, "status").activate()
         
-    if "server" in network_info:
-        e.network.server = network_info["server"]
-        if not e.network.status:
-            window = ui.get_default_window(e.network)
-            if window:
-                window.update()
-    if "port" in network_info:
-        e.network.port = network_info["port"]
+    else:
+        if "server" in network_info:
+            e.network.server = network_info["server"]
+            if not e.network.status:
+                window = ui.get_default_window(e.network)
+                if window:
+                    window.update()
+        if "port" in network_info:
+            e.network.port = network_info["port"]
 
-    if not ("n" in e.switches or "o" in e.switches):
+    if 'o' not in e.switches:
         if e.network.status:
             e.network.quit()
         e.network.connect()
@@ -279,11 +278,11 @@ def postCommand(e):
         e.network.raw(e.text)
         e.done = True
         
-def get_network_info(network, network_info):
-    conf_info = conf.get('networks', {}).get(network)
+def get_network_info(name, network_info):
+    conf_info = conf.get('networks', {}).get(name)
 
     if conf_info:
-        network_info['server'] = conf_info['server'] or network
+        network_info['server'] = conf_info['server'] or name
         
         for info in conf_info:
             if info not in network_info:
@@ -293,9 +292,7 @@ def onStart(e):
     for network in conf.get('start_networks', []):
         network_info = {'name': network, 'server': network}
         get_network_info(network, network_info)
-        
-        print network_info
-            
+
         nw = irc.Network(**network_info)
         
         ui.windows.new(ui.StatusWindow, nw, 'status').activate()
