@@ -20,6 +20,13 @@ def hilight_text(e):
         e.hilight = []
         events.trigger("Hilight",e)
 
+#hilight own nick
+def onHilight(e):
+    pos = e.text.find(e.network.me,0)
+    while pos != -1:
+        e.hilight.append((pos,pos+len(e.network.me)))
+        pos = e.text.find(e.network.me,pos+1)
+
 def prefix(e):
     #return time.strftime('[%H:%M] ')
     return ""
