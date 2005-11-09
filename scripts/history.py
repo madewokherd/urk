@@ -46,7 +46,11 @@ def onInput(e):
         history[e.window] = [], -1
 
     if e.text:
-        history[e.window][0].insert(0, e.text)
+        h, i = history[e.window]
+    
+        h.insert(0, e.text)
+        
+        history[e.window] = h, -1
         
 def onClose(window):
     if window in history:
