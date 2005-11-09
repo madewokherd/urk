@@ -85,7 +85,7 @@ Section "urk (required)"
     for filename in files_to_install:
         f.write(' File "%s"\n' % filename)
     f.write(r"""
-EndSection
+SectionEnd
 """)
     
     #uninstaller
