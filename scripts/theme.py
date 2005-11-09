@@ -15,69 +15,90 @@ ui.set_style("nicklist", textareas)
 
 #take an event e, trigger the highlight event if necessary, and return a
 # (formatted) string
-def get_hilight_text(e):
+def hilight_text(e):
     if not hasattr(e,"hilight"):
         e.hilight = []
         events.trigger("Hilight",e)
-    result = ""
-    #start_code = "\x02\x04FFFF00"
-    #stop_code = "\x02\x0399"
-    start_code = ""
-    stop_code = ""
-    strings_to_insert = [(y, stop_code) for x,y in e.hilight] + \
-          [(x, start_code) for x,y in e.hilight]
-    def first_item(x):
-        return x[0]
-    strings_to_insert.sort(key=first_item)
-    pos = 0
-    for i, string in strings_to_insert:
-        result += e.text[pos:i]+string
-        pos = i
-    result += e.text[pos:]
-    return result
+
+def prefix(e):
+    #return time.strftime('[%H:%M] ')
+    return ""
+
+def format_source(e):
+    #if e.hilight:
+    #    return "\x04FFFF00%s\x0F" % e.source
+    #else:
+    return e.source
+
+def format_info_source(e):
+    if e.source == e.network.me:
+        return "\x02You\x02"
+    else:
+        return "\x02%s\x02" % e.source
+
+def address(e):
+    if e.source != e.network.me:
+        return "(%s) " % e.address
+    else:
+        return ""
+
+def text(e):
+    if e.text:
+        return " (%s\x0F)" % e.text
+    else:
+        return ""
 
 def onText(e):
-    color = "\x02\x040000CC"
-    text = get_hilight_text(e)
+    hilight_text(e)
+    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    to_write = prefix(e)
     if e.network.me == e.target:    # this is a pm
         if e.window.id == e.network.norm_case(e.source):
-            format = "%s<\x0F%s%s>\x0F %s"
+            to_write += "%s<\x0F%s%s>\x0F " % (color, format_source(e), color)
         else:
-            format = "%s*\x0F%s%s*\x0F %s"
-        to_write = format % (color, e.source, color, text)
+            to_write += "%s*\x0F%s%s*\x0F " % (color, format_source(e), color)
     else:
         if e.window.id == e.network.norm_case(e.target):
-            to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, text)
+            to_write += "%s<\x0F%s%s>\x0F " % (color, format_source(e), color)
         else:
-            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, e.source, e.target, color, text)
+            to_write += "%s<\x0F%s:%s%s>\x0F " % (color, format_source(e), e.target, color)
+    to_write += e.text
     
-    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
+    if e.hilight:
+        e.window.write(to_write, ui.HILIT)
+    else:
+        e.window.write(to_write, ui.TEXT)
     
 def onOwnText(e):
     color = "\x02\x04FF00FF"
+    to_write = prefix(e)
     if e.window.id == e.network.norm_case(e.target):
-        to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
+        to_write += "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
     else:
-        to_write = "%s-> *\x0F%s%s*\x0F %s" % (color, e.target, color, e.text)
+        to_write += "%s-> *\x0F%s%s*\x0F %s" % (color, e.target, color, e.text)
     
     e.window.write(to_write)
     
 def onAction(e):
-    color = '\x02\x040000CC'
-    text = get_hilight_text(e)
-    to_write = "%s*\x0F %s %s" % (color, e.source, text)
+    hilight_text(e)
+    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    to_write = "%s%s*\x0F%s %s" % (prefix(e), color, format_source(e), e.text)
     
-    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
-
+    if e.hilight:
+        e.window.write(to_write, ui.HILIT)
+    else:
+        e.window.write(to_write, ui.TEXT)
+    
 def onOwnAction(e):
     color = '\x02\x04FF00FF'
-    to_write = "%s*\x0F %s %s" % (color, e.source, e.text)
+    to_write = "%s%s*\x0F %s %s" % (prefix(e), color, e.source, e.text)
     
     e.window.write(to_write)
 
 def onNotice(e):
     text = get_hilight_text(e)
-    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (e.source, text)
+    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    to_write = "%s%s-\x0F%s%s-\x0F %s" % (prefix(e), color, e.source, color, text)
     
     window = ui.windows.manager.get_active()
     if window.network != e.network:
@@ -85,18 +106,18 @@ def onNotice(e):
     window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
 
 def onOwnNotice(e):
-    to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (e.target, e.text)
+    to_write = "%s\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (prefix(e), e.target, e.text)
     
     e.window.write(to_write)
 
 def onCtcp(e):
-    to_write = "\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (e.source, e.text)
+    to_write = "%s\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (prefix(e), e.source, e.text)
     
     if not e.quiet:
         e.window.write(to_write)
 
 def onCtcpReply(e):
-    to_write = "--- %s reply from %s: %s" % (e.name.capitalize(), e.source, ' '.join(e.args))
+    to_write = "%s--- %s reply from %s: %s" % (prefix(e), e.name.capitalize(), e.source, ' '.join(e.args))
     
     window = ui.windows.manager.get_active()
     if window.network != e.network:
@@ -104,35 +125,27 @@ def onCtcpReply(e):
     window.write(to_write, ui.TEXT)
 
 def onJoin(e):
-    if e.network.me == e.source:
-        to_write = "\x02You\x02 joined %s" % e.target
-    else:
-        to_write = "\x02%s\x02 (%s) joined %s" % (e.source, e.address, e.target)
+    to_write = "%s%s %sjoined %s" % (prefix(e), format_info_source(e), address(e), e.target)
     
     e.window.write(to_write)
         
 def onPart(e):
-    if e.network.me == e.source:
-        to_write = "\x02You\x02 left %s" % e.target
-    else:
-        to_write = "\x02%s\x02 (%s) left %s" % (e.source, e.address, e.target)
-    if e.text:
-        to_write += ' (%s)' % e.text
+    to_write = "%s%s %sleft %s%s" % (prefix(e), format_info_source(e), address(e), e.target, text(e))
     
     e.window.write(to_write)
 
 def onKick(e):
-    to_write = "\x02%s\x02 kicked %s (%s)" % (e.source, e.target, e.text)
+    to_write = "%s%s kicked %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
     e.window.write(to_write, (e.target == e.network.me and ui.TEXT) or ui.EVENT)
         
 def onMode(e):
-    to_write = "\x02%s\x02 sets mode: %s" % (e.source, e.text)
+    to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
     
     e.window.write(to_write)
         
 def onQuit(e):
-    to_write = "\x02%s\x02 quit (%s)" % (e.source, e.text)
+    to_write = "%s%s quit%s" % (prefix(e), format_info_source(e), text(e))
     
     for channame in chaninfo.channels(e.network):
         if chaninfo.ison(e.network, channame, e.source):
@@ -142,9 +155,9 @@ def onQuit(e):
 
 def onNick(e):
     if e.source == e.network.me:
-        to_write = "\x02You\x02 are now known as %s" % e.newnick
+        to_write = "%s\x02You\x02 are now known as %s" % (prefix(e), e.newnick)
     else:
-        to_write = "\x02%s\x02 is now known as %s" % (e.source, e.newnick)
+        to_write = "%s\x02%s\x02 is now known as %s" % (prefix(e), e.source, e.newnick)
     
     if e.source == e.network.me:
         for window in ui.get_window_for(network=e.network):
@@ -157,7 +170,7 @@ def onNick(e):
                     window.write(to_write)
 
 def onTopic(e):
-    to_write = "\x02%s\x02 set topic on %s: %s" % (e.source, e.target, e.text)
+    to_write = "%s%s set topic on %s: %s" % (prefix(e), format_info_source(e), e.target, e.text)
     
     e.window.write(to_write)
 
@@ -166,11 +179,11 @@ def onRaw(e):
         if e.msg[1].isdigit():
             if e.msg[1] == '332':
                 window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
-                window.write("topic on %s is: %s" % (e.msg[3], e.text))
+                window.write("%stopic on %s is: %s" % (prefix(e), e.msg[3], e.text))
                 
             elif e.msg[1] == '333':
                 window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
-                window.write("topic on %s set by %s at time %s" % (e.msg[3], e.msg[4], time.ctime(int(e.msg[5]))))
+                window.write("%stopic on %s set by %s at time %s" % (prefix(e), e.msg[3], e.msg[4], time.ctime(int(e.msg[5]))))
             
             elif e.msg[1] == '329': #RPL_CREATIONTIME
                 pass
@@ -181,10 +194,9 @@ def onRaw(e):
             e.window.write("Error: %s" % e.text)
 
 def onDisconnect(e):
+    to_write = '%s* Disconnected' % prefix(e)
     if e.error:
-        to_write = '* Disconnected (%s)' % e.error
-    else:
-        to_write = '* Disconnected'
+        to_write += ' (%s)' % e.error
 
     for window in ui.get_window_for(network=e.network):
         window.write(to_write, (window.role == ui.StatusWindow and ui.TEXT) or ui.EVENT)
