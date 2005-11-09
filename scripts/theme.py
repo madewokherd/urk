@@ -89,7 +89,7 @@ def onOwnText(e):
 def onAction(e):
     hilight_text(e)
     color = "\x02\x040000CC"
-    to_write = "%s%s*\x0F%s %s" % (prefix(e), color, format_source(e), e.text)
+    to_write = "%s%s*\x0F %s %s" % (prefix(e), color, format_source(e), e.text)
     
     if e.hilight:
         e.window.write(to_write, ui.HILIT)
