@@ -25,8 +25,8 @@ def onClick(e):
         ui.open_file(target)
     
     # click on a #channel
-    elif target and e.window.network and \
-            target[0] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
+    elif e.window.network and \
+            target[0:1] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
         if not chaninfo.ischan(e.window.network, target):
             e.window.network.join(target)
 
