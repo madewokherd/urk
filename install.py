@@ -41,7 +41,7 @@ def install_files():
         shutil.copy(source, dest)
 
 def nsis_generate_script():
-    filename = os.path.join(install_dir,"urk.nsi")
+    filename = os.path.join(install_path,"urk.nsi")
     f = file(filename,'w')
     #header
     f.write(r"""
@@ -75,24 +75,15 @@ Section "urk (required)"
 
  WriteRegStr HKLM "Software\urk" "Install_Dir" "$INSTDIR"
 
- WriteRegStr HKLM
-"Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
-"DisplayName" "urk IRC Client"
- WriteRegStr HKLM
-"Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
-"UninstallString" '"$INSTDIR\uninstall.exe"'
- WriteRegDWORD HKLM
-"Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
-"NoModify" 1
- WriteRegDWORD HKLM
-"Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
-"NoRepair" 1
+ WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "DisplayName" "urk IRC Client"
+ WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "UninstallString" '"$INSTDIR\uninstall.exe"'
+ WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoModify" 1
+ WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoRepair" 1
  WriteUninstaller "uninstall.exe"
 """)
-    #make directories?
     #look for existing installation?
     for filename in files_to_install:
-        f.write('File "%s"\n' % filename)
+        f.write(' File "%s"\n' % filename)
     f.write(r"""
 EndSection
 """)
@@ -102,19 +93,17 @@ EndSection
 Section "Uninstall"
 
  ; Remove registry keys
- DeleteRegKey HKLM
-"Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
+ DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
  DeleteRegKey HKLM "Software\urk"
+""")
+    for filename in files_to_install:
+        f.write(' Delete $INSTDIR\\%s\n' % filename)
+    for dirname in dirs_to_install[::-1]:
+        f.write(' RMDIR $INSTDIR\\%s\n' % dirname)
+    f.write(r"""
+ RMDIR "$INSTDIR"
 
- ; Remove files and uninstaller
- Delete $INSTDIR\example2.nsi
- Delete $INSTDIR\uninstall.exe
-
- ; Remove shortcuts, if any
- Delete "$SMPROGRAMS\Example2\*.*"
-
- ; Remove directories used
- RMDir "$SMPROGRAMS\Example2"
- RMDir "$INSTDIR"
-
-SectionEnd""")
+SectionEnd
+""")
+    
+    f.close()
