@@ -8,10 +8,6 @@ import events
 import parse_mirc
 import ui
 
-HILIT = 4
-TEXT = 2
-EVENT = 1
-
 # This holds all tags for all windows ever    
 tag_table = gtk.TextTagTable()
 
@@ -292,14 +288,11 @@ class TextInput(gtk.Entry):
                     key += c
             
             key += gtk.gdk.keyval_name(event.keyval)
-            
-            e_data = events.data(
-                        key=key,
-                        string=event.string,
-                        window=self.win
-                        )
    
-            events.trigger(event_type, e_data)
+            events.trigger(
+                event_type,
+                events.data(key=key, string=event.string, window=self.win)
+                )
         
             return event.keyval in (up, down, tab)
 
@@ -354,7 +347,7 @@ def get_event_at_iter(view, iter):
 
 class TextOutput(gtk.TextView):
     # the unknowing print weird things to our text widget function
-    def write(self, text, activity_type=EVENT):
+    def write(self, text, activity_type):
         if not isinstance(text, unicode):
             try:
                 text = codecs.utf_8_decode(text)[0]
@@ -511,18 +504,12 @@ class TextOutput(gtk.TextView):
         style_me(self, "view")
 
 class WindowLabel(gtk.EventBox):
-    activity_markup = {
-        HILIT: "<span style='italic' foreground='#00F'>%s</span>",
-        TEXT: "<span foreground='red'>%s</span>",
-        EVENT: "<span foreground='#363'>%s</span>",
-        }
-        
     def update(self):
         title = self.win.title
     
-        for a_type in (ui.HILIT, ui.TEXT, ui.EVENT):
-            if self.win.activity & a_type:
-                title = self.activity_markup[a_type] % title
+        for a_type in sorted(ui.activity_markup, reverse=True):
+            if self.win.activity == a_type:
+                title = ui.activity_markup[a_type] % title
                 break
             
         self.label.set_markup(title)

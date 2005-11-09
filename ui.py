@@ -28,6 +28,9 @@ PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
 PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
 PRIORITY_LOW = gobject.PRIORITY_LOW
 
+def set_clipboard(text):
+    gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
+
 def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
     def callback():
         return f(*args, **kwargs)
@@ -68,6 +71,12 @@ set_style = widgets.set_style
 HILIT = 4
 TEXT = 2
 EVENT = 1
+
+activity_markup = {
+    HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+    TEXT: "<span foreground='red'>%s</span>",
+    EVENT: "<span foreground='#363'>%s</span>",
+    }
 
 #open_file(filename)
 #opens a file or url using the "right" program
@@ -248,7 +257,6 @@ class UrkUI(gtk.Window):
         menus = (
             ("UrkMenu", None, "_urk"),
             ("Servers", None, "_servers", "<control>S", None, servers.ServerWidget),
-            ("Quit", gtk.STOCK_QUIT, "_Quit", "<control>Q", None, self.exit),
         
             ("HelpMenu", None, "_Help"),
             ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about),
@@ -266,7 +274,6 @@ class UrkUI(gtk.Window):
                 <menubar name="MenuBar">
                     <menu action="UrkMenu">
                         <menuitem action="Servers"/>
-                        <menuitem action="Quit"/>
                     </menu>
                 
                     <menu action="HelpMenu">
@@ -322,18 +329,19 @@ def set_title(title=None):
 
 def start():
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
-    #register_idle(ui.exit)
     
     def trigger_start():
         events.trigger("Start")
         
         if not windows:
-            windows.new(StatusWindow, irc.Network(), "status").activate()
+            windows.new(StatusWindow, None, "status").activate()
         
     register_idle(trigger_start)
 
     try:
         gtk.threads_enter()
+        #while gtk.events_pending():
+        #    gtk.main_iteration()
         gtk.main()
         gtk.threads_leave()
     except KeyboardInterrupt:
