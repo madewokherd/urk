@@ -101,7 +101,7 @@ def mode(network, channel, nickname=''):
 #return the topic on the given channel
 def topic(network, channel):
     channel = getchan(network, channel)
-    return (channel or '') and channel.mode
+    return (channel or '') and channel.topic
 
 def setupJoin(e):
     if e.source == e.network.me:

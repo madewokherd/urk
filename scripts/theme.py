@@ -96,9 +96,9 @@ def onOwnAction(e):
     e.window.write(to_write)
 
 def onNotice(e):
-    text = get_hilight_text(e)
+    hilight_text(e)
     color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
-    to_write = "%s%s-\x0F%s%s-\x0F %s" % (prefix(e), color, e.source, color, text)
+    to_write = "%s%s-\x0F%s%s-\x0F %s" % (prefix(e), color, e.source, color, e.text)
     
     window = ui.windows.manager.get_active()
     if window.network != e.network:
