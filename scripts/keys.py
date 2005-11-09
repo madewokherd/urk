@@ -25,17 +25,3 @@ def onKeyPressed(e):
 
     elif e.key == '^w':
         ui.windows.manager.get_active().close()
-        
-    elif e.key == '^Left':
-        w = list(ui.windows.manager)
-    
-        i = w.index(ui.windows.manager.get_active())
-    
-        ui.windows.manager.set_active(w[i-1])
-        
-    elif e.key == '^Right':
-        w = list(ui.windows.manager)
-    
-        i = w.index(ui.windows.manager.get_active())
-    
-        ui.windows.manager.set_active(w[(i+1) % len(w)])
