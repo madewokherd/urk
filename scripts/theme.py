@@ -33,7 +33,7 @@ def prefix(e):
 
 def format_source(e):
     if e.hilight:
-        return "\x02\x04FFFF00%s\x0F" % e.source
+        return "\x02\x04EEDD22%s\x0F" % e.source
     else:
         return e.source
 
