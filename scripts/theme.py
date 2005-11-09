@@ -32,10 +32,10 @@ def prefix(e):
     return ""
 
 def format_source(e):
-    #if e.hilight:
-    #    return "\x04FFFF00%s\x0F" % e.source
-    #else:
-    return e.source
+    if e.hilight:
+        return "\x02\x04FFFF00%s\x0F" % e.source
+    else:
+        return e.source
 
 def format_info_source(e):
     if e.source == e.network.me:
@@ -57,7 +57,7 @@ def text(e):
 
 def onText(e):
     hilight_text(e)
-    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    color = "\x02\x040000CC"
     to_write = prefix(e)
     if e.network.me == e.target:    # this is a pm
         if e.window.id == e.network.norm_case(e.source):
@@ -88,7 +88,7 @@ def onOwnText(e):
     
 def onAction(e):
     hilight_text(e)
-    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    color = "\x02\x040000CC"
     to_write = "%s%s*\x0F%s %s" % (prefix(e), color, format_source(e), e.text)
     
     if e.hilight:
@@ -104,7 +104,7 @@ def onOwnAction(e):
 
 def onNotice(e):
     hilight_text(e)
-    color = e.hilight and "\x02\x04FFFF00" or "\x02\x040000CC"
+    color = "\x02\x040000CC"
     to_write = "%s%s-\x0F%s%s-\x0F %s" % (prefix(e), color, e.source, color, e.text)
     
     window = ui.windows.manager.get_active()
