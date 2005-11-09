@@ -14,6 +14,8 @@ colors = (
   )
 
 def get_mirc_color(number):
+    if number == '99':
+        return None
     return colors[int(number) & 15]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
@@ -94,11 +96,16 @@ def parse_mirc2(string):
     return tags, out
     
 def parse_mirc_color(string, pos, looking, tags):
+    fg = bg = None
     if MIRC_COLOR in looking:
-        tags += [looking.pop(MIRC_COLOR) + (pos,)]
+        prev_colors = looking.pop(MIRC_COLOR)
+        tags += [prev_colors + (pos,)]
+        prev_colors = dict(prev_colors[0])
+        fg = prev_colors.get('foreground')
+        bg = prev_colors.get('background')
     
     color_chars = 1
-
+    
     if string[0] in DEC_DIGITS:
         if string[1:2] in DEC_DIGITS:
             fg = get_mirc_color(string[:2])
@@ -117,28 +124,32 @@ def parse_mirc_color(string, pos, looking, tags):
             else:
                 bg = get_mirc_color(string[2:3])
                 color_chars += 2
-                
-            looking[MIRC_COLOR] = [("foreground", fg), ("background", bg)], pos
-                
-        else:
-            looking[MIRC_COLOR] = [("foreground", fg)], pos 
+    
+    if fg or bg:
+        looking[MIRC_COLOR] = ((fg and [("foreground", fg)]) or []) + ((bg and [("background", bg)]) or []), pos
                     
     return color_chars
 
 def parse_bersirc_color(string, pos, looking, tags):
-    if BERS_COLOR in looking:
-        tags += [looking.pop(BERS_COLOR) + (pos,)]
+    fg = bg = None
+    if MIRC_COLOR in looking:
+        prev_colors = looking.pop(MIRC_COLOR)
+        tags += [prev_colors + (pos,)]
+        prev_colors = dict(prev_colors[0])
+        fg = prev_colors.get('foreground')
+        bg = prev_colors.get('background')
             
-    fg, bg = string[:6], string[7:13]        
-    if HEX_DIGITS.issuperset(fg):
-        if string[6:7] == "," and HEX_DIGITS.issuperset(bg):
-            looking[BERS_COLOR] = [("foreground", "#" + fg), ("background", "#" + bg)], pos
-            return 14
-            
+    f, b = string[:6], string[7:13]        
+    if HEX_DIGITS.issuperset(f):
+        fg = '#' + f
+        if string[6:7] == "," and HEX_DIGITS.issuperset(b):
+            bg = '#' + b
+            result = 14
         else:
-            looking[BERS_COLOR] = [("foreground", "#" + fg)], pos
-            return 7
-            
+            result = 7
+        if fg or bg:
+            looking[MIRC_COLOR] = ((fg and [("foreground", fg)]) or []) + ((bg and [("background", bg)]) or []), pos
+        return result
     else:
         return 1
     

@@ -2,6 +2,7 @@ import time
 
 import ui
 import chaninfo
+import events
 
 textareas = {
     'bg': '#2E3D49',
@@ -12,21 +13,45 @@ textareas = {
 ui.set_style("view", textareas)
 ui.set_style("nicklist", textareas)
 
+#take an event e, trigger the highlight event if necessary, and return a
+# (formatted) string
+def get_hilight_text(e):
+    if not hasattr(e,"hilight"):
+        e.hilight = []
+        events.trigger("Hilight",e)
+    result = ""
+    #start_code = "\x02\x04FFFF00"
+    #stop_code = "\x02\x0399"
+    start_code = ""
+    stop_code = ""
+    strings_to_insert = [(y, stop_code) for x,y in e.hilight] + \
+          [(x, start_code) for x,y in e.hilight]
+    def first_item(x):
+        return x[0]
+    strings_to_insert.sort(key=first_item)
+    pos = 0
+    for i, string in strings_to_insert:
+        result += e.text[pos:i]+string
+        pos = i
+    result += e.text[pos:]
+    return result
+
 def onText(e):
     color = "\x02\x040000CC"
+    text = get_hilight_text(e)
     if e.network.me == e.target:    # this is a pm
         if e.window.id == e.network.norm_case(e.source):
             format = "%s<\x0F%s%s>\x0F %s"
         else:
             format = "%s*\x0F%s%s*\x0F %s"
-        to_write = format % (color, e.source, color, e.text)
+        to_write = format % (color, e.source, color, text)
     else:
         if e.window.id == e.network.norm_case(e.target):
-            to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
+            to_write = "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, text)
         else:
-            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, e.source, e.target, color, e.text)
+            to_write = "%s*\x0F%s:%s%s*\x0F %s" % (color, e.source, e.target, color, text)
     
-    e.window.write(to_write, ui.TEXT)
+    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
     
 def onOwnText(e):
     color = "\x02\x04FF00FF"
@@ -39,9 +64,10 @@ def onOwnText(e):
     
 def onAction(e):
     color = '\x02\x040000CC'
-    to_write = "%s*\x0F %s %s" % (color, e.source, e.text)
+    text = get_hilight_text(e)
+    to_write = "%s*\x0F %s %s" % (color, e.source, text)
     
-    e.window.write(to_write, ui.TEXT)
+    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
 
 def onOwnAction(e):
     color = '\x02\x04FF00FF'
@@ -50,12 +76,13 @@ def onOwnAction(e):
     e.window.write(to_write)
 
 def onNotice(e):
-    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (e.source, e.text)
+    text = get_hilight_text(e)
+    to_write = "\x02\x040000CC-\x0F%s\x02\x040000CC-\x0F %s" % (e.source, text)
     
     window = ui.windows.manager.get_active()
     if window.network != e.network:
         window = ui.get_default_window(e.network)
-    window.write(to_write, ui.TEXT)
+    window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
 
 def onOwnNotice(e):
     to_write = "\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (e.target, e.text)

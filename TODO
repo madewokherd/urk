@@ -15,6 +15,11 @@ Highlighting
     Provide a means for highlighting. Maybe theme should trigger an event? :/
 
 
+Complete more stuff
+
+    We should complete /commands and #channels.
+
+
 Partial SDI
 
     (Optionally) allow one main window per network.
