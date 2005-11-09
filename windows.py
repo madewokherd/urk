@@ -6,7 +6,7 @@ from conf import conf
 def get_default_write(self):  
     def def_f(text, activity_type=ui.EVENT):
         if ui.windows.manager.get_active() != self:
-            self.activity |= activity_type
+            self.activity = max(self.activity, activity_type)
 
         self.output.write(text, activity_type)
         
