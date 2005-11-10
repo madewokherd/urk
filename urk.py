@@ -4,6 +4,8 @@ import imp
 import os
 import sys
 
+sys.modules['urk'] = sys.modules[__name__]
+
 #add ~/.urk and path (normally where urk.py is located) to sys.path
 urkpath = os.path.dirname(__file__)
 def path(filename=""):

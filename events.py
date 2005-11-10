@@ -244,7 +244,7 @@ def onCommandEdit(e):
     except ImportError:
         pass
     if not filename:
-        import __main__ as urk
+        import urk
         filename = os.path.join(urk.userpath,'scripts',e.args[0])
         if not filename.endswith('.py'):
             filename += ".py"

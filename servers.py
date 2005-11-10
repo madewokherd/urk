@@ -4,7 +4,7 @@ import gtk.glade
 import events
 import ui
 from conf import conf
-import __main__ as urk
+import urk
 
 class ServerWidget(gtk.Window):
     def select_network(self, widget):

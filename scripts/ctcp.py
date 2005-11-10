@@ -1,7 +1,7 @@
 import time
 import events
 
-import __main__ as urk
+import urk
 import ui
 
 def ctcp(network, user, msg):

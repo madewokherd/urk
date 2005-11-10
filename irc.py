@@ -3,7 +3,7 @@ import sys
 
 from conf import conf
 import events
-import __main__ as urk
+import urk
 import ui
 
 DEBUG = 0

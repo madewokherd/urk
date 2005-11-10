@@ -4,7 +4,7 @@ import os
 from conf import conf
 import ui
 import chaninfo
-import __main__ as urk
+import urk
 
 DATE_FORMAT_LONG = '%Y-%m-%d.%H %M:%S (%Z)'
 DATE_FORMAT = '%m-%d %H:%M'

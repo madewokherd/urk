@@ -19,7 +19,7 @@ import servers
 import irc
 from conf import conf
 import events
-import __main__ as urk
+import urk
 
 # Priority Constants
 PRIORITY_HIGH = gobject.PRIORITY_HIGH

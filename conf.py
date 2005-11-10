@@ -1,6 +1,6 @@
 import events
 
-import __main__ as urk
+import urk
 import os
 
 CONF_FILE = os.path.join(urk.userpath,'urk.conf')
