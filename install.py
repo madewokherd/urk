@@ -5,7 +5,7 @@ install_path = os.curdir
 bin_path = os.curdir
 dirs_to_install = []
 files_to_install = []
-exclude_dirs = ['CVS','NSIS','profile']
+exclude_dirs = ['CVS','NSIS','profile','.idlerc']
 exclude_files = ['install.py','urk.desktop']
 
 nsis_outfile="urk.exe"

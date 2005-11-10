@@ -55,3 +55,15 @@ def onRightClick(e):
             target[0:1] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
         
         is_chan(e, target)
+
+def onListRightClick(e):
+    def query():
+        events.run('query %s'%e.nick,e.window,e.window.network)
+    
+    def whois():
+        events.run('whois %s'%e.nick,e.window,e.window.network)
+    
+    e.menu += [
+        ("Query",query),
+        ("Whois",whois),
+        (),]
