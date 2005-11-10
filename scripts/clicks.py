@@ -3,10 +3,17 @@ import ui
 import chaninfo
 
 def is_nick(e, target):
+    def query():
+        events.run('query %s' % target, e.window, e.window.network)
+    
     def whois():
         events.run('whois %s' % target, e.window, e.window.network)
-            
-    e.menu.append(('Whois %s' % target, whois))
+    
+    e.menu += [
+        ("Query", query),
+        ("Whois", whois),
+        (),
+        ]
     
 def is_url(e, target):
     def copy_to():
@@ -57,13 +64,4 @@ def onRightClick(e):
         is_chan(e, target)
 
 def onListRightClick(e):
-    def query():
-        events.run('query %s'%e.nick,e.window,e.window.network)
-    
-    def whois():
-        events.run('whois %s'%e.nick,e.window,e.window.network)
-    
-    e.menu += [
-        ("Query",query),
-        ("Whois",whois),
-        (),]
+    is_nick(e, e.nick)
