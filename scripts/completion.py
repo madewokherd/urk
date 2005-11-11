@@ -40,8 +40,12 @@ def get_completer_for(window, left, right, text):
         else:
             suffix = ' '
             
-    insert_text = "%s%s%s%s" % (left[:-len(text)], "%s", suffix, right)
-    cursor_pos = len(left[:-len(text)] + suffix)
+    if text:
+        insert_text = "%s%s%s%s" % (left[:-len(text)], "%s", suffix, right)
+        cursor_pos = len(left[:-len(text)] + suffix)
+    else:
+        insert_text = "%s%s%s%s" % (left, "%s", suffix, right)
+        cursor_pos = len(left + suffix)
         
     result = []       
     for res in candidates:
