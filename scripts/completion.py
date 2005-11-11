@@ -63,7 +63,7 @@ def nick_completer(window, left, right, text):
     if left == text:
         suffix = ': '
     else:
-        ' '
+        suffix = ' '
     
     if text:
         insert_text = "%s%s%s%s" % (left[:-len(text)], "%s", suffix, right)
