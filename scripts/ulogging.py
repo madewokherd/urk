@@ -6,7 +6,7 @@ import ui
 import chaninfo
 import urk
 
-DATE_FORMAT_LONG = '%Y-%m-%d.%H %M:%S (%Z)'
+DATE_FORMAT_LONG = '%Y-%m-%d.%H:%M:%S (%Z)'
 DATE_FORMAT = '%m-%d %H:%M'
 
 LOG_DIR = conf['log_dir'] or os.path.join(urk.userpath,'logs')
@@ -28,7 +28,7 @@ def log_file(network, name, new=False):
         try:
             recent_log = sorted(os.listdir(name_dir))[-1]
         except IndexError:
-            recent_log = time.strftime('%Y-%m-%d %H%M%S.log')
+            recent_log = time.strftime('%Y-%m-%d.%H%M%S.log')
 
     return LogFile(os.path.join(name_dir, recent_log), 'a')
     
