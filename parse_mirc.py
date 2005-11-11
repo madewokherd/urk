@@ -4,8 +4,6 @@ MIRC_COLOR = '\x03'
 BERS_COLOR = '\x04'
 RESET = '\x0F'
 
-TAGS = BOLD, UNDERLINE, MIRC_COLOR, BERS_COLOR, RESET
-
 colors = (
   'white', 'black', '#00007F', '#009300', 
   'red', '#7F0000', '#9C009C', '#FF7F00',
@@ -18,13 +16,15 @@ def get_mirc_color(number):
         return colors[int(number) & 15]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
+
+ishex = HEX_DIGITS.issuperset
     
-def parse_mirc_color(string, pos, looking, tags):
+def parse_mirc_color(string, pos, open_tags, tags):
     color_chars = 1
 
     if string[0] in DEC_DIGITS:
-        if MIRC_COLOR not in looking:
-            looking[MIRC_COLOR] = []
+        if MIRC_COLOR not in open_tags:
+            open_tags[MIRC_COLOR] = []
     
         if string[1:2] in DEC_DIGITS:
             fg = get_mirc_color(string[:2])
@@ -44,66 +44,65 @@ def parse_mirc_color(string, pos, looking, tags):
                 bg = get_mirc_color(string[2:3])
                 color_chars += 2
          
-            looking[MIRC_COLOR] += [([("foreground", fg), ("background", bg)], pos)]
+            open_tags[MIRC_COLOR] += [([("foreground", fg), ("background", bg)], pos)]
                 
         else:
-            looking[MIRC_COLOR] += [([("foreground", fg)], pos)]
+            open_tags[MIRC_COLOR] += [([("foreground", fg)], pos)]
     else:
-        if MIRC_COLOR in looking:
-            for l in looking.pop(MIRC_COLOR):
-                tags += [l + (pos,)]
+        for tag in open_tags.pop(MIRC_COLOR, []):
+            tags += [tag + (pos,)]
               
     return color_chars
 
-def parse_bersirc_color(string, pos, looking, tags):      
-    fg, bg = string[:6], string[7:13]        
-    if HEX_DIGITS.issuperset(fg):
-        if BERS_COLOR not in looking:
-            looking[BERS_COLOR] = []
+def parse_bersirc_color(string, pos, open_tags, tags):      
+    fg, bg = string[:6], string[7:13]
     
-        if string[6:7] == "," and HEX_DIGITS.issuperset(bg):
-            looking[BERS_COLOR] += [([("foreground", "#" + fg), ("background", "#" + bg)], pos)]
+    if ishex(fg):
+        if BERS_COLOR not in open_tags:
+            open_tags[BERS_COLOR] = []
+    
+        if string[6:7] == "," and ishex(bg):
+            open_tags[BERS_COLOR] += [([("foreground", "#" + fg), ("background", "#" + bg)], pos)]
             return 14
             
         else:
-            looking[BERS_COLOR] += [([("foreground", "#" + fg)], pos)]
+            open_tags[BERS_COLOR] += [([("foreground", "#" + fg)], pos)]
             return 7
             
     else:
-        if BERS_COLOR in looking:
-            for l in looking.pop(BERS_COLOR):
-                tags += [l + (pos,)]
+        for tag in open_tags.pop(BERS_COLOR, []):
+            tags += [tag + (pos,)]
     
         return 1
     
-def parse_bold(string, pos, looking, tags):
-    if BOLD in looking:
-        tags += [looking.pop(BOLD) + (pos,)]
+def parse_bold(string, pos, open_tags, tags):
+    if BOLD in open_tags:
+        tags += [open_tags.pop(BOLD) + (pos,)]
         
     else:
-        looking[BOLD] = [("weight", BOLD)], pos
+        open_tags[BOLD] = [("weight", BOLD)], pos
         
     return 1
     
-def parse_underline(string, pos, looking, tags):
-    if UNDERLINE in looking:
-        tags += [looking.pop(UNDERLINE) + (pos,)]
+def parse_underline(string, pos, open_tags, tags):
+    if UNDERLINE in open_tags:
+        tags += [open_tags.pop(UNDERLINE) + (pos,)]
         
     else:
-        looking[UNDERLINE] = [("underline", UNDERLINE)], pos
+        open_tags[UNDERLINE] = [("underline", UNDERLINE)], pos
         
     return 1
 
-def parse_reset(string, pos, looking, tags):
-    for look in looking:
-        if isinstance(looking[look], list):
-            for l in looking[look]:
+def parse_reset(string, pos, open_tags, tags):
+    for tag in open_tags:
+        if isinstance(open_tags[tag], list):
+            for l in open_tags[tag]:
                 tags += [l + (pos,)]
                 
         else:
-            tags += [looking[look] + (pos,)]
+            tags += [open_tags[tag] + (pos,)]
 
-    looking.clear()
+    open_tags.clear()
     
     return 1
 
@@ -111,7 +110,7 @@ def parse_mirc(string):
     string += RESET
 
     out = ''
-    looking = {}
+    open_tags = {}
     tags = []
     last_place = pos = 0
     
@@ -123,15 +122,15 @@ def parse_mirc(string):
         RESET: parse_reset
         }
 
-    for tag_place, tag in [(i, s) for i, s in enumerate(string) if s in tag_fs]:
+    for tag_place, tag_f in [(i, tag_fs[s]) for i, s in enumerate(string) if s in tag_fs]:
         out += string[last_place:tag_place]
 
         pos += tag_place - last_place
         
-        last_place = tag_place + tag_fs[tag](
+        last_place = tag_place + tag_f(
                                     string[tag_place+1:], 
                                     pos, 
-                                    looking,
+                                    open_tags,
                                     tags
                                     )
         
@@ -193,13 +192,12 @@ if __name__ == "__main__":
         ([([('foreground', '#ff0000'), ('background', '#00ff00')], 0, 12), ([('foreground', '#0000ff')], 5, 12)], 'HelloGoodbye'),
         ]
         
-    """
+    #"""
     
-    r = range(5000)    
+    r = range(500)    
     for i in r:
         for test in tests:
             parse_mirc(test)
-            parse_mirc2(test)
             
     """
     
