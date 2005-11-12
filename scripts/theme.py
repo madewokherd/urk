@@ -153,8 +153,6 @@ def onMode(e):
     else:
         to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
     
-    to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
-    
     e.window.write(to_write)
         
 def onQuit(e):
