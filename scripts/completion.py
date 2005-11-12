@@ -30,7 +30,7 @@ def get_completer_for(window, left, right, text):
         
     elif text.startswith('/'):
         candidates = command_completer(window, left, right, text)
-        suffix = ''
+        suffix = ' '
         
     else:
         candidates = nick_completer(window, left, right, text)
@@ -66,19 +66,16 @@ def onKeyPress(e):
     global recent_completer
 
     if e.key == 'Tab':
-        if e.window.role == ui.ChannelWindow and \
-            chaninfo.ischan(e.window.network, e.window.id):
+        if not recent_completer:
+            input = e.window.input
+            
+            left, right = input.text[:input.cursor], input.text[input.cursor:]
+            
+            text = left.split(' ')[-1]
+            
+            recent_completer = get_completer_for(e.window, left, right, text)
 
-            if not recent_completer:
-                input = e.window.input
-                
-                left, right = input.text[:input.cursor], input.text[input.cursor:]
-                
-                text = left.split(' ')[-1]
-                
-                recent_completer = get_completer_for(e.window, left, right, text)
-
-            recent_completer.next()
+        recent_completer.next()
     
     else:
         recent_completer = None
