@@ -148,6 +148,11 @@ def onKick(e):
     e.window.write(to_write, (e.target == e.network.me and ui.TEXT) or ui.EVENT)
         
 def onMode(e):
+    if e.source == e.network.me:
+        to_write = "%s\x02You\x02 set mode: %s" % (prefix(e), e.text)
+    else:
+        to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
+    
     to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
     
     e.window.write(to_write)

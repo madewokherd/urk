@@ -5,8 +5,8 @@ install_path = os.curdir
 bin_path = os.curdir
 dirs_to_install = []
 files_to_install = []
-exclude_dirs = ['CVS','NSIS','profile','.idlerc']
-exclude_files = ['install.py','urk.desktop']
+exclude_dirs = ['CVS','profile','.idlerc']
+exclude_files = ['install.py','urk.desktop','urk.nsi','installer.exe','urk.exe']
 
 nsis_outfile="urk.exe"
 
@@ -50,7 +50,7 @@ def nsis_generate_script():
 
 Name "urk"
 
-OutFile "intaller.exe"
+OutFile "installer.exe"
 
 InstallDir $PROGRAMFILES\urk
 
@@ -82,8 +82,10 @@ Section "urk (required)"
  WriteUninstaller "uninstall.exe"
 """)
     #look for existing installation?
+    for dirname in dirs_to_install:
+        f.write(' CreateDirectory "$INSTDIR\\%s"\n' % dirname)
     for filename in files_to_install:
-        f.write(' File "%s"\n' % filename)
+        f.write(' File "/oname=%s" "%s"\n' % (filename, filename))
     f.write(r"""
 SectionEnd
 """)
@@ -101,6 +103,7 @@ Section "Uninstall"
     for dirname in dirs_to_install[::-1]:
         f.write(' RMDIR $INSTDIR\\%s\n' % dirname)
     f.write(r"""
+ Delete "$INSTDIR\uninstall.exe"
  RMDIR "$INSTDIR"
 
 SectionEnd

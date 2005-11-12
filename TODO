@@ -10,24 +10,9 @@ Alternate nicks
     Make the //commands evaluate python.
 
 
-Highlighting
-    
-    Provide a means for highlighting. Maybe theme should trigger an event? :/
-
-
-Complete more stuff
-
-    We should complete /commands and #channels.
-
-
 Partial SDI
 
     (Optionally) allow one main window per network.
-
-
-Format more stuff
-
-    Change formatting of tabs, tabs with new text, based on theme
 
 
 Preferences UI
@@ -36,12 +21,6 @@ Preferences UI
 "connect or edit connection" dialog
 
     we want a number of "preflets" rather than one gigantic prefs window
-
-
-Right-click links
-
-    (11:55:54) Marc: we need to be able to right click urls
-    (11:55:56) Marc: and say Copy
 
 
 
