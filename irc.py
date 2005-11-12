@@ -45,7 +45,7 @@ class Network:
     # desired nicknames
     try:
         import getpass
-        nicks = (conf["nick"] or getpass.getuser(),)
+        nicks = (conf.get('nick', getpass.getuser()),)
         del getpass
     except:
         nicks = ("mrurk",)
