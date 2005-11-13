@@ -25,8 +25,8 @@ urk was designed for linux, but it happens nearly everything we used is
 cross-platform so..yeah..it runs on windows. You need to install some things:
 
 -python version 2.4 or greater from www.python.org
--pygtk 2.8 or greater from http://www.pcpm.ucl.ac.be/~gustin/win32_ports/
--gtk+ runtime 2.8 or greater from http://gladewin32.sourceforge.net/
+-pygtk 2.6 or greater from http://www.pcpm.ucl.ac.be/~gustin/win32_ports/
+-gtk+ runtime 2.6 or greater from http://gladewin32.sourceforge.net/
 
 It's very important that you get the win32 runtime for gtk+ from the site given.
 Installers from other places, including the gaim gtk+ installer, have failed. 
