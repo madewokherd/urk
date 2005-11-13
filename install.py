@@ -5,10 +5,11 @@ install_path = os.curdir
 bin_path = os.curdir
 dirs_to_install = []
 files_to_install = []
-exclude_dirs = ['CVS','profile','.idlerc']
-exclude_files = ['install.py','urk.desktop','urk.nsi','installer.exe','urk.exe']
+exclude_dirs = ['CVS', 'profile', '.idlerc']
+exclude_files = ['install.py', 'install.pyc', 'urk.desktop', 'urk.nsi', 'installer.exe', 'urk.exe']
 
 nsis_outfile="urk.exe"
+nsis_make_exe="makensisw"
 
 def identify_files(path=os.curdir, prefix=''):
     #set files to a list of the files we want to install
@@ -42,6 +43,7 @@ def install_files():
 
 def nsis_generate_script():
     filename = os.path.join(install_path,"urk.nsi")
+    print "Generating NSIS installer script %s" % filename
     f = file(filename,'w')
     #header
     f.write(r"""
@@ -72,14 +74,6 @@ Section "urk (required)"
  SectionIn RO
 
  SetOutPath $INSTDIR
-
- WriteRegStr HKLM "Software\urk" "Install_Dir" "$INSTDIR"
-
- WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "DisplayName" "urk IRC Client"
- WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "UninstallString" '"$INSTDIR\uninstall.exe"'
- WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoModify" 1
- WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoRepair" 1
- WriteUninstaller "uninstall.exe"
 """)
     #look for existing installation?
     for dirname in dirs_to_install:
@@ -87,6 +81,14 @@ Section "urk (required)"
     for filename in files_to_install:
         f.write(' File "/oname=%s" "%s"\n' % (filename, filename))
     f.write(r"""
+
+ WriteRegStr HKLM SOFTWARE\urk "Install_Dir" "$INSTDIR"
+
+ WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "DisplayName" "urk IRC Client"
+ WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "UninstallString" '"$INSTDIR\uninstall.exe"'
+ WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoModify" 1
+ WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk" "NoRepair" 1
+ WriteUninstaller "uninstall.exe"
 SectionEnd
 """)
     
@@ -96,7 +98,7 @@ Section "Uninstall"
 
  ; Remove registry keys
  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\urk"
- DeleteRegKey HKLM "Software\urk"
+ DeleteRegKey HKLM SOFTWARE\urk
 """)
     for filename in files_to_install:
         f.write(' Delete $INSTDIR\\%s\n' % filename)
@@ -110,3 +112,13 @@ SectionEnd
 """)
     
     f.close()
+
+def nsis_generate_exe():
+    filename = os.path.join(install_path,"urk.nsi")
+    print "Calling makensisw on %s" % filename
+    os.system('%s "%s"' % (nsis_make_exe, filename))
+
+def install_to_nsis():
+    identify_files()
+    nsis_generate_script()
+    nsis_generate_exe()

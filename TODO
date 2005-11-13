@@ -27,11 +27,6 @@ Preferences UI
 Things that can be done as separate components:
 
 
-Functional Nicklist
-
-    right-clicking the nicklist should do something
-
-
 System Install
 
     a script (probably python) to do a system-wide install
