@@ -31,7 +31,7 @@ def is_chan(e, target):
         # remove if it's already there maybe
         pass
         
-    e.menu.append(('Join channel automatically', add_to_perform))
+    #e.menu.append(('Join channel automatically', add_to_perform))
 
 def onRightClick(e):
     # nick on this channel
