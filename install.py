@@ -11,12 +11,12 @@ exclude_files = ['install.py', 'install.pyc', 'urk.desktop', 'urk.nsi', 'install
 nsis_outfile="urk.exe"
 nsis_make_exe="makensisw"
 
-def identify_files(path=os.curdir, prefix=''):
+def identify_files(path=os.curdir, prefix='', sep=os.path.join):
     #set files to a list of the files we want to install
     print "Searching for files to install"
     for filename in os.listdir(path):
         abs_file = os.path.join(path,filename)
-        rel_file = os.path.join(prefix,filename)
+        rel_file = sep(prefix,filename)
         if os.path.isfile(abs_file) and filename not in exclude_files:
             print "Marking file %s for installation" % rel_file
             files_to_install.append(rel_file)
@@ -119,6 +119,8 @@ def nsis_generate_exe():
     os.system('%s "%s"' % (nsis_make_exe, filename))
 
 def install_to_nsis():
-    identify_files()
+    def sep(*args):
+        return '\\'.join(x for x in args if x)
+    identify_files(sep=sep)
     nsis_generate_script()
     nsis_generate_exe()

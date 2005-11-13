@@ -171,7 +171,7 @@ class Network:
         if not self.status:
             self.status = CONNECTING
             
-            self.source_id = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port)
+            self.source_id = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port, 0, socket.SOCK_STREAM)
             
             events.trigger('Connecting', events.data(network=self))
     
