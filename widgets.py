@@ -403,7 +403,8 @@ class TextOutput(gtk.TextView):
 
                 events.trigger("Click", c_data)
                 
-            self.win.focus()
+            if self.is_focus():
+                self.win.focus()
 
     def clear_hover(self, *args):
         buffer = self.get_buffer()
