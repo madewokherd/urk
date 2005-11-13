@@ -5,6 +5,12 @@ Alternate nicks
     We need to do better when nicks are taken.
 
 
+#channel links
+
+    Clicking on a channel we're on should probably activate the window. Also,
+the "Automatically join channel" thing should do something.
+
+
 //commands
 
     Make the //commands evaluate python.
@@ -36,6 +42,11 @@ Ignore list
 
     Possibly doesn't merit a separate component, but this is a "standard irc
 client feature" that's not essential to any current components.
+
+
+IPC
+
+    Be able to send commands to urk remotely. Implement irc: links this way.
 
 
 DCC Stuff
