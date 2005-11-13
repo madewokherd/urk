@@ -7,15 +7,21 @@ from conf import conf
 import urk
 
 class ServerWidget(gtk.Window):
-    def select_network(self, widget):
+    def edit(self, cell, path_string, new_text, model):
+        print ">"
+
+    def select_network(self, widget, event):
         infobox = self.ui.get_widget('infobox')
         
-        for child in infobox.children():
+        for child in infobox.get_children():
             infobox.remove(child)
             
-        active = self.ui.get_widget('networks').get_active()
+        x, y = event.get_coords()
+        x, y = int(x), int(y)
+    
+        (data,), path, x, y = self.ui.get_widget('networks').get_path_at_pos(x, y)
         
-        network = self.ui.get_widget('networks').get_model()[active][0]
+        network = self.ui.get_widget('networks').get_model()[data][0]
             
         network_info = conf.get('networks', {}).get(network, {})
       
@@ -50,20 +56,21 @@ class ServerWidget(gtk.Window):
             
         self.ui.get_widget('connect').connect('clicked', connect)
             
-        combobox = self.ui.get_widget('networks')
+        networks = self.ui.get_widget('networks')
+        
+        networks.connect("button-press-event", self.select_network)
+        
+        networks.set_headers_visible(False)
 
         network_list = gtk.ListStore(str)
+        networks.set_model(network_list)
         
-        combobox = self.ui.get_widget('networks')
-        combobox.set_model(network_list)
+        renderer = gtk.CellRendererText()
+        renderer.connect('edited', self.edit)
         
-        combobox.connect('changed', self.select_network)
-        
-        cell = gtk.CellRendererText()
-        combobox.pack_start(cell, True)
-        combobox.add_attribute(cell, 'text', 0)
-        
+        networks.insert_column_with_attributes(
+            0, "", renderer, text=0
+            )
+
         for network in conf.get('networks', []):
             network_list.append([network])
-                
-        combobox.set_active(len(combobox) - 1)
