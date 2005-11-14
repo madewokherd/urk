@@ -34,7 +34,10 @@ class NetworkInfo(gtk.VBox):
             
             def edit(widget, event, key):
                 if key == 'perform':
-                    network_info[key] = eval(widget.get_text())
+                    try:
+                        network_info[key] = eval(widget.get_text())
+                    except SyntaxError:
+                        pass
                 else:
                     network_info[key] = widget.get_text()
             
