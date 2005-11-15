@@ -6,7 +6,7 @@ bin_path = os.curdir
 dirs_to_install = []
 files_to_install = []
 exclude_dirs = ['CVS', 'profile', '.idlerc']
-exclude_files = ['install.py', 'install.pyc', 'urk.desktop', 'urk.nsi', 'installer.exe', 'urk.exe']
+exclude_files = ['install.py', 'urk.desktop', 'urk.nsi', 'installer.exe', 'urk.exe']
 
 nsis_outfile="urk.exe"
 nsis_make_exe="makensisw"
@@ -23,7 +23,7 @@ def identify_files(path=os.curdir, prefix='', sep=os.path.join):
         elif os.path.isdir(abs_file) and filename not in exclude_dirs:
             print "Marking directory %s for installation" % rel_file
             dirs_to_install.append(rel_file)
-            identify_files(abs_file, rel_file)
+            identify_files(abs_file, rel_file, sep)
 
 def install_files():
     #copy .py files to the destination directory
