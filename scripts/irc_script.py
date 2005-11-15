@@ -162,6 +162,12 @@ def onCommandNick(e):
     else:
         e.network.raw('NICK :%s' % e.args[0])
 
+def defNick(e):
+    if e.source != e.network.me:
+        window = ui.windows.get(ui.QueryWindow, e.network, e.source)
+        if window:
+            window.id = e.newnick
+
 # make /quit always disconnect us
 def onCommandQuit(e):
     if e.network.status:
