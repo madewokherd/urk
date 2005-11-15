@@ -271,7 +271,7 @@ class TextInput(gtk.Entry):
     
     #hack to stop it selecting the text when we focus
     def do_grab_focus(self):
-        temp = self.text, (self.cursor,)*2
+        temp = self.text, (self.selection or (self.cursor,)*2)
         self.text = ''
         gtk.Entry.do_grab_focus(self)
         self.text, self.selection = temp
