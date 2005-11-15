@@ -40,7 +40,14 @@ def pprint(x, depth=-2):
         return s_list
 
 def save(e):
-    file(CONF_FILE, "w").write(pprint(conf))
+    new_file = not os.access(CONF_FILE,os.F_OK)
+    fd = file(CONF_FILE, "w")
+    try:
+        if new_file:
+            os.chmod(CONF_FILE,0600)
+        fd.write(pprint(conf))
+    finally:
+        fd.close()
 
 events.register('Exit', 'post', save)
 
