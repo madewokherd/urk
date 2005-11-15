@@ -1,5 +1,6 @@
 import codecs
 
+import gobject
 import gtk
 import pango
 
@@ -267,7 +268,14 @@ class TextInput(gtk.Entry):
     
     def insert(self, text):
         self.do_insert_at_cursor(self, text)
-
+    
+    #hack to stop it selecting the text when we focus
+    def do_grab_focus(self):
+        temp = self.text, (self.cursor,)*2
+        self.text = ''
+        gtk.Entry.do_grab_focus(self)
+        self.text, self.selection = temp
+    
     def __init__(self, window):
         gtk.Entry.__init__(self)
         
@@ -298,7 +306,9 @@ class TextInput(gtk.Entry):
 
         self.connect('key-press-event', key_event, 'KeyPress')
         self.connect('key-release-event', key_event, 'KeyPressed')
-        
+
+gobject.type_register(TextInput)
+
 def prop_to_gtk(prop, val):
     if val == parse_mirc.BOLD:
         val = pango.WEIGHT_BOLD
