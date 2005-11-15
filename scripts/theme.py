@@ -106,12 +106,14 @@ def onOwnAction(e):
 def onNotice(e):
     hilight_text(e)
     color = "\x02\x040000CC"
-    to_write = "%s%s-\x0F%s%s-\x0F %s" % (prefix(e), color, e.source, color, e.text)
+    to_write = prefix(e)
+    if e.network.me == e.target:    # this is a pm
+        to_write += "%s-\x0F%s%s-\x0F " % (color, format_source(e), color)
+    else:
+        to_write += "%s-\x0F%s:%s%s-\x0F " % (color, format_source(e), e.target, color)
+    to_write += e.text
     
-    window = ui.windows.manager.get_active()
-    if window.network != e.network:
-        window = ui.get_default_window(e.network)
-    window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
+    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
 
 def onOwnNotice(e):
     to_write = "%s\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (prefix(e), e.target, e.text)

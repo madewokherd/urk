@@ -42,6 +42,11 @@ def preText(e):
 
 preAction = preText
 
+def preNotice(e):
+    if e.target != e.network.me:
+        e.window = \
+            ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+
 def preOwnText(e):
     e.window = \
         ui.windows.get(ui.ChannelWindow, e.network, e.target) or \

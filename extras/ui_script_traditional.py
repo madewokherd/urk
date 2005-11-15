@@ -59,6 +59,11 @@ def preOwnText(e):
 
 preOwnAction = preOwnText
 
+def preNotice(e):
+    if e.target != e.network.me:
+        e.window = \
+            ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+
 def postPart(e):
     if e.source == e.network.me:
         window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
