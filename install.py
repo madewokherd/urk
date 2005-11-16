@@ -120,7 +120,7 @@ def nsis_generate_exe():
         import _winreg
         key_software = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,"Software")
         key_nsis = _winreg.OpenKey(key_software,"NSIS")
-        make_exe = os.path.join(QueryValueEx(key_nsis,None)[0],"makensisw.exe")
+        make_exe = '"'+os.path.join(_winreg.QueryValueEx(key_nsis,None)[0],"makensisw.exe")+'"'
     except: #..or just use the global for it
         make_exe = nsis_make_exe
     os.system('%s "%s"' % (make_exe, filename))

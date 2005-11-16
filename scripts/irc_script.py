@@ -5,12 +5,41 @@ import irc
 
 COMMAND_PREFIX = conf["command_prefix"] or "/"
 
+NICK_SUFFIX = r"`_-\|0123456789"
+
+#for getting a list of alternative nicks to try on a network
+def _nick_generator(network):
+    for nick in network.nicks[1:]:
+        yield nick
+    import itertools
+    for i in itertools.count(1):
+        for j in xrange(len(NICK_SUFFIX)**i):
+            suffix = ''.join(NICK_SUFFIX[(j/(len(NICK_SUFFIX)**x))%len(NICK_SUFFIX)] for x in xrange(i))
+            if network._nick_max_length:
+                yield network.nicks[0][0:network._nick_max_length-i]+suffix
+            else:
+                yield network.nicks[0]+suffix
+
 def defRaw(e):
     if not e.done:
         if not e.network.got_nick:
             if e.msg[1] in ('431','432','433','436','437'):
                 failednick = e.msg[3]
                 nicks = list(e.network.nicks)
+                
+                if hasattr(e.network,'_nick_generator'):
+                    if len(failednick) < len(e.network._next_nick):
+                        e.network._nick_max_length = len(failednick)
+                    e.network._next_nick = e.network._nick_generator.next()
+                    e.network.raw('NICK %s' % e.network._next_nick)
+                else:
+                    if len(failednick) < len(e.network.nicks[0]):
+                        e.network._nick_max_length = len(failednick)
+                    else:
+                        e.network._nick_max_length = 0
+                    e.network._nick_generator = _nick_generator(e.network)
+                    e.network._next_nick = e.network._nick_generator.next()
+                    e.network.raw('NICK %s' % e.network._next_nick)
                 
                 if failednick in nicks[:-1]:
                     index = nicks.index(failednick)+1
@@ -27,6 +56,8 @@ def defRaw(e):
                     events.trigger('Nick', e_data)
                     e.network.me = e.msg[2]
                     e.network.got_nick = True
+                if hasattr(e.network,'_nick_generator'):
+                    del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
                 
         if e.msg[1] == "PING":
             e.network.raw("PONG :%s" % e.msg[-1])
@@ -105,6 +136,8 @@ def setupSocketConnect(e):
         'CHANMODES': 'b,k,l,imnpstr',
     }
     e.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
+    if hasattr(e.network,'_nick_generator'):
+        del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
 
 def defSocketConnect(e):
     if not e.done:
