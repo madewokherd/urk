@@ -1,6 +1,7 @@
 import sys #only needed for the stupid workaround
 import os
 import thread
+import subprocess #because os.spawnvp sucks
 
 import commands
 
@@ -87,25 +88,37 @@ os_commands = ( #list of commands to search for for opening files
     )
 def open_file(filename):
     if conf['open-file-command']:
-        command = (conf['open-file-command'] % filename).split(' ')
-        #Note: we have to use spawn here so that no shell evaluates the filename
-        os.spawnvp(os.P_NOWAIT,command[0], command)
+        command = conf['open-file-command'].split(' ') + [filename]
+        try:
+            process = subprocess.Popen(command)
+            _kill_the_zombies(process)
+        except OSError:
+            print "Unable to start %s" % command
     elif hasattr(os, 'startfile'):
         os.startfile(filename)
     elif open_file_cmd:
-        #Note: see above note about spawn
-        os.spawnvp(os.P_NOWAIT,open_file_cmd[0], open_file_cmd + (filename,))
+        try:
+            process = subprocess.Popen(open_file_cmd + (filename,))
+            _kill_the_zombies(process)
+        except OSError:
+            print "Unable to start %s" % command
     else:
-        #look for a command we can use
         paths = os.getenv("PATH") or os.defpath
         for cmdfile, cmd in os_commands:
             for path in paths.split(os.pathsep):
                 if os.access(os.path.join(path,cmdfile),os.X_OK):
                     globals()['open_file_cmd'] = cmd
-                    #Note: see above note about spawn
-                    os.spawnvp(os.P_NOWAIT,cmd[0], cmd + (filename,))
+                    try:
+                        process = subprocess.Popen(cmd + (filename,))
+                        _kill_the_zombies(process)
+                    except OSError:
+                        print "Unable to start %s" % command
                     return
         print "Unable to find a method to open %s." % filename
+#ugly hack to make sure we get rid of zombie processes
+def _kill_the_zombies(process):
+    if process.poll() == None: #Note: 0 means success, None means still running
+        register_timer(5000,_kill_the_zombies,PRIORITY_DEFAULT_IDLE, process)
 
 def urk_about(action):
     about = gtk.AboutDialog()
