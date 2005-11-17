@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 install_path = os.curdir
 bin_path = os.curdir
@@ -9,7 +10,7 @@ exclude_dirs = ['CVS', 'profile', '.idlerc']
 exclude_files = ['install.py', 'urk.desktop', 'urk.nsi', 'installer.exe', 'urk.exe']
 
 nsis_outfile="urk.exe"
-nsis_make_exe="makensisw" #for non-windows systems
+nsis_make_exe=["makensis"] #for non-windows systems
 
 def identify_files(path=os.curdir, prefix='', sep=os.path.join):
     #set files to a list of the files we want to install
@@ -65,10 +66,22 @@ Page instfiles
 
 UninstPage uninstConfirm
 UninstPage instfiles
-""")
-    
-    #list of files to install
-    f.write(r"""
+
+
+Function GetPythonDir
+  Var /GLOBAL python_dir
+  ReadRegStr $python_dir HKLM Software\Python\PythonCore\2.4 InstallPath
+FunctionEnd
+
+
+Section "dependencies"
+  SectionIn RO
+  
+  Call GetPythonDir
+  MessageBox MB_OK $python_dir
+SectionEnd
+
+
 Section "urk (required)"
 
  SectionIn RO
@@ -115,15 +128,15 @@ SectionEnd
 
 def nsis_generate_exe():
     filename = os.path.join(install_path,"urk.nsi")
-    print "Calling makensisw on %s" % filename
+    print "Calling makensis on %s" % filename
     try: #look for NSIS in the registry
         import _winreg
         key_software = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,"Software")
         key_nsis = _winreg.OpenKey(key_software,"NSIS")
-        make_exe = '"'+os.path.join(_winreg.QueryValueEx(key_nsis,None)[0],"makensisw.exe")+'"'
+        make_exe = [os.path.join(_winreg.QueryValueEx(key_nsis,None)[0],"makensis.exe")]
     except: #..or just use the global for it
         make_exe = nsis_make_exe
-    os.system('%s "%s"' % (make_exe, filename))
+    subprocess.call(make_exe + [filename])
 
 def install_to_nsis():
     def sep(*args):
