@@ -22,7 +22,6 @@ class NetworkInfo(gtk.VBox):
         for i, key in enumerate(to_show):
             label = gtk.Label()
             label.set_text('%s:' % str(key).capitalize())
-            label.set_justify(gtk.JUSTIFY_LEFT)
             label.show()
             
             value = network_info.get(key, '')
@@ -52,43 +51,72 @@ class NetworkInfo(gtk.VBox):
         gtk.VBox.__init__(self)
 
 class ServerWidget(gtk.Window):
-    def edit(self, cell, path_string, new_text, model):
+    def edit_network(self, cell, path_string, new_text):
+        network_list = self.networks.get_model()
+    
         networks = conf.get('networks')
         
-        if model[path_string][0] in networks:
-            networks[new_text] = networks.pop(model[path_string][0])
+        if network_list[path_string][0] in networks:
+            networks[new_text] = networks.pop(network_list[path_string][0])
         else:
             networks[new_text] = {}
 
-        iter = model.get_iter_from_string(path_string)
-        model.set_value(iter, 0, new_text)
+        iter = network_list.get_iter_from_string(path_string)
+        network_list.set_value(iter, 0, new_text)
+        
+    def add_network(self, button):
+        network_list = self.networks.get_model()
+    
+        if 'networks' not in conf:
+            conf['networks'] = {}
+    
+        name = 'NewNetwork'
+        
+        while name in conf.get('networks'):
+            name += '_'
+
+        conf['networks'][name] = {}
+        network_list.append([name])
+        
+    def remove_network(self, button):
+        model, iter = networks.get_selection().get_selected()
+
+        if iter:
+            del conf['networks'][model.get_value(iter, 0)]
+            model.remove(iter)
             
     def on_selection_changed(self, selection):
         model, iter = selection.get_selected()
+
+        if iter:
+            self.infobox.show(model.get_value(iter, 0))
+            
+            self.buttons['connect'].set_sensitive(True)
+        else:
+            self.buttons['connect'].set_sensitive(False)
+            
+    def on_close(self, button):
+        self.destroy()
         
-        infobox = self.vbox.get_children()[1]
+    def on_connect(self, button):
+        model, iter = self.networks.get_selection().get_selected()
         
         if iter:
-            infobox.show(model.get_value(iter, 0))
+            network = model.get_value(iter, 0)
             
-            self.vbox.get_children()[-1].get_children()[-1].set_sensitive(True)
-        else:
-            self.vbox.get_children()[-1].get_children()[-1].set_sensitive(False)
+            events.run(
+                'server %s' % network,
+                ui.windows.manager.get_active(),
+                ui.windows.manager.get_active().network
+                )
 
     def __init__(self, action):
         gtk.Window.__init__(self)
         
         self.set_default_size(320, 300)
         self.set_border_width(5)
-        
-        self.vbox = gtk.VBox()
-        self.vbox.set_spacing(5)
-        
-        hb = gtk.HBox()
-        hb.set_spacing(5)
-        
-        self.vbox.pack_start(hb)
-        self.vbox.pack_start(NetworkInfo(), expand=False)
+
+        self.infobox = NetworkInfo()
 
         network_list = gtk.ListStore(str)
         for network in conf.get('networks', []):
@@ -96,90 +124,65 @@ class ServerWidget(gtk.Window):
 
         renderer = gtk.CellRendererText()
         renderer.set_property('editable', True)
-        renderer.connect('edited', self.edit, network_list)
+        renderer.connect('edited', self.edit_network)
 
-        networks = gtk.TreeView(network_list)
-        networks.set_headers_visible(False)
-        networks.insert_column_with_attributes(
+        self.networks = gtk.TreeView(network_list)
+        self.networks.set_headers_visible(False)
+        self.networks.insert_column_with_attributes(
             0, '', renderer, text=0
             )
             
-        selection = networks.get_selection()
+        selection = self.networks.get_selection()
         selection.set_mode(gtk.SELECTION_SINGLE)
         selection.connect('changed', self.on_selection_changed)
+
+        self.buttons = {
+            'add': gtk.Button(stock='gtk-add'),
+            'remove': gtk.Button(stock='gtk-remove'),
+            
+            'close': gtk.Button(stock='gtk-close'),
+            'connect': gtk.Button(stock='gtk-connect'),
+            }
+        
+        self.buttons['add'].connect('clicked', self.add_network)
+        self.buttons['remove'].connect('clicked', self.remove_network)
+
+        self.buttons['close'].connect('clicked', self.on_close)
+        self.buttons['connect'].connect('clicked', self.on_connect)
+
+        vbox = gtk.VBox()
+        vbox.set_spacing(5)
+        
+        hb = gtk.HBox()
+        hb.set_spacing(5)
+
+        vb = gtk.VButtonBox()
+        vb.set_layout(gtk.BUTTONBOX_START)
         
         sw = gtk.ScrolledWindow()
         sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         sw.set_shadow_type(gtk.SHADOW_ETCHED_IN)
-        sw.add(networks)
-            
-        self.vbox.get_children()[0].pack_start(sw, expand=True)
+        sw.add(self.networks)
         
-        vb = gtk.VButtonBox()
-        vb.set_layout(gtk.BUTTONBOX_START)
+        vb.add(self.buttons['add'])
+        vb.add(self.buttons['remove'])
         
-        button = gtk.Button(stock='gtk-add')
-        vb.add(button)
+        hb.pack_start(sw, expand=True)
+        hb.pack_start(vb, expand=False)
         
-        def add_network(button, network_list):
-            if 'networks' not in conf:
-                conf['networks'] = {}
-        
-            name = 'NewNetwork'
-            
-            while name in conf.get('networks'):
-                name += '_'
+        vbox.pack_start(hb)
 
-            conf['networks'][name] = {}
-            network_list.append([name])
-        
-        button.connect('clicked', add_network, network_list)
-
-        button = gtk.Button(stock='gtk-remove')
-        vb.add(button)
-        
-        def remove_network(button, network_list):
-            model, iter = networks.get_selection().get_selected()
-
-            if iter:
-                del conf['networks'][model.get_value(iter, 0)]
-                model.remove(iter)
-     
-        button.connect('clicked', remove_network, network_list)
-
-        self.vbox.get_children()[0].pack_start(vb, expand=False)
+        vbox.pack_start(self.infobox, expand=False)
         
         hb = gtk.HButtonBox()
         hb.set_layout(gtk.BUTTONBOX_END)
         
-        button = gtk.Button(stock='gtk-close')
-        hb.add(button)
+        hb.add(self.buttons['close'])
+        hb.add(self.buttons['connect'])
         
-        def close(*args):
-            self.destroy()
-        
-        button.connect('clicked', close)
-        
-        button = gtk.Button(stock='gtk-connect')
-        hb.add(button)
-        
-        def connect(*args):
-            model, iter = networks.get_selection().get_selected()
-            
-            if iter:
-                network = model.get_value(iter, 0)
-                
-                events.run(
-                    'server %s' % network,
-                    ui.windows.manager.get_active(),
-                    ui.windows.manager.get_active().network
-                    )
-                
-        button.connect('clicked', connect)
-        
-        self.vbox.pack_end(hb, expand=False)
+        vbox.pack_end(hb, expand=False)
 
-        self.add(self.vbox)
+        self.add(vbox)
         self.show_all()
  
         
