@@ -1,6 +1,7 @@
 import events
 import ui
 import chaninfo
+from conf import conf
 
 def is_nick(e, target):
     def query():
@@ -24,8 +25,23 @@ def is_url(e, target):
     
 def is_chan(e, target):
     def add_to_perform():
-        # add to perform maybe
-        pass
+        if 'networks' not in conf:
+            conf['networks'] = {}
+        networks = conf['networks']
+        if e.window.network.name in networks:
+            network = networks[e.window.network.name]
+        else:
+            network_name = e.window.network.isupport.get('NETWORK',e.network.server)
+            while network_name in networks:
+                network_name += '_'
+            network = networks[network_name] = {}
+        for i, command in enumerate(network.get('perform',())):
+            # this might be worth updating to account for channel keys
+            if command.lower().startswith('join ') and command.count(' ') == 1:
+                network['perform'][i] += ','+target
+                break
+        else:
+            network['perform'] = network.get('perform',[])+('join %s' % target)
         
     def remove_from_perform():
         # remove if it's already there maybe

@@ -220,8 +220,10 @@ class Network:
                 pass
             self.disconnect()
         
-    def join(self, name):        
-        self.raw("JOIN %s" % name)
+    def join(self, name, key=''):
+        if key:
+            key = ' '+key
+        self.raw("JOIN %s%s" % (name,key))
         
     def part(self, target, msg=""):
         if msg:

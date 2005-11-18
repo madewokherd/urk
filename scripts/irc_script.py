@@ -219,7 +219,7 @@ onCommandQuote = onCommandRaw
 def onCommandJoin(e):
     if e.args:
         if e.network.status >= irc.INITIALIZING:
-            e.network.join(e.args[0])
+            e.network.join(' '.join(e.args))
         else:
             raise events.CommandError("We're not connected.")
     elif e.window.role == ui.ChannelWindow:

@@ -29,6 +29,9 @@ def onClick(e):
             target[0] in (e.window.network.isupport.get('CHANTYPES') or '&#$+'):
         if not chaninfo.ischan(e.window.network, target):
             e.window.network.join(target)
+        window = ui.windows.get(ui.ChannelWindow,e.network,target)
+        if window:
+            window.activate()
 
 def onHover(e):
     # nick on this channel

@@ -70,22 +70,25 @@ UninstPage instfiles
 
 Function GetPythonDir
   Var /GLOBAL python_dir
-  ReadRegStr $python_dir HKLM Software\Python\PythonCore\2.4 InstallPath
+  ReadRegStr $python_dir HKLM "Software\Python\PythonCore\2.4\InstallPath" ""
 FunctionEnd
 
 
-Section "dependencies"
-  SectionIn RO
+Function GetPythonVersion
+  Var /GLOBAL python_version
+  Call GetPythonDir
+  ExecWait "$python_dir\python.exe -V"
   
+FunctionEnd
+
+
+Section /o "dependencies"
   Call GetPythonDir
   MessageBox MB_OK $python_dir
 SectionEnd
 
 
 Section "urk (required)"
-
- SectionIn RO
-
  SetOutPath $INSTDIR
 """)
     #look for existing installation?
