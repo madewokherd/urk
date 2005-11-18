@@ -7,9 +7,7 @@ import urk
 
 class NetworkInfo(gtk.VBox):
     def show_what(self, network_info): 
-        keys = ['server', 'perform']
-        
-        return keys + [k for k in network_info if k not in keys]
+        return ['server', 'perform']
 
     def show(self, network):
         for child in self.get_children():
@@ -22,8 +20,9 @@ class NetworkInfo(gtk.VBox):
         table = gtk.Table(len(to_show), 2)
 
         for i, key in enumerate(to_show):
-            label = gtk.Entry()
-            label.set_text(str(key))
+            label = gtk.Label()
+            label.set_text('%s:' % str(key).capitalize())
+            label.set_justify(gtk.JUSTIFY_LEFT)
             label.show()
             
             value = network_info.get(key, '')
@@ -54,14 +53,27 @@ class NetworkInfo(gtk.VBox):
 
 class ServerWidget(gtk.Window):
     def edit(self, cell, path_string, new_text, model):
-        print ">"
+        networks = conf.get('networks')
+        
+        if model[path_string][0] in networks:
+            networks[new_text] = networks.pop(model[path_string][0])
+        else:
+            networks[new_text] = {}
+
+        iter = model.get_iter_from_string(path_string)
+        model.set_value(iter, 0, new_text)
             
     def on_selection_changed(self, selection):
         model, iter = selection.get_selected()
         
         infobox = self.vbox.get_children()[1]
         
-        infobox.show(model.get_value(iter, 0))
+        if iter:
+            infobox.show(model.get_value(iter, 0))
+            
+            self.vbox.get_children()[-1].get_children()[-1].set_sensitive(True)
+        else:
+            self.vbox.get_children()[-1].get_children()[-1].set_sensitive(False)
 
     def __init__(self, action):
         gtk.Window.__init__(self)
@@ -77,8 +89,6 @@ class ServerWidget(gtk.Window):
         
         self.vbox.pack_start(hb)
         self.vbox.pack_start(NetworkInfo(), expand=False)
-
-        #self.ui.get_widget('connect').connect('clicked', connect)
 
         network_list = gtk.ListStore(str)
         for network in conf.get('networks', []):
@@ -154,14 +164,16 @@ class ServerWidget(gtk.Window):
         hb.add(button)
         
         def connect(*args):
-            model, iter = self.ui.get_widget('networks').get_selection().get_selected()
-            network = model.get_value(iter, 0)
+            model, iter = networks.get_selection().get_selected()
             
-            events.run(
-                'server %s' % network,
-                ui.windows.manager.get_active(),
-                ui.windows.manager.get_active().network
-                )
+            if iter:
+                network = model.get_value(iter, 0)
+                
+                events.run(
+                    'server %s' % network,
+                    ui.windows.manager.get_active(),
+                    ui.windows.manager.get_active().network
+                    )
                 
         button.connect('clicked', connect)
         
