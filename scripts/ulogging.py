@@ -6,8 +6,8 @@ import ui
 import chaninfo
 import urk
 
-DATE_FORMAT_LONG = '%Y-%m-%d.%H:%M:%S (%Z)'
-DATE_FORMAT = '%m-%d %H:%M'
+FILENAME = '%Y-%m-%d.%H%M%S.txt'
+DATE_FORMAT = '(%H:%M:%S)'
 
 LOG_DIR = conf['log_dir'] or os.path.join(urk.userpath,'logs')
 if not os.access(LOG_DIR, os.F_OK):
@@ -23,12 +23,12 @@ def log_file(network, name, new=False):
         os.mkdir(name_dir)
        
     if new:
-        recent_log = time.strftime('%Y-%m-%d.%H%M%S.log')
+        recent_log = time.strftime(FILENAME)
     else:
         try:
             recent_log = sorted(os.listdir(name_dir))[-1]
         except IndexError:
-            recent_log = time.strftime('%Y-%m-%d.%H%M%S.log')
+            recent_log = time.strftime(FILENAME)
 
     return LogFile(os.path.join(name_dir, recent_log), 'a')
     
@@ -93,7 +93,10 @@ def onJoin(e):
     if e.network.me == e.source:   
         # START A NEW LOG FILE HERE OMG
         f = log_file(e.network, e.window.id, new=True)
-        f.write('%s %s' % (e.network.me, time.strftime(DATE_FORMAT_LONG)))
+        f.write(
+            'Conversation with %s at %s on %s' % 
+                (e.target, time.strftime('%Y-%m-%d %H%M%S'), e.network.me)
+                )
 
         to_write = 'You joined %s' % e.target
 
