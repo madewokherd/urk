@@ -22,10 +22,15 @@ ishex = HEX_DIGITS.issuperset
 def parse_mirc_color(string, pos, open_tags, tags):
     color_chars = 1
 
-    if string[0] in DEC_DIGITS:
-        if MIRC_COLOR not in open_tags:
-            open_tags[MIRC_COLOR] = []
-    
+    bg = None
+    if MIRC_COLOR in open_tags:
+        tag = open_tags.pop(MIRC_COLOR)
+        tags += [tag + (pos,)]
+        
+        if len(tag[0]) > 1:
+            bg = tag[0][1][1]
+
+    if string[0] in DEC_DIGITS:   
         if string[1:2] in DEC_DIGITS:
             fg = get_mirc_color(string[:2])
             string = string[1:]
@@ -44,35 +49,43 @@ def parse_mirc_color(string, pos, open_tags, tags):
                 bg = get_mirc_color(string[2:3])
                 color_chars += 2
          
-            open_tags[MIRC_COLOR] += [([("foreground", fg), ("background", bg)], pos)]
+            open_tags[MIRC_COLOR] = ([("foreground", fg), ("background", bg)], pos)
+            
+        elif bg:
+            open_tags[MIRC_COLOR] = ([("foreground", fg), ("background", bg)], pos)
                 
         else:
-            open_tags[MIRC_COLOR] += [([("foreground", fg)], pos)]
-    else:
-        for tag in open_tags.pop(MIRC_COLOR, []):
-            tags += [tag + (pos,)]
+            open_tags[MIRC_COLOR] = ([("foreground", fg)], pos)
               
     return color_chars
 
 def parse_bersirc_color(string, pos, open_tags, tags):      
-    fg, bg = string[:6], string[7:13]
+    fg = string[:6]
+    
+    bg = None
+    if BERS_COLOR in open_tags:
+        tag = open_tags.pop(BERS_COLOR)
+        tags += [tag + (pos,)]
+        
+        if len(tag[0]) > 1:
+            bg = tag[0][1][1]
     
     if ishex(fg):
-        if BERS_COLOR not in open_tags:
-            open_tags[BERS_COLOR] = []
-    
-        if string[6:7] == "," and ishex(bg):
-            open_tags[BERS_COLOR] += [([("foreground", "#" + fg), ("background", "#" + bg)], pos)]
+        if string[6:7] == "," and ishex(string[7:13]):
+            bg = string[7:13]
+        
+            open_tags[BERS_COLOR] = ([("foreground", "#" + fg), ("background", "#" + bg)], pos)
             return 14
             
+        elif bg:
+            open_tags[BERS_COLOR] = ([("foreground", "#" + fg), ("background", "#" + bg)], pos)
+            return 7
+            
         else:
-            open_tags[BERS_COLOR] += [([("foreground", "#" + fg)], pos)]
+            open_tags[BERS_COLOR] = ([("foreground", "#" + fg)], pos)
             return 7
             
     else:
-        for tag in open_tags.pop(BERS_COLOR, []):
-            tags += [tag + (pos,)]
-    
         return 1
     
 def parse_bold(string, pos, open_tags, tags):
@@ -133,7 +146,7 @@ def parse_mirc(string):
                                     open_tags,
                                     tags
                                     )
-        
+    
     return tags, out
 
 if __name__ == "__main__":
@@ -162,6 +175,8 @@ if __name__ == "__main__":
         "\x034,5Hello\x036Goodbye",
         
         "\x04ff0000,00ff00Hello\x040000ffGoodbye",
+        
+        "\x04777777(\x0400CCCCstuff\x04777777)\x04"
         ]
         
     results = [
@@ -193,6 +208,8 @@ if __name__ == "__main__":
         ]
         
     #"""
+    
+    print parse_mirc(tests[-1])
     
     r = range(500)    
     for i in r:
