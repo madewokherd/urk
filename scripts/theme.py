@@ -46,15 +46,18 @@ def format_info_source(e):
 
 def address(e):
     if e.source != e.network.me:
-        return "(%s) " % e.address
+        return "%s " % info_in_brackets(e.address)
     else:
         return ""
 
 def text(e):
     if e.text:
-        return " (%s\x0F)" % e.text
+        return " %s" % info_in_brackets(e.text)
     else:
         return ""
+        
+def info_in_brackets(text):
+    return "\x04777777(\x0400CCCC%s\x04777777)\x0F" % text
 
 def onText(e):
     hilight_text(e)
@@ -140,7 +143,8 @@ def onJoin(e):
     e.window.write(to_write)
         
 def onPart(e):
-    to_write = "%s%s %sleft %s%s" % (prefix(e), format_info_source(e), address(e), e.target, text(e))
+    #to_write = "%s%s %sleft %s%s" % (prefix(e), format_info_source(e), address(e), e.target, text(e))
+    to_write = "%s%s left %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
     e.window.write(to_write)
 
