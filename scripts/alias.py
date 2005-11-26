@@ -6,8 +6,8 @@ import events
 aliases = conf.get("aliases",{
     'op':'"mode "+window.id+" +ooo "+" ".join(args)',
     'deop':'"mode "+window.id+" -ooo "+" ".join(args)',
-    'voice':'"mode "+window.id+" +ooo "+" ".join(args)',
-    'devoice':'"mode "+window.id+" -ooo "+" ".join(args)',
+    'voice':'"mode "+window.id+" +vvv "+" ".join(args)',
+    'devoice':'"mode "+window.id+" -vvv "+" ".join(args)',
     'clear':'window.output.get_buffer().set_text("")',
     })
 
