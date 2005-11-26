@@ -120,7 +120,7 @@ def _kill_the_zombies(process):
     if process.poll() == None: #Note: 0 means success, None means still running
         register_timer(5000,_kill_the_zombies,PRIORITY_DEFAULT_IDLE, process)
 
-def urk_about(action):
+def urk_about(*args):
     about = gtk.AboutDialog()
     
     about.set_name(urk.name+" (GTK+ Frontend)")
@@ -267,38 +267,37 @@ class UrkUI(gtk.Window):
             conf["wh"] = self.get_size()
         self.connect("configure_event", save_xywh)
         
-        menus = (
-            ("UrkMenu", None, "_urk"),
-            ("Servers", None, "_servers", "<control>S", None, servers.ServerWidget),
+        def add_server_to_menu(e):
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.ServerWidget)]
+
+        events.register('MainMenu', 'on', add_server_to_menu, 'ui')
+
+        def build_urk_menu(*args):
+            data = events.data(menu=[])
+            events.trigger("MainMenu", data)
+
+            menu = widgets.menu_from_list(data.menu)
+            menu.show_all()
+            
+            urk_menu.set_submenu(menu)
         
-            ("HelpMenu", None, "_Help"),
-            ("About", gtk.STOCK_ABOUT, "_About", None, None, urk_about),
-            )
-    
-        actions = gtk.ActionGroup("Urk")   
-        actions.add_actions(menus)
+        urk_menu = gtk.MenuItem("urk")
+        urk_menu.connect("button-press-event", build_urk_menu)    
+        help_menu = gtk.MenuItem("Help")
         
-        ui_manager = gtk.UIManager()        
-        ui_manager.insert_action_group(actions, 0)
+        help_menu.set_submenu(gtk.Menu())
+        about_item = gtk.ImageMenuItem("gtk-about")
+        about_item.connect("activate", urk_about)
+
+        help_menu.get_submenu().append(about_item)
         
-        ui_manager.add_ui_from_string(
-            """
-            <ui>
-                <menubar name="MenuBar">
-                    <menu action="UrkMenu">
-                        <menuitem action="Servers"/>
-                    </menu>
-                
-                    <menu action="HelpMenu">
-                        <menuitem action="About"/>
-                    </menu>
-                </menubar>
-            </ui>
-            """)
+        menu = gtk.MenuBar()
+        menu.append(urk_menu)
+        menu.append(help_menu)
 
         # widgets
         box = gtk.VBox(False)
-        box.pack_start(ui_manager.get_widget("/MenuBar"), expand=False)
+        box.pack_start(menu, expand=False)
         box.pack_end(windows.manager)
 
         self.add(box)

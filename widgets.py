@@ -55,39 +55,36 @@ def set_style(widget, style):
         style = dummy.rc_get_style()
     
     styles[widget] = style
-        
-def menu_from_list(alist):
-    ui_manager = gtk.UIManager()
-    ui_manager.add_ui_from_string('<popup name="Menu"></popup>')
     
-    actions = gtk.ActionGroup("Menu")
-    
+def menu_from_list(alist, menuitem=None):
+    menu = gtk.Menu()
+
     def callback(action, f): f()
     
-    for item in alist: 
+    for item, next in zip(alist, alist[1:] + [None]): 
         if item:
             if len(item) == 2:
                 name, function = item
-                action = (name, None, name, None, None, callback)
+                
+                menuitem = gtk.ImageMenuItem(name)
+                
             elif len(item) == 3:
                 name, stock_id, function = item
-                action = (name, stock_id, None, None, None, callback)
                 
-            actions.add_actions([action], function)
-
-            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                "/Menu/",
-                name, name, 
-                gtk.UI_MANAGER_MENUITEM, False)
-
-        else: # None means add a separator
-            ui_manager.add_ui(ui_manager.new_merge_id(), 
-                "/Menu/",
-                "", None, 
-                gtk.UI_MANAGER_SEPARATOR, False)
+                menuitem = gtk.ImageMenuItem(stock_id)
                 
-    ui_manager.insert_action_group(actions, 0) 
-    return ui_manager.get_widget("/Menu")
+            if isinstance(function, list):
+                menuitem.set_submenu(menu_from_list(function))
+            else:
+                menuitem.connect("activate", callback, function)
+                
+            menu.append(menuitem)
+
+        elif menuitem and next:
+            menu.append(gtk.SeparatorMenuItem())
+       
+    menu.show_all()         
+    return menu
 
 class Nicklist:
     def click(self, widget, event):
