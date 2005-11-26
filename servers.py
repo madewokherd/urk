@@ -110,7 +110,7 @@ class ServerWidget(gtk.Window):
                 ui.windows.manager.get_active().network
                 )
 
-    def __init__(self, action):
+    def __init__(self):
         gtk.Window.__init__(self)
         
         self.set_default_size(320, 300)
