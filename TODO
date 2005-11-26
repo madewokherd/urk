@@ -1,5 +1,11 @@
 Current components:
 
+aliases
+
+    An easy way to make simple custom commands. We need a way to manipulate the
+"aliases" dictionary.
+
+
 #channel links
 
     The "Automatically join channel" thing should do something.
