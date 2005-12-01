@@ -2,8 +2,13 @@ Current components:
 
 aliases
 
-    An easy way to make simple custom commands. We need a way to manipulate the
-"aliases" dictionary.
+    An easy way to make simple custom commands. We need a way to manipulate the "aliases" dictionary.
+
+
+auto-reconnect
+
+    We should try to reconnet when the socket open fails or
+as an option.
 
 
 #channel links

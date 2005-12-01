@@ -11,19 +11,23 @@ NICK_SUFFIX = r"`_-\|0123456789"
 def _nick_generator(network):
     for nick in network.nicks[1:]:
         yield nick
+    if network._nick_error:
+        nick = 'ircperson'
+    else:
+        nick = network.nicks[0]
     import itertools
     for i in itertools.count(1):
         for j in xrange(len(NICK_SUFFIX)**i):
             suffix = ''.join(NICK_SUFFIX[(j/(len(NICK_SUFFIX)**x))%len(NICK_SUFFIX)] for x in xrange(i))
             if network._nick_max_length:
-                yield network.nicks[0][0:network._nick_max_length-i]+suffix
+                yield nick[0:network._nick_max_length-i]+suffix
             else:
-                yield network.nicks[0]+suffix
+                yield nick+suffix
 
 def defRaw(e):
     if not e.done:
         if not e.network.got_nick:
-            if e.msg[1] in ('431','432','433','436','437'):
+            if e.msg[1] in ('432','433','436','437'): #nickname unavailable
                 failednick = e.msg[3]
                 nicks = list(e.network.nicks)
                 
@@ -32,7 +36,9 @@ def defRaw(e):
                         e.network._nick_max_length = len(failednick)
                     e.network._next_nick = e.network._nick_generator.next()
                     e.network.raw('NICK %s' % e.network._next_nick)
+                    e.network._nick_error |= (e.msg[1] == '432')
                 else:
+                    e.network._nick_error = (e.msg[1] == '432')
                     if len(failednick) < len(e.network.nicks[0]):
                         e.network._nick_max_length = len(failednick)
                     else:
@@ -44,8 +50,10 @@ def defRaw(e):
                 if failednick in nicks[:-1]:
                     index = nicks.index(failednick)+1
                     e.network.raw('NICK %s' % nicks[index])
-                # else get the user to supply a nick or make one up?
-        
+            
+            elif e.msg[1] == '431': #no nickname given--this shouldn't happen
+                pass
+            
             elif e.msg[1] == '001':
                 if e.network.me != e.msg[2]:
                     e_data = events.data()
