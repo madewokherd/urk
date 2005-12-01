@@ -353,6 +353,9 @@ def get_event_at_iter(view, iter):
                 )
 
 class TextOutput(gtk.TextView):
+    def clear(self):
+        self.get_buffer.set_text('')
+
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type):
         if not isinstance(text, unicode):
