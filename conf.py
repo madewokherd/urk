@@ -11,7 +11,7 @@ def pprint(x, depth=-2):
     s_list = []
 
     if isinstance(x, dict):
-        s_list = s_list + ['{', '\n']
+        s_list += ['{', '\n']
     
         for key in x:
             s_list += ['%s%s%s' % (' '*depth, repr(key), ':')]
@@ -51,12 +51,7 @@ def save(e):
 
 events.register('Exit', 'post', save)
 
-class confdict(dict):
-    def __getitem__(self, key):
-        if key in self:
-            return dict.__getitem__(self, key)
-
 if os.access(CONF_FILE,os.R_OK):
-    conf = confdict(**eval(file(CONF_FILE).read()))
+    conf = eval(file(CONF_FILE).read())
 else:
-    conf = confdict()
+    conf = {}
