@@ -9,7 +9,7 @@ import urk
 FILENAME = '%Y-%m-%d.%H%M%S.txt'
 DATE_FORMAT = '(%H:%M:%S)'
 
-LOG_DIR = conf['log_dir'] or os.path.join(urk.userpath,'logs')
+LOG_DIR = conf.get('log_dir', os.path.join(urk.userpath,'logs'))
 if not os.access(LOG_DIR, os.F_OK):
     os.mkdir(LOG_DIR)
     

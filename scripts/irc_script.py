@@ -3,7 +3,7 @@ from conf import conf
 import ui
 import irc
 
-COMMAND_PREFIX = conf["command_prefix"] or "/"
+COMMAND_PREFIX = conf.get('command_prefix', '/')
 
 NICK_SUFFIX = r"`_-\|0123456789"
 
@@ -303,7 +303,7 @@ needschan = {
 def defCommand(e):
     if not e.done: 
         if e.name in needschan and e.window.role == ui.ChannelWindow:
-            valid_chan_prefixes = e.network.isupport.get('CHANTYPES','#&+')
+            valid_chan_prefixes = e.network.isupport.get('CHANTYPES', '#&+')
             chan_pos = needschan[e.name]
             
             if len(e.args) > chan_pos:

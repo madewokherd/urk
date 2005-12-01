@@ -576,10 +576,10 @@ class WindowListTabs(gtk.Notebook):
     def __init__(self):
         gtk.Notebook.__init__(self)
         
-        tab_pos = conf["ui-gtk/tab-pos"]
-        if tab_pos is None:
-            tab_pos = gtk.POS_BOTTOM
-        self.set_property("tab-pos", tab_pos)
+        self.set_property(
+            "tab-pos", 
+            conf.get("ui-gtk/tab-pos", gtk.POS_BOTTOM)
+            )
 
         self.set_scrollable(True)
         self.set_property("can-focus", False)
