@@ -29,8 +29,7 @@ def onHilight(e):
         pos = e.text.find(e.network.me,pos+1)
 
 def prefix(e):
-    #return time.strftime('[%H:%M] ')
-    return ""
+    return time.strftime(conf.get('timestamp', ''))
 
 def format_source(e):
     if e.hilight:
@@ -196,11 +195,17 @@ def onRaw(e):
         if e.msg[1].isdigit():
             if e.msg[1] == '332':
                 window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
-                window.write("%stopic on %s is: %s" % (prefix(e), e.msg[3], e.text))
+                window.write(
+                    "%sTopic on %s is: %s" % 
+                        (prefix(e), e.msg[3], e.text)
+                        )
                 
             elif e.msg[1] == '333':
                 window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
-                window.write("%stopic on %s set by %s at time %s" % (prefix(e), e.msg[3], e.msg[4], time.ctime(int(e.msg[5]))))
+                window.write(
+                    "%sTopic on %s set by %s at time %s" % 
+                        (prefix(e), e.msg[3], e.msg[4], time.ctime(int(e.msg[5])))
+                        )
             
             elif e.msg[1] == '329': #RPL_CREATIONTIME
                 pass
