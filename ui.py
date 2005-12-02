@@ -87,7 +87,7 @@ os_commands = ( #list of commands to search for for opening files
     ('kfmclient', ('kfmclient','exec')),
     )
 def open_file(filename):
-    if conf['open-file-command']:
+    if conf.get('open-file-command'):
         command = conf['open-file-command'].split(' ') + [filename]
         try:
             process = subprocess.Popen(command)

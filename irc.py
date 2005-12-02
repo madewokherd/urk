@@ -208,13 +208,11 @@ class Network:
     def norm_case(self, string):
         return string.lower()
     
-    def quit(self,msg=None):
+    def quit(self, msg=None):
         if self.status:
             try:
                 if msg == None:
-                    msg = conf['quitmsg']
-                    if msg == None:
-                        msg = "%s - %s" % (urk.long_version, urk.website)
+                    msg = conf.get('quitmsg', "%s - %s" % (urk.long_version, urk.website))
                 self.raw("QUIT :%s" % msg)
             except:
                 pass
