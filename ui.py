@@ -1,7 +1,6 @@
 import sys #only needed for the stupid workaround
 import os
 import thread
-import subprocess #because os.spawnvp sucks
 
 import commands
 
@@ -88,6 +87,7 @@ os_commands = ( #list of commands to search for for opening files
     )
 def open_file(filename):
     if conf.get('open-file-command'):
+        import subprocess
         command = conf['open-file-command'].split(' ') + [filename]
         try:
             process = subprocess.Popen(command)
@@ -98,11 +98,13 @@ def open_file(filename):
         os.startfile(filename)
     elif open_file_cmd:
         try:
+            import subprocess
             process = subprocess.Popen(open_file_cmd + (filename,))
             _kill_the_zombies(process)
         except OSError:
             print "Unable to start %s" % command
     else:
+        import subprocess
         paths = os.getenv("PATH") or os.defpath
         for cmdfile, cmd in os_commands:
             for path in paths.split(os.pathsep):
@@ -117,6 +119,7 @@ def open_file(filename):
         print "Unable to find a method to open %s." % filename
 #ugly hack to make sure we get rid of zombie processes
 def _kill_the_zombies(process):
+    import subprocess
     if process.poll() == None: #Note: 0 means success, None means still running
         register_timer(5000,_kill_the_zombies,PRIORITY_DEFAULT_IDLE, process)
 
