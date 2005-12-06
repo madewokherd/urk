@@ -6,51 +6,64 @@ from conf import conf
 import urk
 
 class NetworkInfo(gtk.VBox):
-    def show_what(self, network_info): 
-        return ['server', 'perform']
-
     def show(self, network):
         for child in self.get_children():
             self.remove(child)
     
         network_info = conf.get('networks', {}).get(network, {})
-        
-        to_show = self.show_what(network_info)
 
-        table = gtk.Table(len(to_show), 2)
-
-        for i, key in enumerate(to_show):
-            label = gtk.Label()
-            label.set_text('%s:' % str(key).capitalize())
-            label.show()
-            
-            value = network_info.get(key, '')
-            
-            data = gtk.Entry()
-            data.set_text(str(value))
-            data.show()
-            
-            def edit(widget, event, key):
-                if key == 'perform':
-                    try:
-                        network_info[key] = eval(widget.get_text())
-                    except SyntaxError:
-                        pass
-                else:
-                    network_info[key] = widget.get_text()
-            
-            data.connect('key-release-event', edit, key)
+        table = gtk.Table(3, 2)
+        table.set_row_spacings(3)
         
-            table.attach(label, 0, 1, i, i+1)
-            table.attach(data, 1, 2, i, i+1) 
+        # server
+        label = gtk.Label('Server:')
+
+        data = gtk.Entry()
+        data.set_text(str(network_info.get('server', '')))
+        
+        def edit(widget, event):
+            network_info['server'] = widget.get_text()
+                    
+        data.connect('key-release-event', edit)
+
+        table.attach(label, 0, 1, 0, 1)
+        table.attach(data, 1, 2, 0, 1)
+        
+        # perform
+        label = gtk.Label('Perform:')
+
+        data = gtk.TextView()
+        data.get_buffer().set_text(
+            '\n'.join(str(p) for p in network_info.get('perform', []))
+            )
+        
+        def edit(widget, event):
+            buffer = widget.get_buffer()
             
+            perform = buffer.get_text(
+                        buffer.get_start_iter(), buffer.get_end_iter()
+                        ).split('\n')
+
+            network_info['perform'] = [p for p in perform if p]
+                    
+        data.connect('key-release-event', edit)
+
+        table.attach(label, 0, 1, 1, 2)
+        table.attach(data, 1, 2, 1, 2)
+
+        # autoconnect
+        data = gtk.CheckButton(label='Connect on startup')
+        data.set_active(network in conf.get('start_networks', []))        
+        
+        table.attach(data, 1, 2, 2, 3)
         table.show_all()
+
         self.add(table)
 
     def __init__(self):
         gtk.VBox.__init__(self)
 
-class ServerWidget(gtk.Window):
+class ServerWidget(gtk.VBox):
     def edit_network(self, cell, path_string, new_text):
         network_list = self.networks.get_model()
     
@@ -79,7 +92,7 @@ class ServerWidget(gtk.Window):
         network_list.append([name])
         
     def remove_network(self, button):
-        model, iter = networks.get_selection().get_selected()
+        model, iter = self.networks.get_selection().get_selected()
 
         if iter:
             del conf['networks'][model.get_value(iter, 0)]
@@ -94,9 +107,6 @@ class ServerWidget(gtk.Window):
             self.buttons['connect'].set_sensitive(True)
         else:
             self.buttons['connect'].set_sensitive(False)
-            
-    def on_close(self, button):
-        self.destroy()
         
     def on_connect(self, button):
         model, iter = self.networks.get_selection().get_selected()
@@ -111,11 +121,6 @@ class ServerWidget(gtk.Window):
                 )
 
     def __init__(self):
-        gtk.Window.__init__(self)
-        
-        self.set_default_size(320, 300)
-        self.set_border_width(5)
-
         self.infobox = NetworkInfo()
 
         network_list = gtk.ListStore(str)
@@ -147,11 +152,10 @@ class ServerWidget(gtk.Window):
         self.buttons['add'].connect('clicked', self.add_network)
         self.buttons['remove'].connect('clicked', self.remove_network)
 
-        self.buttons['close'].connect('clicked', self.on_close)
         self.buttons['connect'].connect('clicked', self.on_connect)
 
-        vbox = gtk.VBox()
-        vbox.set_spacing(5)
+        gtk.VBox.__init__(self)
+        self.set_spacing(5)
         
         hb = gtk.HBox()
         hb.set_spacing(5)
@@ -170,9 +174,9 @@ class ServerWidget(gtk.Window):
         hb.pack_start(sw, expand=True)
         hb.pack_start(vb, expand=False)
         
-        vbox.pack_start(hb)
+        self.pack_start(hb)
 
-        vbox.pack_start(self.infobox, expand=False)
+        self.pack_start(self.infobox, expand=False)
         
         hb = gtk.HButtonBox()
         hb.set_layout(gtk.BUTTONBOX_END)
@@ -180,11 +184,29 @@ class ServerWidget(gtk.Window):
         hb.add(self.buttons['close'])
         hb.add(self.buttons['connect'])
         
-        vbox.pack_end(hb, expand=False)
-
-        self.add(vbox)
-        self.show_all()
- 
+        self.pack_end(hb, expand=False)
         
+def main():
+    w = gtk.Window()
+    w.set_title('Connect-o-rama') # XXX replace this
+    
+    try:
+        w.set_icon(
+            gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+            )
+    except:
+        pass
 
+    w.set_default_size(320, 300)
+    w.set_border_width(5)
+    
+    sw = ServerWidget()
+    
+    def close(button):
+        w.destroy()
+    
+    sw.buttons['close'].connect('clicked', close)
+    
+    w.add(sw)    
+    w.show_all()
         

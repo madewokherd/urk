@@ -271,7 +271,7 @@ class UrkUI(gtk.Window):
         self.connect("configure_event", save_xywh)
         
         def add_server_to_menu(e):
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.ServerWidget)]
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
 
         events.register('MainMenu', 'on', add_server_to_menu, 'ui')
 
