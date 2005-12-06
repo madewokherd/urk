@@ -53,7 +53,20 @@ class NetworkInfo(gtk.VBox):
 
         # autoconnect
         data = gtk.CheckButton(label='Connect on startup')
-        data.set_active(network in conf.get('start_networks', []))        
+        data.set_active(network in conf.get('start_networks', []))    
+        
+        def edit(widget):
+            if 'start_networks' not in conf:
+                conf['start_networks'] = []
+
+            # note (n in C) != w
+            if (network in conf.get('start_networks')) != widget.get_active():
+                if widget.get_active():
+                    conf.get('start_networks').append(network)
+                else:
+                    conf.get('start_networks').remove(network)
+
+        data.connect('toggled', edit)    
         
         table.attach(data, 1, 2, 2, 3)
         table.show_all()
