@@ -137,8 +137,12 @@ class ServerWidget(gtk.VBox):
         self.infobox = NetworkInfo()
 
         network_list = gtk.ListStore(str)
+        for network in conf.get('start_networks', []):
+             network_list.append([network])
+        
         for network in conf.get('networks', []):
-            network_list.append([network])
+            if network not in conf.get('start_networks', []):
+                network_list.append([network])
 
         renderer = gtk.CellRendererText()
         renderer.set_property('editable', True)
