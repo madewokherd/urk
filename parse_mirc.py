@@ -12,7 +12,7 @@ colors = (
   )
 
 def get_mirc_color(number):
-    if number != '99':
+    #if number != '99':
         return colors[int(number) & 15]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')

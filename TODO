@@ -1,5 +1,8 @@
 Current components:
 
+handle color 99 properly
+
+
 aliases
 
     An easy way to make simple custom commands. We need a way to manipulate the "aliases" dictionary.
@@ -14,6 +17,12 @@ as an option.
 #channel links
 
     The "Automatically join channel" thing should do something.
+
+
+Fix open_file on windows
+
+    On windows, open_file on .py files executes them instead of editing.
+Also, we should stop using subprocess.
 
 
 //commands
