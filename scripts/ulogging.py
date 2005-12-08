@@ -12,7 +12,9 @@ DATE_FORMAT = '(%H:%M:%S)'
 LOG_DIR = conf.get('log_dir', os.path.join(urk.userpath,'logs'))
 if not os.access(LOG_DIR, os.F_OK):
     os.mkdir(LOG_DIR)
-    
+
+open_logs = set()
+
 def log_file(network, name, new=False):
     network_dir = os.path.join(LOG_DIR, network.name)
     if not os.access(network_dir, os.F_OK):
@@ -22,19 +24,25 @@ def log_file(network, name, new=False):
     if not os.access(name_dir, os.F_OK):
         os.mkdir(name_dir)
        
-    if new:
+    if new or (network, name) not in open_logs:
         recent_log = time.strftime(FILENAME)
+        open_logs.add((network, name))
     else:
         try:
             recent_log = sorted(os.listdir(name_dir))[-1]
         except IndexError:
             recent_log = time.strftime(FILENAME)
+            open_logs.add((network, name))
 
     return LogFile(os.path.join(name_dir, recent_log), 'a')
     
 class LogFile(file):
     def write(self, text):
         file.write(self, '%s %s%s' % (time.strftime(DATE_FORMAT), text, os.linesep))
+
+def onClose(window):
+    if (window.network, window.id) in open_logs:
+        open_logs.remove((window.network, window.id))
 
 def onText(e):
     f = log_file(e.network, e.window.id)
