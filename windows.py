@@ -1,4 +1,6 @@
 import gtk
+import pango
+import gtksourceview
 
 import ui
 from conf import conf
@@ -131,14 +133,28 @@ def ChannelWindow(self):
     self.show_all()
     
 def ScriptWindow(self):    
-    self.output = gtk.TextView()
+    self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
+    
+    self.output.set_auto_indent(True)
+    self.output.set_show_line_numbers(True)
+    self.output.set_insert_spaces_instead_of_tabs(True)
+    self.output.set_show_margin(True)
+    self.output.set_margin(80)
+    
+    buffer = self.output.get_buffer()
+    language = gtksourceview.SourceLanguagesManager(). \
+                    get_language_from_mime_type('text/x-python')
+    
+    buffer.set_language(language)
+    
+    buffer.set_check_brackets(True)
+    buffer.set_highlight(True)
 
     self.focus = self.output.grab_focus
     
     def write(*args):
         pass
     self.write = write
-    self.connect("key-press-event", get_default_transfer_text(self))
 
     topbox = gtk.ScrolledWindow()
     topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
