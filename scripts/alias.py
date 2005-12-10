@@ -8,6 +8,7 @@ aliases = conf.get("aliases",{
     'deop':'"mode "+window.id+" -"+"o"*len(args)+" "+" ".join(args)',
     'voice':'"mode "+window.id+" +"+"v"*len(args)+" "+" ".join(args)',
     'devoice':'"mode "+window.id+" -"+"v"*len(args)+" "+" ".join(args)',
+    'umode':'"mode "+network.me+" "+" ".join(args)',
     'clear':'window.output.clear()',
     })
 
