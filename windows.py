@@ -116,7 +116,7 @@ def ChannelWindow(self):
     nlbox.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)   
     nlbox.add(self.nicklist.view)
     
-    nlbox.set_size_request(conf["ui-gtk/nicklist-width"] or 0, -1)
+    nlbox.set_size_request(conf.get("ui-gtk/nicklist-width",0), -1)
 
     def save_nicklist_width(w, rectangle):
         conf["ui-gtk/nicklist-width"] = rectangle.width
