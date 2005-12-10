@@ -259,8 +259,8 @@ class UrkUI(gtk.Window):
         self.connect("delete_event", self.exit)
 
         # layout
-        xy = conf["xy"] or (-1, -1)
-        wh = conf["wh"] or (500, 500)
+        xy = conf.get("xy", (-1, -1))
+        wh = conf.get("wh", (500, 500))
 
         self.move(*xy)
         self.set_default_size(*wh)
