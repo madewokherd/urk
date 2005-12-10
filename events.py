@@ -232,25 +232,7 @@ def onCommandScripts(e):
         e.window.write("* %s" % name)
 
 def onCommandEcho(e):
-    e.window.write(' '.join(e.args))
-
-def onCommandEdit(e):
-    filename = ''
-    try:
-        args = find_script(e.args[0])
-        if args[1]:
-            args[1].close()
-        filename = args[2]
-    except ImportError:
-        pass
-    if not filename:
-        import urk
-        filename = os.path.join(urk.userpath,'scripts',e.args[0])
-        if not filename.endswith('.py'):
-            filename += ".py"
-        open(filename,'a').close()
-    import ui
-    ui.open_file(filename)
+    e.window.write(' '.join(e.args))    
 
 name = ''
 for name in globals():

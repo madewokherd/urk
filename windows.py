@@ -129,3 +129,21 @@ def ChannelWindow(self):
     self.pack_end(botbox, expand=False)
 
     self.show_all()
+    
+def ScriptWindow(self):    
+    self.output = gtk.TextView()
+
+    self.focus = self.output.grab_focus
+    
+    def write(*args):
+        pass
+    self.write = write
+    self.connect("key-press-event", get_default_transfer_text(self))
+
+    topbox = gtk.ScrolledWindow()
+    topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+    topbox.add(self.output)
+
+    self.pack_start(topbox)
+
+    self.show_all()

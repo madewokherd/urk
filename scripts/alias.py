@@ -62,3 +62,36 @@ def onCommandAlias(e):
  /alias \x02name\x02 to look at an alias
  /alias -r \x02name\x02 to remove an alias
  /alias -l to see a list of aliases""")
+ 
+def onClose(w):
+    import windows
+    
+    if w.role == windows.ScriptWindow:
+        buffer = w.output.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
+        
+        file(w.id, "w").write(text)
+        events.load(w.id, True)
+ 
+def onCommandEdit(e):
+    filename = ''
+    try:
+        args = events.find_script(e.args[0])
+        if args[1]:
+            args[1].close()
+        filename = args[2]
+    except ImportError:
+        pass
+    if not filename:
+        import urk
+        filename = os.path.join(urk.userpath,'scripts',e.args[0])
+        if not filename.endswith('.py'):
+            filename += ".py"
+        open(filename,'a').close()
+    import ui, windows
+    w = ui.windows.new(windows.ScriptWindow, None, filename)
+    
+    w.output.get_buffer().set_text(file(filename).read())
+
+def onCommandBlurk(e):
+  e.network.msg(e.window.id, 'OMG BLURK')
