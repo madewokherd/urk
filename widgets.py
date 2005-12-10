@@ -444,7 +444,10 @@ class TextOutput(gtk.TextView):
             if h_data.tolink:
                 buffer = self.get_buffer()
             
-                offset = buffer.get_iter_at_line(hover_iter.get_line()).get_offset()        
+                offset = buffer.get_iter_at_line(
+                            hover_iter.get_line()
+                            ).get_offset()
+                                  
                 for fr, to in h_data.tolink:
                     fr = buffer.get_iter_at_offset(offset + fr)
                     to = buffer.get_iter_at_offset(offset + to)
@@ -456,7 +459,9 @@ class TextOutput(gtk.TextView):
                             buffer.create_mark(None, to))
                         )
                         
-                    self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
+                    self.get_window(
+                        gtk.TEXT_WINDOW_TEXT
+                        ).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
 
         self.get_pointer()
 
