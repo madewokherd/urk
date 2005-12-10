@@ -260,7 +260,8 @@ def onCommandServer(e):
         
     else:
         if "server" in network_info:
-            e.network.server = network_info["server"]
+            e.network.name = network_info['name']
+            e.network.server = network_info['name']
             if not e.network.status:
                 window = ui.get_default_window(e.network)
                 if window:
