@@ -92,6 +92,4 @@ def onCommandEdit(e):
     w = ui.windows.new(windows.ScriptWindow, None, filename)
     
     w.output.get_buffer().set_text(file(filename).read())
-
-def onCommandBlurk(e):
-  e.network.msg(e.window.id, 'OMG BLURK')
+    w.activate()
