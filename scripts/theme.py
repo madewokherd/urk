@@ -23,10 +23,11 @@ def hilight_text(e):
 
 #hilight own nick
 def onHilight(e):
-    pos = e.text.find(e.network.me,0)
-    while pos != -1:
-        e.hilight.append((pos,pos+len(e.network.me)))
-        pos = e.text.find(e.network.me,pos+1)
+    for word in conf.get('highlight_words', []) + [e.network.me]:
+        pos = e.text.find(word,0)
+        while pos != -1:
+            e.hilight.append((pos, pos+len(word)))
+            pos = e.text.find(word, pos+1)
 
 def prefix(e):
     return time.strftime(conf.get('timestamp', ''))
