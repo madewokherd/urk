@@ -39,7 +39,7 @@ def pprint(x, depth=-2):
     else:
         return s_list
 
-def save(e):
+def save(*args):
     new_file = not os.access(CONF_FILE,os.F_OK)
     fd = file(CONF_FILE, "w")
     try:
