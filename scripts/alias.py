@@ -1,4 +1,5 @@
 import sys
+import os
 
 from conf import conf
 import events
@@ -72,7 +73,8 @@ def onClose(w):
         text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
         
         file(w.id, "w").write(text)
-        events.load(w.id, True)
+        if events.is_loaded(w.id):
+            events.load(w.id, True)
  
 def onCommandEdit(e):
     filename = ''
@@ -88,9 +90,9 @@ def onCommandEdit(e):
         filename = os.path.join(urk.userpath,'scripts',e.args[0])
         if not filename.endswith('.py'):
             filename += ".py"
-        open(filename,'a').close()
     import ui, windows
     w = ui.windows.new(windows.ScriptWindow, None, filename)
     
-    w.output.get_buffer().set_text(file(filename).read())
+    if os.access(filename, os.R_OK):
+        w.output.get_buffer().set_text(file(filename).read())
     w.activate()
