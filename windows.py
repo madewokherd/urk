@@ -145,6 +145,7 @@ if GTK_SOURCE_VIEW:
         self.output.set_insert_spaces_instead_of_tabs(True)
         self.output.set_show_margin(True)
         self.output.set_margin(80)
+        self.output.set_tabs_width(4)
         
         buffer = self.output.get_buffer()
         language = gtksourceview.SourceLanguagesManager(). \
@@ -187,3 +188,4 @@ else:
         self.pack_start(topbox)
 
         self.show_all()
+
