@@ -12,7 +12,7 @@ colors = (
   )
 
 def get_mirc_color(number):
-    #if number != '99':
+    if number != '99':
         return colors[int(number) & 15]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
@@ -39,7 +39,7 @@ def parse_mirc_color(string, pos, open_tags, tags):
         else:
             fg = get_mirc_color(string[:1])
             color_chars += 1
-            
+        
         if string[1:2] == "," and string[2:3] in DEC_DIGITS:
             if string[3:4] in DEC_DIGITS:
                 bg = get_mirc_color(string[2:4])
@@ -48,14 +48,14 @@ def parse_mirc_color(string, pos, open_tags, tags):
             else:
                 bg = get_mirc_color(string[2:3])
                 color_chars += 2
-         
-            open_tags[MIRC_COLOR] = ([("foreground", fg), ("background", bg)], pos)
-            
-        elif bg:
-            open_tags[MIRC_COLOR] = ([("foreground", fg), ("background", bg)], pos)
-                
-        else:
-            open_tags[MIRC_COLOR] = ([("foreground", fg)], pos)
+        
+        tag = []
+        if fg:
+            tag.append(("foreground",fg))
+        if bg:
+            tag.append(("background",bg))
+        if tag:
+            open_tags[MIRC_COLOR] = (tag, pos) 
               
     return color_chars
 
