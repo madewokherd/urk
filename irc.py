@@ -91,6 +91,8 @@ class Network:
             else: #ignore ipv6
                 result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f != socket.AF_INET6]
             
+            self.failedlasthost = False
+            
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
                     self.socket = socket.socket(f, t, p)
@@ -98,6 +100,7 @@ class Network:
                     self.failedhosts.append((f, t, p, c, a))
                     break
             else:
+                self.failedlasthost = True
                 if len(result):
                     self.failedhosts[:] = (f, t, p, c, a),
                     f, t, p, c, a = result[0]
@@ -110,6 +113,10 @@ class Network:
     def on_connect(self, result, error):
         if error:
             self.disconnect(error=error[1])
+            #we should immediately retry if we failed to open the socket and there are hosts left
+            if self.status == DISCONNECTED and not self.failedlasthost:
+                ui.get_default_window(self).write("* Retrying with next available host")
+                self.connect()
         else:
             self.status = INITIALIZING
             self.failedhosts[:] = ()
@@ -117,7 +124,7 @@ class Network:
             events.trigger('SocketConnect', events.data(network=self))
             
             self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
-    
+        
     #called when we read data or failed to read data
     def on_read(self, result, error):
         if error:
