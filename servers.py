@@ -125,12 +125,19 @@ class ServerWidget(gtk.VBox):
         model, iter = self.networks.get_selection().get_selected()
         
         if iter:
-            network = model.get_value(iter, 0)
+            network_name = model.get_value(iter, 0)
+            window = ui.windows.manager.get_active()
+            network = window.network 
+            
+            if network and network.status:
+                switches = 'm'
+            else:
+                switches = ''
             
             events.run(
-                'server %s' % network,
-                ui.windows.manager.get_active(),
-                ui.windows.manager.get_active().network
+                'server -%s %s' % (switches, network_name),
+                window,
+                network
                 )
 
     def __init__(self):

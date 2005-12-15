@@ -98,6 +98,8 @@ class Network:
                     self.socket = socket.socket(f, t, p)
                     self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
                     self.failedhosts.append((f, t, p, c, a))
+                    if set(self.failedhosts) >= set(result):
+                        self.failedlasthost = True
                     break
             else:
                 self.failedlasthost = True
