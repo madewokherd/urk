@@ -38,8 +38,8 @@ def is_url(e):
     
 def is_chan(e):
     # click on a #channel
-    return e.window.network and \
-            e._target[0:1] in (e.window.network.isupport.get('CHANTYPES', '&#$+'))
+    return e.window.network and e._target and \
+            e._target[0] in e.window.network.isupport.get('CHANTYPES', '&#$+')
             
 def make_nick_menu(e, target):
     def query():
