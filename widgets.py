@@ -529,9 +529,6 @@ class WindowLabel(gtk.EventBox):
                 break
             
         self.label.set_markup(title)
-        
-        if self.win == ui.windows.manager.get_active():
-            ui.set_title()
 
     def tab_popup(self, widget, event):
         if event.button == 3: # right click
@@ -580,6 +577,9 @@ class WindowListTabs(gtk.Notebook):
         
     def update(self, window):
         self.get_tab_label(window).update()
+        
+        if self.get_active() == window:
+            ui.set_title()
 
     def __init__(self):
         gtk.Notebook.__init__(self)
@@ -599,43 +599,3 @@ class WindowListTabs(gtk.Notebook):
     
     def __iter__(self):
         return iter(self.get_children())
-    
-"""class WindowListButtons(gtk.HBox):
-    def get_active(self):
-        if self.windows.get_children():
-            return self.windows.get_children()[0]
-        
-    def set_active(self, window):
-        if window != self.get_active():
-            if self.windows.get_children():
-                self.windows.remove(self.windows.get_children()[0])
-            self.windows.add(window)
-            
-            events.trigger("Active", window)
-       
-    def add(self, window):
-        def activate_window(widget, event):
-            if event.button == 1:
-                self.set_active(window)
-        window.title.connect("button-press-event", activate_window)
-        
-        self.buttons.add(window.title)
-        self.manager[window] = window.title
-        
-    def remove(self, window):
-        self.buttons.remove(self.manager[window])
-        self.windows.remove(window)
-        del self.manager[window]
-
-    def __init__(self):
-        gtk.HBox.__init__(self)
-        
-        self.manager = {}
-        
-        self.buttons = gtk.VButtonBox()
-        self.buttons.set_layout(gtk.BUTTONBOX_START)
-
-        self.windows = gtk.VBox()
-        
-        self.pack_start(self.buttons, expand=False)
-        self.pack_end(self.windows, expand=True)"""
