@@ -85,7 +85,7 @@ class Network:
         if error:
             self.disconnect(error=error[1])
         else:
-            import os
+            #import os
             #import random
             #random.shuffle(result, os.urandom)
             if socket.has_ipv6: #prefer ipv6
@@ -136,15 +136,18 @@ class Network:
         elif not result:
             self.disconnect(error="Connection closed by remote host")
         else:
-            self.buffer += result
-            
-            lines, self.buffer = self.buffer.rsplit("\r\n", 1)
-            
-            for line in lines.split('\r\n'):
+            self.buffer = (self.buffer + result).split('\r\n')
+
+            for line in self.buffer[:-1]:
                 if DEBUG:
                     print "<<< %s" % line
         
-                self.got_msg(line)            
+                self.got_msg(line)
+                
+            if self.buffer:
+                self.buffer = self.buffer[-1]
+            else:
+                self.buffer = ''
             
             self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
 
