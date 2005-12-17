@@ -41,7 +41,7 @@ def pprint(x, depth=-2):
 
 def save(*args):
     new_file = not os.access(CONF_FILE,os.F_OK)
-    fd = file(CONF_FILE, "w")
+    fd = file(CONF_FILE, "wb")
     try:
         if new_file:
             os.chmod(CONF_FILE,0600)
