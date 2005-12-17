@@ -44,9 +44,11 @@ def parse_irc(msg, server):
 class Network:
     # desired nicknames
     try:
-        import getpass
-        nicks = (conf.get('nick', getpass.getuser()),)
-        del getpass
+        nicks = (conf.get('nick'),)
+        if not nicks[0]:
+            import getpass
+            nicks = (getpass.getuser(),)
+            del getpass
     except:
         nicks = ("mrurk",)
     
