@@ -72,7 +72,7 @@ def onClose(w):
         buffer = w.output.get_buffer()
         text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
         
-        file(w.id, "w").write(text)
+        file(w.id, "wb").write(text)
         if events.is_loaded(w.id):
             events.load(w.id, True)
  
