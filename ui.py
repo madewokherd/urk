@@ -31,27 +31,40 @@ PRIORITY_LOW = gobject.PRIORITY_LOW
 def set_clipboard(text):
     gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
 
+class Source:
+    __slots__ = ['enabled']
+    enabled = True
+    def unregister(self):
+        self.enabled = False
+
+class GtkSource:
+    __slots__ = ['tag']
+    def __init__(self, tag):
+        self.tag = tag
+    def unregister(self):
+        gobject.source_remove(self.tag)
+
 def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
     def callback():
         return f(*args, **kwargs)
-    return gobject.idle_add(callback, priority=priority)
+    return GtkSource(gobject.idle_add(callback, priority=priority))
 
 def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
     def callback():
         return f(*args, **kwargs)
-    return gobject.timeout_add(time, callback, priority=priority)
+    return GtkSource(gobject.timeout_add(time, callback, priority=priority))
 
 def fork(cb, f, *args, **kwargs):
-    is_stopped = [False]
+    is_stopped = Source()
     def thread_func():
         try:
             result, error = f(*args, **kwargs), None
         except Exception, e:
             result, error = None, e
             
-        if not is_stopped[0]:
+        if is_stopped.enabled:
             def callback():           
-                if not is_stopped[0]:
+                if is_stopped.enabled:
                     cb(result, error)
 
             gobject.idle_add(callback)
@@ -59,12 +72,6 @@ def fork(cb, f, *args, **kwargs):
     thread.start_new_thread(thread_func, ())
     return is_stopped
 
-def unregister(tag):
-    if isinstance(tag, list):
-        tag[0] = True
-    else:
-        gobject.source_remove(tag)
-    
 set_style = widgets.set_style
 
 # Window activity Constants

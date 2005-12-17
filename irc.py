@@ -98,7 +98,7 @@ class Network:
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
                     self.socket = socket.socket(f, t, p)
-                    self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
+                    self.source = ui.fork(self.on_connect, self.socket.connect,a)
                     self.failedhosts.append((f, t, p, c, a))
                     if set(self.failedhosts) >= set(result):
                         self.failedlasthost = True
@@ -109,7 +109,7 @@ class Network:
                     self.failedhosts[:] = (f, t, p, c, a),
                     f, t, p, c, a = result[0]
                     self.socket = socket.socket(f, t, p)
-                    self.source_id = ui.fork(self.on_connect, self.socket.connect,a)
+                    self.source = ui.fork(self.on_connect, self.socket.connect,a)
                 else:
                     self.disconnect(error="Couldn't find a host we can connect to")
     
@@ -122,12 +122,14 @@ class Network:
                 ui.get_default_window(self).write("* Retrying with next available host")
                 self.connect()
         else:
+            self.source = source = ui.Source()
             self.status = INITIALIZING
             self.failedhosts[:] = ()
 
             events.trigger('SocketConnect', events.data(network=self))
             
-            self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
+            if source.enabled:
+                self.source = ui.fork(self.on_read, self.socket.recv, 8192)
         
     #called when we read data or failed to read data
     def on_read(self, result, error):
@@ -136,8 +138,10 @@ class Network:
         elif not result:
             self.disconnect(error="Connection closed by remote host")
         else:
+            self.source = source = ui.Source()
+            
             self.buffer = (self.buffer + result).split('\r\n')
-
+            
             for line in self.buffer[:-1]:
                 if DEBUG:
                     print "<<< %s" % line
@@ -149,7 +153,8 @@ class Network:
             else:
                 self.buffer = ''
             
-            self.source_id = ui.fork(self.on_read, self.socket.recv, 8192)
+            if source.enabled:
+                self.source = ui.fork(self.on_read, self.socket.recv, 8192)
 
     def raw(self, msg):
         if DEBUG:
@@ -185,7 +190,7 @@ class Network:
         if not self.status:
             self.status = CONNECTING
             
-            self.source_id = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port, 0, socket.SOCK_STREAM)
+            self.source = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port, 0, socket.SOCK_STREAM)
             
             events.trigger('Connecting', events.data(network=self))
     
@@ -193,9 +198,9 @@ class Network:
         if self.socket:
             self.socket.close()
         
-        if self.source_id:
-            ui.unregister(self.source_id)
-            self.source_id = None
+        if self.source:
+            self.source.unregister()
+            self.source = None
         
         self.socket = None
         

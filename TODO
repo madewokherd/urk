@@ -1,13 +1,18 @@
 Current components:
 
-aliases
+Internal editor
 
-    An easy way to make simple custom commands. We need a way to manipulate the "aliases" dictionary.
+    Make a nice gui for /edit.
 
 
 auto-reconnect
 
-    We should try to reconnet as an option.
+    We should try to reconnect as an option.
+
+
+Keyboard shortcut for scrolling
+
+    It should be possible to scroll the output with page up/page down or something similar.
 
 
 #channel links
