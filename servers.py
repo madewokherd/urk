@@ -73,9 +73,6 @@ class NetworkInfo(gtk.VBox):
 
         self.add(table)
 
-    def __init__(self):
-        gtk.VBox.__init__(self)
-
 class ServerWidget(gtk.VBox):
     def edit_network(self, cell, path_string, new_text):
         network_list = self.networks.get_model()
@@ -210,27 +207,36 @@ class ServerWidget(gtk.VBox):
         
         self.pack_end(hb, expand=False)
         
+widget = None
+        
 def main():
-    w = gtk.Window()
-    w.set_title('Connect-o-rama') # XXX replace this
-    
-    try:
-        w.set_icon(
-            gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
-            )
-    except:
-        pass
+    global widget
 
-    w.set_default_size(320, 300)
-    w.set_border_width(5)
-    
-    sw = ServerWidget()
-    
-    def close(button):
-        w.destroy()
-    
-    sw.buttons['close'].connect('clicked', close)
-    
-    w.add(sw)    
-    w.show_all()
+    if widget:
+        pass
+    else:
+        win = gtk.Window()
+        win.set_title('Connect-o-rama') # XXX replace this
+        
+        try:
+            w.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+
+        win.set_default_size(320, 300)
+        win.set_border_width(5)
+        
+        widget = ServerWidget()
+        
+        def close(button):
+            win.destroy()
+            
+            widget = None
+        
+        widget.buttons['close'].connect('clicked', close)
+        
+        win.add(widget)    
+        win.show_all()
         
