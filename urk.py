@@ -39,6 +39,11 @@ sys.path = [
 import events
 import ui
 
+import remote
+
+if remote.doit_remotely(' '.join(sys.argv[1:])):
+    sys.exit(0)
+
 name = "urk"
 long_name = "urk IRC"
 version = 0, -1, 4
