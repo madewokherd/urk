@@ -3,6 +3,7 @@
 import imp
 import os
 import sys
+import traceback
 
 sys.modules['urk'] = sys.modules[__name__]
 
@@ -43,6 +44,11 @@ import remote
 
 if remote.doit_remotely(' '.join(sys.argv[1:])):
     sys.exit(0)
+else:
+    try:
+        remote.start_service()
+    except:
+        traceback.print_exc()
 
 name = "urk"
 long_name = "urk IRC"
