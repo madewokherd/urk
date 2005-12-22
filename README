@@ -112,7 +112,7 @@ certain "magic" names, like onText (for when someone sends a channel or private
 message). See www.python.org for help on writing python code. The format for 
 onText is:
 
-def onText(event):
+def onText(e):
     code
 
 event is an object used to pass on the various information relating to the
