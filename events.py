@@ -210,7 +210,7 @@ def onCommandLoad(e):
         else:
             e.window.write("* The script '%s' has been loaded." % name)
     except:
-        traceback.print_exc()
+        e.window.write(traceback.format_exc(), newline=False)
         raise CommandError("Error loading the script")
 
 def onCommandUnload(e):
@@ -225,7 +225,7 @@ def onCommandReload(e):
     try:
         load(name, reloading=True)
     except:
-        traceback.print_exc()
+        e.window.write(traceback.format_exc(), newline=False)
         raise CommandError("Error loading the script")
 
 def onCommandScripts(e):
