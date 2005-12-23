@@ -25,3 +25,9 @@ def onKeyPressed(e):
 
     elif e.key == '^w':
         ui.windows.manager.get_active().close()
+    
+    elif e.key == 'Page_Up':
+        e.window.output.y = e.window.output.y - e.window.output.height / 2
+    
+    elif e.key == 'Page_Down':
+        e.window.output.y = e.window.output.y + e.window.output.height / 2

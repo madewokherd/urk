@@ -361,12 +361,22 @@ class TextOutput(gtk.TextView):
         return rect.y
     
     def set_y(self,y):
-        pass
+        iter = self.get_iter_at_location(0, y)
+        if self.get_iter_location(iter).y < y:
+            self.forward_display_line(iter)
+        yalign = float(self.get_iter_location(iter).y-y)/self.height
+        self.scroll_to_iter(iter, 0, True, 0, yalign)
     
     def get_ymax(self):
-        rect = self.get_visible_rect()
         buffer = self.get_buffer()
-        return sum(self.get_line_yrange(buffer.get_buffer().get_end_iter())) - rect.height
+        return sum(self.get_line_yrange(self.get_buffer().get_end_iter())) - self.height
+    
+    def get_height(self):
+        return self.get_visible_rect().height
+    
+    y = property(get_y, set_y)
+    ymax = property(get_ymax)
+    height = property(get_height)
     
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type):

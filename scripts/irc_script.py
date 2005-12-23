@@ -276,7 +276,7 @@ def onCommandServer(e):
     
     if len(e.args):
         host = e.args[0]
-        if ':' in server:
+        if ':' in host:
             host, port = host.rsplit(':', 1)
             network_info["port"] = int(port)
             
