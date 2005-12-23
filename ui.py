@@ -349,7 +349,7 @@ def set_title(title=None):
     
     ui.set_title("%s - urk" % title)
 
-def start():
+def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
     
     def trigger_start():
@@ -357,6 +357,9 @@ def start():
         
         if not windows:
             windows.new(StatusWindow, None, "status").activate()
+        
+        window = ui.windows.manager.get_active()
+        events.run(command, window, window.network)
         
     register_idle(trigger_start)
 

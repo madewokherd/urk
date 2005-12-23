@@ -2,6 +2,7 @@ import events
 from conf import conf
 import ui
 import irc
+from urllib import unquote
 
 COMMAND_PREFIX = conf.get('command_prefix', '/')
 
@@ -235,47 +236,114 @@ def onCommandJoin(e):
     else:
         raise events.CommandError("You must supply a channel.")
 
-def onCommandServer(e):
+#this should be used whereever a new network may need to be created
+def server(server=None,port=6667,network=None,connect=True):
     network_info = {}
+    
+    if server:
+        network_info["name"] = server
+        network_info["server"] = server
+        if port:
+            network_info["port"] = port
+        get_network_info(server, network_info)
+    
+    if not network:
+        network = irc.Network(**network_info)
+        ui.windows.new(ui.StatusWindow, network, "status").activate()
+    else:
+        if "server" in network_info:
+            network.name = network_info['name']
+            network.server = network_info['server']
+            if not network.status:
+                window = ui.get_default_window(network)
+                if window:
+                    window.update()
+        if "port" in network_info:
+            network.port = network_info["port"]
+    
+    if network.status or connect:
+        network.quit()
+    if connect:
+        network.connect()
+        ui.get_default_window(network).write(
+            "* Connecting to %s on port %s" % (network.server, network.port)
+            )
+    
+    return network
 
+def onCommandServer(e):
+    port = 6667
+    
     if len(e.args):
-        server = e.args[0]
+        host = e.args[0]
         if ':' in server:
-            server, port = server.rsplit(':', 1)
+            host, port = host.rsplit(':', 1)
             network_info["port"] = int(port)
             
         elif len(e.args) > 1:
             port = e.args[1]
         
             network_info["port"] = int(port)
-            
-        network_info["name"] = server
-        network_info["server"] = server
-
-        get_network_info(server, network_info)
-
-    if 'm' in e.switches or not e.network:    
-        e.network = irc.Network(**network_info)
-        ui.windows.new(ui.StatusWindow, e.network, "status").activate()
-        
     else:
-        if "server" in network_info:
-            e.network.name = network_info['name']
-            e.network.server = network_info['server']
-            if not e.network.status:
-                window = ui.get_default_window(e.network)
-                if window:
-                    window.update()
-        if "port" in network_info:
-            e.network.port = network_info["port"]
+        host = None
+    
+    if 'm' in e.switches:    
+        network = None
+    else:
+        network = e.network
+    
+    server(server=host, port=port, network=network, connect='o' not in e.switches)
 
-    if 'o' not in e.switches:
-        if e.network.status:
-            e.network.quit()
-        e.network.connect()
-        ui.get_default_window(e.network).write(
-            "* Connecting to %s on port %s" % (e.network.server, e.network.port)
-            )
+#see http://www.w3.org/Addressing/draft-mirashi-url-irc-01.txt
+def onCommandIrcurl(e):
+    url = e.args[0]
+    
+    if url.startswith('irc://'):
+        url = url[6:]
+        
+        if not url.startswith('/'):
+            host, target = url.rsplit('/',1)
+            if ':' in host:
+                host, port = host.rsplit(':',1)
+            else:
+                port = 6667
+        else:
+            host = None
+            port = 6667
+            target = url
+        
+        if host:
+            if e.network and e.network.server == host:
+                network = e.network
+            else:
+                for w in list(ui.windows):
+                    if w.network and w.network.server == host:
+                        network = w.network
+                        break
+                else:
+                    for w in list(ui.windows):
+                        if w.network and w.network.server == 'irc.default.org':
+                            network = server(host,port,w.network)
+                            break
+                    else:
+                        network = server(host,port)
+        
+        if ',' in target:
+            target, modifiers = target.split(',',1)
+            action = ''
+        else:
+            target = unquote(target)
+            if target[0] not in '#&+':
+                target = '#'+target
+            action = 'join %s' % target
+        
+        if network.status == irc.CONNECTED:
+            events.run(action,ui.get_default_window(network),network)
+        else:
+            if not hasattr(network,'temp_perform'):
+                network.temp_perform = [action]
+            else:
+                network.temp_perform.append(action)
 
 #commands that we need to add a : to but otherwise can send unchanged
 #the dictionary contains the number of arguments we take without adding the :
@@ -350,3 +418,7 @@ def onStart(e):
 def onConnect(e):
     for command in conf.get('networks', {}).get(e.network.name, {}).get('perform', []):
         events.run(command, e.window, e.network)
+    if hasattr(e.network,'temp_perform'):
+        for command in e.network.temp_perform:
+            events.run(command, e.window, e.network)
+        del e.network.temp_perform

@@ -69,8 +69,8 @@ def main():
                     
         except OSError:
             pass
-
-    ui.start()
+    
+    ui.start(' '.join(sys.argv[1:]))
 
 if __name__ == "__main__":
     main()

@@ -44,7 +44,8 @@ else:
         def __init__(self, *args, **kwargs):
             pass
         def run(self, command):
-            pass
+            window = ui.windows.manager.get_active()
+            events.run(command, window, window.network)
     def doit_remotely(x):
         pass
     def start_service():

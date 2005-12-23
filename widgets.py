@@ -355,7 +355,19 @@ def get_event_at_iter(view, iter):
 class TextOutput(gtk.TextView):
     def clear(self):
         self.get_buffer.set_text('')
-
+    
+    def get_y(self):
+        rect = self.get_visible_rect()
+        return rect.y
+    
+    def set_y(self,y):
+        pass
+    
+    def get_ymax(self):
+        rect = self.get_visible_rect()
+        buffer = self.get_buffer()
+        return sum(self.get_line_yrange(buffer.get_buffer().get_end_iter())) - rect.height
+    
     # the unknowing print weird things to our text widget function
     def write(self, text, activity_type):
         if not isinstance(text, unicode):
