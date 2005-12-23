@@ -358,7 +358,7 @@ def start(command=''):
         if not windows:
             windows.new(StatusWindow, None, "status").activate()
         
-        window = ui.windows.manager.get_active()
+        window = windows.manager.get_active()
         events.run(command, window, window.network)
         
     register_idle(trigger_start)
