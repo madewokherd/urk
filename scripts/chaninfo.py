@@ -70,7 +70,11 @@ def getchan(network, channel):
 
 #return a list of channels you're on on the given network
 def channels(network):
-    return list(network.channels)
+    if hasattr(network,'channels'):
+        return list(network.channels)
+    else:
+        network.channels = result = {}
+        return result
 
 #return True if you're on the channel
 def ischan(network, channel):

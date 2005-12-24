@@ -78,7 +78,7 @@ def onClick(e):
     elif is_chan(e):
         if not chaninfo.ischan(e.window.network, e._target):
             e.window.network.join(e._target)
-        window = ui.windows.get(ui.ChannelWindow, e.network, e._target)
+        window = ui.windows.get(ui.ChannelWindow, e.window.network, e._target)
         if window:
             window.activate()
 

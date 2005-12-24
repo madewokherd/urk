@@ -547,7 +547,8 @@ class TextOutput(gtk.TextView):
 class WindowLabel(gtk.EventBox):
     def update(self):
         title = self.win.title
-    
+        title = title.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+        
         for a_type in sorted(ui.activity_markup, reverse=True):
             if self.win.activity == a_type:
                 title = ui.activity_markup[a_type] % title
