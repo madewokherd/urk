@@ -97,7 +97,10 @@ class Network:
             
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
-                    self.socket = socket.socket(f, t, p)
+                    try:
+                        self.socket = socket.socket(f, t, p)
+                    except:
+                        continue
                     self.source = ui.fork(self.on_connect, self.socket.connect,a)
                     self.failedhosts.append((f, t, p, c, a))
                     if set(self.failedhosts) >= set(result):
@@ -108,8 +111,11 @@ class Network:
                 if len(result):
                     self.failedhosts[:] = (f, t, p, c, a),
                     f, t, p, c, a = result[0]
-                    self.socket = socket.socket(f, t, p)
-                    self.source = ui.fork(self.on_connect, self.socket.connect,a)
+                    try:
+                        self.socket = socket.socket(f, t, p)
+                        self.source = ui.fork(self.on_connect, self.socket.connect,a)
+                    except:
+                        self.disconnect(error="Couldn't find a host we can connect to")
                 else:
                     self.disconnect(error="Couldn't find a host we can connect to")
     
