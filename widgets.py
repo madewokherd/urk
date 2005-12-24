@@ -9,20 +9,21 @@ import events
 import parse_mirc
 import ui
 
-# This holds all tags for all windows ever    
-tag_table = gtk.TextTagTable()
+# This holds all tags for all windows ever
+if 'tag_table' not in globals():
+    tag_table = gtk.TextTagTable()
+    
+    link_tag = gtk.TextTag('link')
+    link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
+    
+    indent_tag = gtk.TextTag('indent')
+    indent_tag.set_property('indent', -20)
+    
+    tag_table.add(link_tag)
+    tag_table.add(indent_tag)
 
-link_tag = gtk.TextTag('link')
-link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
-
-indent_tag = gtk.TextTag('indent')
-indent_tag.set_property('indent', -20)
-
-tag_table.add(link_tag)
-tag_table.add(indent_tag)
-
-#FIXME: MEH hates dictionaries, they remind him of the bad words
-styles = {}
+    #FIXME: MEH hates dictionaries, they remind him of the bad words
+    styles = {}
 
 def style_me(widget, style):
     widget.set_style(styles.get(style))
@@ -273,6 +274,8 @@ class TextInput(gtk.Entry):
         gtk.Entry.do_grab_focus(self)
         self.text, self.selection = temp
     
+    last_key = ''
+    
     def __init__(self, window):
         gtk.Entry.__init__(self)
         
@@ -293,14 +296,23 @@ class TextInput(gtk.Entry):
                     key += c
             
             key += gtk.gdk.keyval_name(event.keyval)
-   
+            
+            if event_type == 'KeyPressed':
+                TextInput.last_key = ''
+                repeat = False
+            elif key == TextInput.last_key: 
+                repeat = True
+            else:
+                TextInput.last_key = key
+                repeat = False
+            
             events.trigger(
                 event_type,
-                events.data(key=key, string=event.string, window=self.win)
+                events.data(key=key, string=event.string, window=self.win, repeat=repeat)
                 )
         
             return event.keyval in (up, down, tab)
-
+        
         self.connect('key-press-event', key_event, 'KeyPress')
         self.connect('key-release-event', key_event, 'KeyPressed')
 
