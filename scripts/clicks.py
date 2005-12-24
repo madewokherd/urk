@@ -118,6 +118,24 @@ def onRightClick(e):
                 network['perform'] = network.get('perform',[])+('join %s' % e._target)
             
         def remove_from_perform():
+            for network in conf.get('networks',{}):
+                if network == e.window.network.name or \
+                        conf['networks'][network][server] == e.window.network.server:
+                    perform = conf['networks'][network]['perform']
+                    for n, line in enumerate(perform):
+                        if line.startswith('join ') and ' ' not in line[6:]:
+                            channels = line[6:].split(',')
+                            if e._target in channels:
+                                channels.remove(e._target)
+                                if channels:
+                                    perform[n] = 'join %s' % ','.join(channels)
+                                else:
+                                    perform.pop(n)
+                                    if not perform:
+                                        conf['networks'].pop(network)
+                                        if network in conf['start_networks']:
+                                            conf['start_networks'].remove(network)
+                                break
             # remove if it's already there maybe
             pass
             

@@ -10,11 +10,8 @@ shortcuts = {
     }
 
 def onKeyPressed(e):
-    if e.key in shortcuts:
-        e.window.input.insert(shortcuts[e.key])
-        
-    elif e.key == '!a':
-        w = [w for w in ui.windows if w.activity > ui.EVENT]
+    if e.key == '!a':
+        w = [w for w in ui.windows.manager if w.activity > ui.EVENT]
         
         if w:
             ui.windows.manager.set_active(w[0])
@@ -25,6 +22,10 @@ def onKeyPressed(e):
 
     elif e.key == '^w':
         ui.windows.manager.get_active().close()
+
+def onKeyPress(e):
+    if e.key in shortcuts:
+        e.window.input.insert(shortcuts[e.key])
     
     elif e.key == 'Page_Up':
         e.window.output.y = e.window.output.y - e.window.output.height / 2
