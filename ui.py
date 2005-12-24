@@ -44,12 +44,14 @@ class GtkSource:
     def unregister(self):
         gobject.source_remove(self.tag)
 
-def register_idle(f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+def register_idle(f, *args, **kwargs):
+    priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
         return f(*args, **kwargs)
     return GtkSource(gobject.idle_add(callback, priority=priority))
 
-def register_timer(time, f, priority=PRIORITY_DEFAULT_IDLE, *args, **kwargs):
+def register_timer(time, f, *args, **kwargs):
+    priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
         return f(*args, **kwargs)
     return GtkSource(gobject.timeout_add(time, callback, priority=priority))
@@ -128,7 +130,7 @@ def open_file(filename):
 def _kill_the_zombies(process):
     import subprocess
     if process.poll() == None: #Note: 0 means success, None means still running
-        register_timer(5000,_kill_the_zombies,PRIORITY_DEFAULT_IDLE, process)
+        register_timer(5000, _kill_the_zombies, process)
 
 def urk_about(*args):
     about = gtk.AboutDialog()
