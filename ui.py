@@ -15,7 +15,6 @@ import pango
 
 import windows
 import widgets
-import servers
 import irc
 from conf import conf
 import events
@@ -245,75 +244,7 @@ class Windows(list):
 
     def __init__(self):
         list.__init__(self)
-        self.manager = widgets.WindowListTabs()
-
-class UrkUI(gtk.Window):
-    def exit(self, *args):
-        events.trigger("Exit")
-        gtk.main_level() and gtk.main_quit()
-
-    def __init__(self):
-        # threading stuff
-        gtk.gdk.threads_init()
-        
-        gtk.Window.__init__(self)
-        
-        try:
-            self.set_icon(
-                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
-                )
-        except:
-            pass
-
-        self.connect("delete_event", self.exit)
-
-        # layout
-        xy = conf.get("xy", (-1, -1))
-        wh = conf.get("wh", (500, 500))
-
-        self.move(*xy)
-        self.set_default_size(*wh)
-        
-        def save_xywh(*args):
-            conf["xy"] = self.get_position()
-            conf["wh"] = self.get_size()
-        self.connect("configure_event", save_xywh)
-        
-        def add_server_to_menu(e):
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-
-        events.register('MainMenu', 'on', add_server_to_menu, 'ui')
-
-        def build_urk_menu(*args):
-            data = events.data(menu=[])
-            events.trigger("MainMenu", data)
-
-            menu = widgets.menu_from_list(data.menu)
-            menu.show_all()
-            
-            urk_menu.set_submenu(menu)
-        
-        urk_menu = gtk.MenuItem("urk")
-        urk_menu.connect("button-press-event", build_urk_menu)    
-        help_menu = gtk.MenuItem("Help")
-        
-        help_menu.set_submenu(gtk.Menu())
-        about_item = gtk.ImageMenuItem("gtk-about")
-        about_item.connect("activate", urk_about)
-
-        help_menu.get_submenu().append(about_item)
-        
-        menu = gtk.MenuBar()
-        menu.append(urk_menu)
-        menu.append(help_menu)
-
-        # widgets
-        box = gtk.VBox(False)
-        box.pack_start(menu, expand=False)
-        box.pack_end(windows.manager)
-
-        self.add(box)
-        self.show_all()
+        self.manager = widgets.UrkUITabs()
 
 def get_window_for(role=None, network=None, id=None):
     if network and id:
@@ -349,7 +280,7 @@ def set_title(title=None):
         else:
             title = "%s - %s" % (w.network.me, w.title)
     
-    ui.set_title("%s - urk" % title)
+    windows.manager.set_title("%s - urk" % title)
 
 def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
@@ -372,10 +303,7 @@ def start(command=''):
         gtk.main()
         gtk.threads_leave()
     except KeyboardInterrupt:
-        ui.exit()
+        windows.manager.exit()
     
 # build our tab widget
 windows = Windows()
-
-# build our overall UI
-ui = UrkUI()

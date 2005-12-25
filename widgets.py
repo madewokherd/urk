@@ -8,6 +8,9 @@ from conf import conf
 import events
 import parse_mirc
 import ui
+import urk
+
+import servers
 
 # This holds all tags for all windows ever
 if 'tag_table' not in globals():
@@ -582,47 +585,113 @@ class WindowLabel(gtk.EventBox):
 
         self.update()
         self.show_all()
+        
+class UrkUITabs(gtk.Window):
+    def __iter__(self):
+        return iter(self.tabs.get_children())
 
-class WindowListTabs(gtk.Notebook):
+    def exit(self, *args):
+        events.trigger("Exit")
+        gtk.main_level() and gtk.main_quit()
+        
     def get_active(self):
-        return self.get_nth_page(self.get_current_page())
+        return self.tabs.get_nth_page(self.tabs.get_current_page())
         
     def set_active(self, window):
-        self.set_current_page(self.page_num(window))
+        self.tabs.set_current_page(self.tabs.page_num(window))
         
     def add(self, window):
-        for pos in reversed(range(self.get_n_pages())):
-            if self.get_nth_page(pos).network == window.network:
+        for pos in reversed(range(self.tabs.get_n_pages())):
+            if self.tabs.get_nth_page(pos).network == window.network:
                 break
         else:
-            pos = self.get_n_pages() - 1
+            pos = self.tabs.get_n_pages() - 1
  
-        self.insert_page(window, WindowLabel(window), pos+1)   
+        self.tabs.insert_page(window, WindowLabel(window), pos+1)   
         
     def remove(self, window):
-        self.remove_page(self.page_num(window))
+        self.tabs.remove_page(self.tabs.page_num(window))
         
     def update(self, window):
-        self.get_tab_label(window).update()
+        self.tabs.get_tab_label(window).update()
         
         if self.get_active() == window:
             ui.set_title()
 
     def __init__(self):
-        gtk.Notebook.__init__(self)
+        # threading stuff
+        gtk.gdk.threads_init()
         
-        self.set_property(
+        gtk.Window.__init__(self)
+        
+        try:
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+
+        self.connect("delete_event", self.exit)
+
+        # layout
+        xy = conf.get("xy", (-1, -1))
+        wh = conf.get("wh", (500, 500))
+
+        self.move(*xy)
+        self.set_default_size(*wh)
+        
+        def save_xywh(*args):
+            conf["xy"] = self.get_position()
+            conf["wh"] = self.get_size()
+        self.connect("configure_event", save_xywh)
+        
+        def add_server_to_menu(e):
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+
+        events.register('MainMenu', 'on', add_server_to_menu, 'ui')
+
+        def build_urk_menu(*args):
+            data = events.data(menu=[])
+            events.trigger("MainMenu", data)
+
+            menu = menu_from_list(data.menu)
+            menu.show_all()
+            
+            urk_menu.set_submenu(menu)
+        
+        urk_menu = gtk.MenuItem("urk")
+        urk_menu.connect("button-press-event", build_urk_menu)    
+        help_menu = gtk.MenuItem("Help")
+        
+        help_menu.set_submenu(gtk.Menu())
+        about_item = gtk.ImageMenuItem("gtk-about")
+        about_item.connect("activate", ui.urk_about)
+
+        help_menu.get_submenu().append(about_item)
+        
+        menu = gtk.MenuBar()
+        menu.append(urk_menu)
+        menu.append(help_menu)
+        
+        self.tabs = gtk.Notebook()
+        
+        self.tabs.set_property(
             "tab-pos", 
             conf.get("ui-gtk/tab-pos", gtk.POS_BOTTOM)
             )
 
-        self.set_scrollable(True)
-        self.set_property("can-focus", False)
+        self.tabs.set_scrollable(True)
+        self.tabs.set_property("can-focus", False)
         
-        def window_change(self, wptr, page_num):
-            events.trigger("Active", self.get_nth_page(page_num))
+        def window_change(notebook, wptr, page_num):
+            events.trigger("Active", notebook.get_nth_page(page_num))
             
-        self.connect("switch-page", window_change)
-    
-    def __iter__(self):
-        return iter(self.get_children())
+        self.tabs.connect("switch-page", window_change)
+
+        # widgets
+        box = gtk.VBox(False)
+        box.pack_start(menu, expand=False)
+        box.pack_end(self.tabs)
+
+        gtk.Window.add(self, box)
+        self.show_all()
