@@ -18,17 +18,17 @@ def onKeyPress(e):
     
     elif e.key == 'Page_Down':
         e.window.output.y = e.window.output.y + e.window.output.height / 2
-    
-    elif not e.repeat:
-        if e.key == '!a':
-            w = [w for w in ui.windows.manager if w.activity > ui.EVENT]
-            
-            if w:
-                ui.windows.manager.set_active(w[0])
-    
-        # tabbed browsing
-        elif e.key == '^t':
-            ui.windows.new(ui.StatusWindow, None, 'status').activate()
-    
-        elif e.key == '^w':
-            ui.windows.manager.get_active().close()
+
+def onKeyPressed(e):
+    if e.key == '!a':
+        w = [w for w in ui.windows.manager if w.activity > ui.EVENT]
+        
+        if w:
+            ui.windows.manager.set_active(w[0])
+
+    # tabbed browsing
+    elif e.key == '^t':
+        ui.windows.new(ui.StatusWindow, None, 'status').activate()
+
+    elif e.key == '^w':
+        ui.windows.manager.get_active().close()

@@ -274,8 +274,6 @@ class TextInput(gtk.Entry):
         gtk.Entry.do_grab_focus(self)
         self.text, self.selection = temp
     
-    last_key = ''
-    
     def __init__(self, window):
         gtk.Entry.__init__(self)
         
@@ -297,18 +295,9 @@ class TextInput(gtk.Entry):
             
             key += gtk.gdk.keyval_name(event.keyval)
             
-            if event_type == 'KeyPressed':
-                TextInput.last_key = ''
-                repeat = False
-            elif key == TextInput.last_key: 
-                repeat = True
-            else:
-                TextInput.last_key = key
-                repeat = False
-            
             events.trigger(
                 event_type,
-                events.data(key=key, string=event.string, window=self.win, repeat=repeat)
+                events.data(key=key, string=event.string, window=self.win)
                 )
         
             return event.keyval in (up, down, tab)
