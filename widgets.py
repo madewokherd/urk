@@ -284,30 +284,6 @@ class TextInput(gtk.Entry):
 
         self.connect('activate', self.entered_text)
         
-        up = gtk.gdk.keyval_from_name("Up")
-        down = gtk.gdk.keyval_from_name("Down")
-        tab = gtk.gdk.keyval_from_name("Tab")
-        
-        def key_event(widget, event, event_type):
-            key = ''
-            for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
-                            (gtk.gdk.SHIFT_MASK, '+'),
-                            (gtk.gdk.MOD1_MASK, '!')):
-                if event.state & k:
-                    key += c
-            
-            key += gtk.gdk.keyval_name(event.keyval)
-            
-            events.trigger(
-                event_type,
-                events.data(key=key, string=event.string, window=self.win)
-                )
-        
-            return event.keyval in (up, down, tab)
-        
-        self.connect('key-press-event', key_event, 'KeyPress')
-        self.connect('key-release-event', key_event, 'KeyPressed')
-
 gobject.type_register(TextInput)
 
 def prop_to_gtk(prop, val):
@@ -683,6 +659,30 @@ class UrkUITabs(gtk.Window):
         self.tabs.set_scrollable(True)
         self.tabs.set_property("can-focus", False)
         
+        up = gtk.gdk.keyval_from_name("Up")
+        down = gtk.gdk.keyval_from_name("Down")
+        tab = gtk.gdk.keyval_from_name("Tab")
+        
+        def key_event(widget, event, event_type):
+            key = ''
+            for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
+                            (gtk.gdk.SHIFT_MASK, '+'),
+                            (gtk.gdk.MOD1_MASK, '!')):
+                if event.state & k:
+                    key += c
+            
+            key += gtk.gdk.keyval_name(event.keyval)
+            
+            events.trigger(
+                event_type,
+                events.data(key=key, string=event.string, window=self.get_active())
+                )
+        
+            return event.keyval in (up, down, tab)
+        
+        self.tabs.connect('key-press-event', key_event, 'KeyPress')
+        self.tabs.connect('key-release-event', key_event, 'KeyPressed')
+
         def window_change(notebook, wptr, page_num):
             events.trigger("Active", notebook.get_nth_page(page_num))
             

@@ -19,8 +19,7 @@ def onKeyPress(e):
     elif e.key == 'Page_Down':
         e.window.output.y = e.window.output.y + e.window.output.height / 2
 
-def onKeyPressed(e):
-    if e.key == '!a':
+    elif e.key == '!a':
         w = [w for w in ui.windows.manager if w.activity > ui.EVENT]
         
         if w:
