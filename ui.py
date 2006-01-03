@@ -88,48 +88,51 @@ activity_markup = {
 
 #open_file(filename)
 #opens a file or url using the "right" program
-open_file_cmd = "" #cache results of searching for the os program
-os_commands = ( #list of commands to search for for opening files
-    ('gnome-open', ('gnome-open',)),
-    ('kfmclient', ('kfmclient','exec')),
-    )
-def open_file(filename):
-    if conf.get('open-file-command'):
-        import subprocess
-        command = conf['open-file-command'].split(' ') + [filename]
-        try:
-            process = subprocess.Popen(command)
-            _kill_the_zombies(process)
-        except OSError:
-            print "Unable to start %s" % command
-    elif hasattr(os, 'startfile'):
-        os.startfile(filename)
-    elif open_file_cmd:
-        try:
+if hasattr(os,'startfile'):
+    open_file = os.startfile
+else:
+    open_file_cmd = "" #cache results of searching for the os program
+    os_commands = ( #list of commands to search for for opening files
+        ('gnome-open', ('gnome-open',)),
+        ('kfmclient', ('kfmclient','exec')),
+        ('sensible-browser', ('sensible-browser')),
+        )
+    def open_file(filename):
+        if conf.get('open-file-command'):
             import subprocess
-            process = subprocess.Popen(open_file_cmd + (filename,))
-            _kill_the_zombies(process)
-        except OSError:
-            print "Unable to start %s" % command
-    else:
-        import subprocess
-        paths = os.getenv("PATH") or os.defpath
-        for cmdfile, cmd in os_commands:
-            for path in paths.split(os.pathsep):
-                if os.access(os.path.join(path,cmdfile),os.X_OK):
-                    globals()['open_file_cmd'] = cmd
-                    try:
-                        process = subprocess.Popen(cmd + (filename,))
-                        _kill_the_zombies(process)
-                    except OSError:
-                        print "Unable to start %s" % command
-                    return
-        print "Unable to find a method to open %s." % filename
-#ugly hack to make sure we get rid of zombie processes
-def _kill_the_zombies(process):
-    import subprocess
-    if process.poll() == None: #Note: 0 means success, None means still running
-        register_timer(5000, _kill_the_zombies, process)
+            command = conf['open-file-command'].split(' ') + [filename]
+            try:
+                process = os.spawnvp(os.P_NOWAIT,command[0], command)
+                _kill_the_zombies(process)
+            except OSError:
+                print "Unable to start %s" % command
+        elif open_file_cmd:
+            try:
+                command = open_file_cmd + (filename,)
+                process = os.spawnvp(os.P_NOWAIT,command[0], command)
+                _kill_the_zombies(process)
+            except OSError:
+                print "Unable to start %s" % command
+        else:
+            import subprocess
+            paths = os.getenv("PATH") or os.defpath
+            for cmdfile, cmd in os_commands:
+                for path in paths.split(os.pathsep):
+                    if os.access(os.path.join(path,cmdfile),os.X_OK):
+                        globals()['open_file_cmd'] = cmd
+                        try:
+                            command = cmd + (filename,)
+                            process = os.spawnvp(os.P_NOWAIT,command[0], command)
+                            _kill_the_zombies(process)
+                        except OSError:
+                            print "Unable to start %s" % command
+                        return
+            print "Unable to find a method to open %s." % filename
+    #ugly hack to make sure we get rid of zombie processes
+    def _kill_the_zombies(process):
+        pid, status = os.waitpid(process,os.WNOHANG)
+        if pid == 0:
+            register_timer(5000, _kill_the_zombies, process)
 
 def urk_about(*args):
     about = gtk.AboutDialog()
