@@ -61,13 +61,12 @@ def get_completer_for(window, left, right, text):
      
 # generator--use recent_completer.next() to continue cycling through whatever
 recent_completer = None
-recent_text = None
 
 def onKeyPress(e):
     global recent_completer, recent_text
 
     if e.key == 'Tab':
-        if not recent_completer or e.window.input.text != recent_text:
+        if not recent_completer:
             input = e.window.input
             
             left, right = input.text[:input.cursor], input.text[input.cursor:]
@@ -77,7 +76,6 @@ def onKeyPress(e):
             recent_completer = get_completer_for(e.window, left, right, text)
 
         recent_completer.next()
-        recent_text = e.window.input.text
     
     else:
         recent_completer = None
