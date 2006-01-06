@@ -1,3 +1,5 @@
+import time
+
 import events
 from conf import conf
 import ui
@@ -145,6 +147,7 @@ def setupSocketConnect(e):
         'CHANMODES': 'b,k,l,imnpstr',
     }
     e.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
+    e.network.connect_timestamp = time.time()
     if hasattr(e.network,'_nick_generator'):
         del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
 
@@ -160,6 +163,26 @@ def defSocketConnect(e):
         
         #e.network.me = None
         e.done = True
+
+def onDisconnect(e):
+    if hasattr(e.network,'_reconnect_source'):
+        e.network._reconnect_source.unregister()
+        del e.network._reconnect_source
+    if hasattr(e.network,'connect_timestamp'):
+        if conf.get('autoreconnect',True):
+            delay = time.time() - e.network.connect_timestamp > 30 and 30 or 120
+            def do_reconnect():
+                if not e.network.status:
+                    server(network=e.network)
+            def do_announce_reconnect():
+                if not e.network.status:
+                    ui.get_default_window(e.network).write("* Will reconnect in %s seconds.." % delay)
+                    e.network._reconnect_source = ui.register_timer(delay*1000,do_reconnect)
+            e.network._reconnect_source = ui.register_idle(do_announce_reconnect)
+
+def postDisconnect(e):
+    if hasattr(e.network,'connect_timestamp'):
+        del e.network.connect_timestamp
 
 def defInput(e):
     if not e.done:
