@@ -1,6 +1,6 @@
 import time
-import events
 
+import events
 import urk
 import ui
 
@@ -24,23 +24,20 @@ def emote(network, user, msg):
     e_data.window = ui.get_default_window(network)
     events.trigger('OwnAction', e_data)
 
-def defCommand(e):
-    if not e.done:
-        if e.name == 'me':
-            if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
-                emote(e.network, e.window.id, ' '.join(e.args))
-                e.done = True
-            else:
-                e.error_text = "There's no one here to speak to."
-        elif e.name == 'ctcp':
-            ctcp(e.network, e.args[0], ' '.join(e.args[1:]))
-            e.done = True
-        elif e.name == 'ping':
-            ctcp(e.network, e.args[0], 'PING %s' % time.time())
-            e.done = True
-        elif e.name == 'ctcpreply':
-            ctcp_reply(e.network, e.args[0], ' '.join(e.args[1:]))
-            e.done = True
+def onCommandMe(e):
+    if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
+        emote(e.network, e.window.id, ' '.join(e.args))
+    else:
+        raise events.CommandError("There's no one here to speak to.")
+
+def onCommandCtcp(e):
+    ctcp(e.network, e.args[0], ' '.join(e.args[1:]))
+
+def onCommandPing(e):
+    ctcp(e.network, e.args[0], 'PING %s' % time.time())
+
+def onCommandCtcpreply(e):
+    ctcp_reply(e.network, e.args[0], ' '.join(e.args[1:]))
 
 def setupText(e):
     if e.text.startswith('\x01') and e.text.endswith('\x01'):
