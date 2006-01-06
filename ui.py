@@ -11,14 +11,13 @@ sys.peth = list(sys.path)
 import gtk
 sys.path = sys.peth
 
-import pango
-
-import windows
-import widgets
+import urk
 import irc
 from conf import conf
 import events
-import urk
+import widgets
+
+from windows import StatusWindow, QueryWindow, ChannelWindow
 
 # Priority Constants
 PRIORITY_HIGH = gobject.PRIORITY_HIGH
@@ -215,9 +214,7 @@ class Window(gtk.VBox):
         
         self.__activity = 0
         
-StatusWindow = windows.StatusWindow
-QueryWindow = windows.QueryWindow
-ChannelWindow = windows.ChannelWindow
+
   
 class Windows(list):     
     def new(self, role, network, id):
@@ -268,22 +265,6 @@ def get_default_window(network):
     # There can be only one...
     for window in get_window_for(network=network):
         return window
-        
-def set_title(title=None):
-    if not title:
-        w = windows.manager.get_active()
-        
-        if w.role != StatusWindow:
-            if w.network.status:
-                server = w.network.server
-            else:
-                server = "[%s]" % w.network.server
-                
-            title = "%s - %s - %s" % (w.network.me, server, w.title)
-        else:
-            title = "%s - %s" % (w.network.me, w.title)
-    
-    windows.manager.set_title("%s - urk" % title)
 
 def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")

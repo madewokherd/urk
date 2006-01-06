@@ -276,14 +276,14 @@ class TextInput(gtk.Entry):
         self.text = ''
         gtk.Entry.do_grab_focus(self)
         self.text, self.selection = temp
-    
+
     def __init__(self, window):
         gtk.Entry.__init__(self)
         
         self.win = window
 
         self.connect('activate', self.entered_text)
-        
+
 gobject.type_register(TextInput)
 
 def prop_to_gtk(prop, val):
@@ -563,6 +563,22 @@ class WindowLabel(gtk.EventBox):
         self.show_all()
         
 class UrkUITabs(gtk.Window):
+    def set_title(self, title=None):
+        if title is None:
+            w = self.get_active()
+            
+            if w.role != ui.StatusWindow:
+                if w.network.status:
+                    server = w.network.server
+                else:
+                    server = "[%s]" % w.network.server
+                    
+                title = "%s - %s - %s" % (w.network.me, server, w.title)
+            else:
+                title = "%s - %s" % (w.network.me, w.title)
+        
+        gtk.Window.set_title(self, "%s - urk" % title)
+
     def __iter__(self):
         return iter(self.tabs.get_children())
 
@@ -592,7 +608,7 @@ class UrkUITabs(gtk.Window):
         self.tabs.get_tab_label(window).update()
         
         if self.get_active() == window:
-            ui.set_title()
+            self.set_title()
 
     def __init__(self):
         # threading stuff
@@ -688,7 +704,6 @@ class UrkUITabs(gtk.Window):
             
         self.tabs.connect("switch-page", window_change)
 
-        # widgets
         box = gtk.VBox(False)
         box.pack_start(menu, expand=False)
         box.pack_end(self.tabs)

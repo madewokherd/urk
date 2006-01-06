@@ -7,7 +7,7 @@ import chaninfo
 def onActive(w):
     w.activity = 0
 
-    ui.register_idle(ui.set_title)
+    ui.register_idle(ui.windows.manager.set_title)
 
 def onNick(e):
     if e.source == e.network.me:
