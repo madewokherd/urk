@@ -301,12 +301,12 @@ def onCommandServer(e):
         host = e.args[0]
         if ':' in host:
             host, port = host.rsplit(':', 1)
-            network_info["port"] = int(port)
+            port = int(port)
             
         elif len(e.args) > 1:
             port = e.args[1]
         
-            network_info["port"] = int(port)
+            port = int(port)
     else:
         host = None
     
