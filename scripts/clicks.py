@@ -40,7 +40,33 @@ def is_chan(e):
     # click on a #channel
     return e.window.network and e._target and \
             e._target[0] in e.window.network.isupport.get('CHANTYPES', '&#$+')
-            
+
+def get_autojoin_list(network):
+    perform = conf.get('networks',{}).get(network.name,{}).get('perform',())
+    channels = set()
+    for line in perform:
+        if line.startswith('join ') and ' ' not in line[5:]:
+            channels.update(line[5:].split(','))
+    return channels
+
+def add_autojoin(network, channel):
+    if 'networks' not in conf:
+        conf['networks'] = {}
+    if network.name not in conf['networks']:
+        conf['networks'][network.name] = {'server': network.server}
+        conf['start_networks'] = conf.get('start_networks',[]) + [network.name]
+    if 'perform' in conf['networks'][network.name]:
+        perform = conf['networks'][network.name]['perform']
+    else:
+        perform = conf['networks'][network.name]['perform'] = []
+    
+    for n, line in enumerate(perform):
+        if line.startswith('join ') and ' ' not in line[5:]:
+            perform[n] = "%s,%s" % (line, channel)
+            break
+    else:
+        perform.append('join %s' % channel)
+
 def make_nick_menu(e, target):
     def query():
         events.run('query %s' % target, e.window, e.window.network)

@@ -19,10 +19,20 @@ class NetworkInfo(gtk.VBox):
         label = gtk.Label('Server:')
 
         data = gtk.Entry()
-        data.set_text(str(network_info.get('server', '')))
+        if 'port' in network_info:
+            data.set_text("%s:%s" % (network_info.get('server', '') , network_info['port']))
+        else:
+            data.set_text(str(network_info.get('server', '')))
         
         def edit(widget, event):
-            network_info['server'] = widget.get_text()
+            text = widget.get_text()
+            if ':' in text:
+                network_info['server'], port = widget.get_text().rsplit(':',1)
+                network_info['port'] = int(port)
+            else:
+                network_info['server'] = widget.get_text()
+                if 'port' in network_info:
+                    del network_info['port']
                     
         data.connect('key-release-event', edit)
 

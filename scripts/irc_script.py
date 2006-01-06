@@ -169,7 +169,7 @@ def onDisconnect(e):
         e.network._reconnect_source.unregister()
         del e.network._reconnect_source
     if hasattr(e.network,'connect_timestamp'):
-        if conf.get('autoreconnect',True):
+        if e.error and conf.get('autoreconnect',True):
             delay = time.time() - e.network.connect_timestamp > 30 and 30 or 120
             def do_reconnect():
                 if not e.network.status:
@@ -259,7 +259,7 @@ def onCommandJoin(e):
     else:
         raise events.CommandError("You must supply a channel.")
 
-#this should be used whereever a new network may need to be created
+#this should be used whereever a new irc.Network may need to be created
 def server(server=None,port=6667,network=None,connect=True):
     network_info = {}
     
@@ -268,7 +268,9 @@ def server(server=None,port=6667,network=None,connect=True):
         network_info["server"] = server
         if port:
             network_info["port"] = port
+        print network_info
         get_network_info(server, network_info)
+        print network_info
     
     if not network:
         network = irc.Network(**network_info)
@@ -284,7 +286,7 @@ def server(server=None,port=6667,network=None,connect=True):
         if "port" in network_info:
             network.port = network_info["port"]
     
-    if network.status or connect:
+    if network.status:
         network.quit()
     if connect:
         network.connect()
@@ -295,10 +297,11 @@ def server(server=None,port=6667,network=None,connect=True):
     return network
 
 def onCommandServer(e):
-    port = 6667
+    port = None
     
     if len(e.args):
         host = e.args[0]
+        port = 6667
         if ':' in host:
             host, port = host.rsplit(':', 1)
             port = int(port)
@@ -421,11 +424,8 @@ def get_network_info(name, network_info):
     conf_info = conf.get('networks', {}).get(name)
 
     if conf_info:
-        network_info['server'] = conf_info['server'] or name
-        
-        for info in conf_info:
-            if info not in network_info:
-                network_info[info] = conf_info[info]
+        network_info['server'] = name
+        network_info.update(conf_info)
 
 def onStart(e):
     for network in conf.get('start_networks', []):
