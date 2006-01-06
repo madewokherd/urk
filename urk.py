@@ -42,13 +42,8 @@ import ui
 
 import remote
 
-if remote.doit_remotely(' '.join(sys.argv[1:])):
+if remote.run(' '.join(sys.argv[1:])):
     sys.exit(0)
-else:
-    try:
-        remote.start_service()
-    except:
-        traceback.print_exc()
 
 name = "urk"
 long_name = "urk IRC"

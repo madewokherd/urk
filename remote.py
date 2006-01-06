@@ -12,41 +12,31 @@ except ImportError:
 import events
 import ui
 
+def run(command):
+    pass
+
 if DBUS:
     class UrkRemoteControl(dbus.service.Object):
-        def __init__(self, bus_name, object_path='/net/sf/urk/RemoteControl'):
-            dbus.service.Object.__init__(self, bus_name, object_path)
-    
-        @dbus.service.method('net.sf.urk.RemoteControlIFace')
+        @dbus.service.method('net.sf.urk')
         def run(self, command):
             window = ui.windows.manager.get_active()
             events.run(command, window, window.network)
 
-    def doit_remotely(x):
+    def run(command):
         try:
             bus = dbus.SessionBus()
-            proxy_obj = bus.get_object('net.sf.urk', '/net/sf/urk/RemoteControl')
-                
-            iface = dbus.Interface(proxy_obj, 'net.sf.urk.RemoteControlIFace')
-            iface.run(x)
-            
+        except:
+            print "NO DBUS"
+            return
+    
+        try:
+            urk_obj = bus.get_object('net.sf.urk', '/net/sf/urk')
+
+            urk_iface = dbus.Interface(urk_obj, 'net.sf.urk')
+            urk_iface.run(command)
+
             return True
 
         except:
-            traceback.print_exc()
-            
-    def start_service():
-        bus = dbus.SessionBus()
-        bus_name = dbus.service.BusName('net.sf.urk', bus=bus)
-        UrkRemoteControl(bus_name)
-else:
-    class UrkRemoteControl:
-        def __init__(self, *args, **kwargs):
-            pass
-        def run(self, command):
-            window = ui.windows.manager.get_active()
-            events.run(command, window, window.network)
-    def doit_remotely(x):
-        pass
-    def start_service():
-        pass
+            bus_name = dbus.service.BusName('net.sf.urk', bus)
+            UrkRemoteControl(bus_name, '/net/sf/urk')
