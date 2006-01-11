@@ -268,9 +268,7 @@ def server(server=None,port=6667,network=None,connect=True):
         network_info["server"] = server
         if port:
             network_info["port"] = port
-        print network_info
         get_network_info(server, network_info)
-        print network_info
     
     if not network:
         network = irc.Network(**network_info)
