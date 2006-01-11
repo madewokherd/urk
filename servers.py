@@ -115,6 +115,8 @@ class ServerWidget(gtk.VBox):
         model, iter = self.networks.get_selection().get_selected()
 
         if iter:
+            if model.get_value(iter, 0) in conf.get('start_networks',()):
+                conf['start_networks'].remove(model.get_value(iter, 0))
             del conf['networks'][model.get_value(iter, 0)]
             model.remove(iter)
             
