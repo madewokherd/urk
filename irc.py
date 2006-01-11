@@ -277,3 +277,36 @@ class Network:
                     window=ui.get_default_window(self)
                     )
         events.trigger('OwnNotice', e_data)
+
+
+#this was ported from srvx's tools.c
+def match_glob(text, glob, t=0, g=0):
+    while g < len(glob):
+        if glob[g] in '?*':
+            star_p = q_cnt = 0
+            while g < len(glob):
+                if glob[g] == '*':
+                    star_p = True
+                elif glob[g] == '?':
+                    q_cnt += 1
+                else:
+                    break
+                g += 1
+            t += q_cnt
+            if t > len(text):
+                return False
+            if star_p:
+                if g == len(glob):
+                    return True
+                for i in xrange(t, len(text)):
+                    if text[i] == glob[g] and match_glob(text, glob, i+1, g+1):
+                        return True
+                return False
+            else:
+                if t == len(text) and g == len(glob):
+                    return True
+        if t == len(text) or g == len(glob) or text[t] != glob[g]:
+            return False
+        t += 1
+        g += 1
+    return t == len(text)
