@@ -48,6 +48,7 @@ def onCommandSay(e):
             result = eval(text,e.window.globals,e.window.locals)
             if result is not None:
                 e.window.write(repr(result))
+            e.window.globals['_'] = result
         except SyntaxError:
             try:
                 exec text in e.window.globals,e.window.locals
