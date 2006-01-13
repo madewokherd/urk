@@ -1,10 +1,5 @@
 import gtk
 import pango
-try:
-    import gtksourceview
-    GTK_SOURCE_VIEW = True
-except:
-    GTK_SOURCE_VIEW = False
 
 import ui
 from conf import conf
@@ -135,59 +130,3 @@ def ChannelWindow(self):
     self.pack_end(botbox, expand=False)
 
     self.show_all()
-
-if GTK_SOURCE_VIEW:
-    def ScriptWindow(self):
-        self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
-        
-        self.output.set_auto_indent(True)
-        self.output.set_show_line_numbers(True)
-        self.output.set_insert_spaces_instead_of_tabs(True)
-        self.output.set_show_margin(True)
-        self.output.set_margin(80)
-        self.output.set_wrap_mode(gtk.WRAP_WORD)
-        self.output.set_tabs_width(4)
-        
-        buffer = self.output.get_buffer()
-        language = gtksourceview.SourceLanguagesManager(). \
-                        get_language_from_mime_type('text/x-python')
-        
-        buffer.set_language(language)
-        
-        buffer.set_check_brackets(True)
-        buffer.set_highlight(True)
-
-        self.focus = self.output.grab_focus
-        
-        def write(*args):
-            pass
-        self.write = write
-
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-
-        self.pack_start(topbox)
-
-        self.show_all()
-else:
-    def ScriptWindow(self):
-        self.output = gtk.TextView()
-        
-        self.output.modify_font(pango.FontDescription('monospace 9'))
-        self.output.set_wrap_mode(gtk.WRAP_WORD)
-
-        self.focus = self.output.grab_focus
-        
-        def write(*args):
-            pass
-        self.write = write
-
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-
-        self.pack_start(topbox)
-
-        self.show_all()
-

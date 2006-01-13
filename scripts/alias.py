@@ -11,6 +11,7 @@ aliases = conf.get("aliases",{
     'devoice':'"mode "+window.id+" -"+"v"*len(args)+" "+" ".join(args)',
     'umode':'"mode "+network.me+" "+" ".join(args)',
     'clear':'window.output.clear()',
+    'omglol':'"msg "+window.id+" jello"',
     })
 
 #if we're reloading, we need to get rid of old onCommand events
@@ -65,17 +66,6 @@ def onCommandAlias(e):
  /alias -r \x02name\x02 to remove an alias
  /alias -l to see a list of aliases""")
  
-def onClose(w):
-    import windows
-    
-    if w.role == windows.ScriptWindow:
-        buffer = w.output.get_buffer()
-        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
-        
-        file(w.id, "wb").write(text)
-        if events.is_loaded(w.id):
-            events.load(w.id, True)
- 
 def onCommandEdit(e):
     filename = ''
     try:
@@ -90,9 +80,8 @@ def onCommandEdit(e):
         filename = os.path.join(urk.userpath,'scripts',e.args[0])
         if not filename.endswith('.py'):
             filename += ".py"
-    import ui, windows
-    w = ui.windows.new(windows.ScriptWindow, None, filename)
-    
+
+    import ui
+
     if os.access(filename, os.R_OK):
-        w.output.get_buffer().set_text(file(filename).read())
-    w.activate()
+        ui.widgets.editor.edit(filename)

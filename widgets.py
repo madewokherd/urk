@@ -11,6 +11,7 @@ import ui
 import urk
 
 import servers
+import editor
 
 # This holds all tags for all windows ever
 if 'tag_table' not in globals():
@@ -661,10 +662,11 @@ class UrkUITabs(gtk.Window):
             conf["wh"] = self.get_size()
         self.connect("configure_event", save_xywh)
         
-        def add_server_to_menu(e):
+        def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+            e.menu += [('Editor', editor.main)]
 
-        events.register('MainMenu', 'on', add_server_to_menu, 'ui')
+        events.register('MainMenu', 'on', add_defaults_to_menu, 'ui')
 
         def build_urk_menu(*args):
             data = events.data(menu=[])
