@@ -8,7 +8,7 @@ from conf import conf
 textareas = {
     'bg': '#2E3D49',
     'fg': '#DEDEDE',
-#    'font': conf.get('font', 'sans 8'),
+    'font': conf.get('font', 'sans 8'),
     }
 
 ui.set_style("view", textareas)
