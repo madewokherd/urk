@@ -22,8 +22,9 @@ class data:
 
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
-events = {}
-loaded = {} # FIXME: dict for when we need some info on it
+if 'events' not in globals():
+    events = {}
+    loaded = {} # FIXME: dict for when we need some info on it
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
@@ -60,17 +61,19 @@ def register(e_name, e_stage, f_ref, s_name=""):
         
     events[e_name][e_stage] += [(f_ref, s_name)]
 
+# turn a filename (or module name) and trim it to the name of the module
+def get_modulename(s_name):
+    name = os.path.basename(s_name)
+    for suffix, dummy, dummy in imp.get_suffixes():
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+    return name
+
 #take a given script name and turn it into a tuple for use with load_module
 def find_script(s_name):
     # split the directory and filename
     dirname = os.path.dirname(s_name)
-    filename = os.path.basename(s_name)
-    
-    for suffix, dummy, dummy in imp.get_suffixes():
-        #trim things like .py
-        if filename.endswith(suffix):
-            filename = filename[:-len(suffix)]
-            break
+    filename = get_modulename(s_name)
     
     return (filename,) + imp.find_module(filename, (dirname and [dirname]) or None)
 
@@ -93,7 +96,10 @@ def load(s_name, reloading = False):
     loaded[name] = filename
     
     try:
-        imported = imp.load_module(*args)
+        if reloading or name not in sys.modules:
+            imported = imp.load_module(*args)
+        else:
+            imported = sys.modules[name]
     finally:
         if not reloading:
             del loaded[name]
@@ -127,15 +133,13 @@ def load(s_name, reloading = False):
 
 # Is the script with the given name loaded?
 def is_loaded(s_name):
-    name, f, filename, filetype = find_script(s_name)
-    f.close()
+    name = get_modulename(s_name)
     
     return name in loaded
 
 # Remove any function which was defined in the given script
 def unload(s_name, reloading = False):
-    name, f, filename, filetype = find_script(s_name)
-    f.close()
+    name = get_modulename(s_name)
     
     if not reloading:
         del loaded[name]
@@ -234,10 +238,12 @@ def onCommandScripts(e):
         e.window.write("* %s" % name)
 
 def onCommandEcho(e):
-    e.window.write(' '.join(e.args))    
+    e.window.write(' '.join(e.args))
 
-name = ''
-for name in globals():
-    if name.startswith('onCommand'):
-        register(name[2:], "on", globals()[name], '_events')
-del name
+#name = ''
+#for name in globals():
+#    if name.startswith('onCommand'):
+#        register(name[2:], "on", globals()[name], '_events')
+#del name
+
+load('events')

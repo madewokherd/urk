@@ -90,7 +90,7 @@ class Network:
             #random.shuffle(result, os.urandom)
             if socket.has_ipv6: #prefer ipv6
                 result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f == socket.AF_INET6]+result
-            else: #ignore ipv6
+            elif hasattr(socket,"AF_INET6"): #ignore ipv6
                 result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f != socket.AF_INET6]
             
             self.failedlasthost = False
