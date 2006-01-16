@@ -151,7 +151,7 @@ def onPart(e):
 def onKick(e):
     to_write = "%s%s kicked %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
-    e.window.write(to_write, (e.target == e.network.me and ui.TEXT) or ui.EVENT)
+    e.window.write(to_write, (e.target == e.network.me and ui.HILIT) or ui.EVENT)
         
 def onMode(e):
     if e.source == e.network.me:
@@ -172,9 +172,9 @@ def onQuit(e):
 
 def onNick(e):
     if e.source == e.network.me:
-        to_write = "%s\x02You\x02 are now known as %s" % (prefix(e), e.newnick)
+        to_write = "%sYou are now known as \x02%s\x02" % (prefix(e), e.newnick)
     else:
-        to_write = "%s\x02%s\x02 is now known as %s" % (prefix(e), e.source, e.newnick)
+        to_write = "%s%s is now known as \x02%s\x02" % (prefix(e), e.source, e.newnick)
     
     if e.source == e.network.me:
         for window in ui.get_window_for(network=e.network):
