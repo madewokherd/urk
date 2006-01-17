@@ -55,6 +55,9 @@ class ScriptEditorWidget(gtk.VBox):
             if events.is_loaded(self.filename):
                 events.load(self.filename, True)
     
+    def update_title(self):
+        self.win.set_title("%s (%s)" % (events.get_modulename(self.filename),self.filename))
+    
     def __init__(self):
         gtk.VBox.__init__(self)
         
@@ -74,9 +77,16 @@ class ScriptEditorWidget(gtk.VBox):
 
 def edit(filename):
     widget = main()
+    
+    if GTK_SOURCE_VIEW:
+        widget.output.get_buffer().begin_not_undoable_action()
 
     widget.output.get_buffer().set_text(file(filename).read())
     widget.filename = filename
+    widget.update_title()
+
+    if GTK_SOURCE_VIEW:
+        widget.output.get_buffer().end_not_undoable_action()
 
 def main():
     win = gtk.Window()
@@ -93,7 +103,8 @@ def main():
     win.set_border_width(5)
     
     widget = ScriptEditorWidget()
-
+    widget.win = win    #This seems a bit wrong..
+    
     win.add(widget)    
     win.show_all()
     
