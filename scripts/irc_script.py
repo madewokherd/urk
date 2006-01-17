@@ -49,15 +49,12 @@ def defRaw(e):
                     e.network._nick_generator = _nick_generator(e.network)
                     e.network._next_nick = e.network._nick_generator.next()
                     e.network.raw('NICK %s' % e.network._next_nick)
-                
-                if failednick in nicks[:-1]:
-                    index = nicks.index(failednick)+1
-                    e.network.raw('NICK %s' % nicks[index])
             
             elif e.msg[1] == '431': #no nickname given--this shouldn't happen
                 pass
             
             elif e.msg[1] == '001':
+                e.network.got_nick = True
                 if e.network.me != e.msg[2]:
                     e_data = events.data()
                     e_data.network = e.network
@@ -66,7 +63,6 @@ def defRaw(e):
                     e_data.newnick = e.msg[2]
                     events.trigger('Nick', e_data)
                     e.network.me = e.msg[2]
-                    e.network.got_nick = True
                 if hasattr(e.network,'_nick_generator'):
                     del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
                 
