@@ -359,7 +359,7 @@ def get_event_at_iter(view, iter):
 
 class TextOutput(gtk.TextView):
     def clear(self):
-        self.get_buffer.set_text('')
+        self.get_buffer().set_text('')
     
     def get_y(self):
         rect = self.get_visible_rect()
