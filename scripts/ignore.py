@@ -3,8 +3,9 @@ from conf import conf
 import irc
 
 def setupText(e):
+    address = e.network.norm_case('%s!%s' % (e.source, e.address))
     for mask in conf.get('ignore_masks',()):
-        if irc.match_glob('%s!%s' % (e.source, e.address), mask):
+        if irc.match_glob(address, e.network.norm_case(mask)):
             events.halt()
 
 setupAction = setupNotice = setupCtcp = setupCtcpReply = setupText
