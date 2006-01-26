@@ -4,11 +4,25 @@ import events
 from conf import conf
 import ui
 import irc
-from urllib import unquote
 
 COMMAND_PREFIX = conf.get('command_prefix', '/')
 
 NICK_SUFFIX = r"`_-\|0123456789"
+
+_hextochr = dict(('%02x' % i, chr(i)) for i in range(256))
+def unquote(url, rurl=""):
+
+    while '%' in url:
+        url, char = url.rsplit('%', 1)
+        
+        chars = char[:2].lower()
+
+        if chars in _hextochr:
+            rurl = '%s%s%s' % (_hextochr[chars], char[2:], rurl)
+        else:
+            rurl = "%s%s%s" % ('%', char, rurl)
+            
+    return url + rurl
 
 #for getting a list of alternative nicks to try on a network
 def _nick_generator(network):
