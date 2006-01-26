@@ -4,7 +4,7 @@ import linecache
 
 def traceit(frame, event, arg):
     if event == "line":
-        mem = commands.getoutput(
+        mem = " " + commands.getoutput(
                 "ps -eo cmd,rss | grep urk_trace.py | grep -v grep"
                 ).split(" ")[-1]
     
