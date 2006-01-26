@@ -11,7 +11,7 @@ class ConsoleWriter:
         self.window = window
     def write(self, text):
         try:
-            self.window.write(text, newline=False)
+            self.window.write(text, line_ending='')
         except:
             self.window.write(traceback.format_exc())
 

@@ -384,22 +384,19 @@ class TextOutput(gtk.TextView):
     height = property(get_height)
     
     # the unknowing print weird things to our text widget function
-    def write(self, text, activity_type, newline=True):
+    def write(self, text, activity_type, line_ending='\n'):
         if not isinstance(text, unicode):
             try:
                 text = codecs.utf_8_decode(text)[0]
             except:
                 text = codecs.latin_1_decode(text)[0]
         tag_data, text = parse_mirc.parse_mirc(text)
-    
-        if newline:
-            text += '\n'
-        
+
         buffer = self.get_buffer()
         
         cc = buffer.get_char_count()
         
-        buffer.insert(buffer.get_end_iter(), text)
+        buffer.insert(buffer.get_end_iter(), text + line_ending)
         
         buffer.apply_tag_by_name(
             'indent', 

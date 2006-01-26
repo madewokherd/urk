@@ -5,11 +5,11 @@ import ui
 from conf import conf
 
 def get_default_write(self):  
-    def def_f(text, activity_type=ui.EVENT, newline=True):
+    def def_f(text, activity_type=ui.EVENT, line_ending='\n'):
         if ui.windows.manager.get_active() != self:
             self.activity = max(self.activity, activity_type)
 
-        self.output.write(text, activity_type, newline)
+        self.output.write(text, activity_type, line_ending)
         
     return def_f
     
