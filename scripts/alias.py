@@ -11,7 +11,6 @@ aliases = conf.get("aliases",{
     'devoice':'"mode "+window.id+" -"+"v"*len(args)+" "+" ".join(args)',
     'umode':'"mode "+network.me+" "+" ".join(args)',
     'clear':'window.output.clear()',
-    'omglol':'"msg "+window.id+" jello"',
     })
 
 #if we're reloading, we need to get rid of old onCommand events
