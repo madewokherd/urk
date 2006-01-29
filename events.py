@@ -240,10 +240,10 @@ def onCommandScripts(e):
 def onCommandEcho(e):
     e.window.write(' '.join(e.args))
 
-#name = ''
-#for name in globals():
-#    if name.startswith('onCommand'):
-#        register(name[2:], "on", globals()[name], '_events')
-#del name
+name = ''
+for name in globals():
+    if name.startswith('onCommand'):
+        register(name[2:], "on", globals()[name], '_events')
+del name
 
-load('events')
+#load('events')
