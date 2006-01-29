@@ -59,6 +59,26 @@ def text(e):
 def info_in_brackets(text):
     return "\x04777777(\x0400CCCC%s\x04777777)\x0F" % text
 
+def pretty_time(secs):
+    times = (
+        #("years", "year", 31556952),
+        ("weeks", "week", 604800),
+        ("days", "day", 86400),
+        ("hours", "hour", 3600),
+        ("minutes", "minute", 60),
+        ("seconds", "second", 1),
+        )
+    if secs == 0:
+        return "0 seconds"
+    result = ""
+    for plural, singular, amount in times:
+        n, secs = divmod(secs, amount)
+        if n == 1:
+            result = result + " %s %s" % (n, singular)
+        elif n:
+            result = result + " %s %s" % (n, plural)
+    return result[1:]
+
 def onText(e):
     hilight_text(e)
     color = "\x02\x040000CC"
@@ -210,6 +230,28 @@ def onRaw(e):
             
             elif e.msg[1] == '329': #RPL_CREATIONTIME
                 pass
+            
+            elif e.msg[1] == '311': #RPL_WHOISUSER
+                e.window.write("* %s is %s@%s * %s" % (e.msg[3], e.msg[4], e.msg[5], e.msg[7]))
+            
+            elif e.msg[1] == '312': #RPL_WHOISSERVER
+                e.window.write("* %s on %s (%s)" % (e.msg[3], e.msg[4], e.msg[5]))
+            
+            elif e.msg[1] == '317': #RPL_WHOISIDLE
+                e.window.write("* %s has been idle for %s" % (e.msg[3], pretty_time(int(e.msg[4]))))
+                if e.msg[5].isdigit():
+                    e.window.write("* %s signed on %s" % (e.msg[3], time.ctime(int(e.msg[5]))))
+            
+            elif e.msg[1] == '319': #RPL_WHOISCHANNELS
+                e.window.write("* %s on channels: %s" % (e.msg[3], e.msg[4]))
+            
+            elif e.msg[1] == '330': #RPL_WHOISACCOUNT
+                #this appears to conflict with another raw, so if there's anything weird about it,
+                # we fall back on the default
+                if len(e.msg) == 6 and not e.msg[4].isdigit() and not e.msg[5].isdigit():
+                    e.window.write("* %s %s %s" % (e.msg[3], e.msg[5], e.msg[4]))
+                else:
+                    e.window.write("* %s" % ' '.join(e.msg[3:]))
             
             else:
                 e.window.write("* %s" % ' '.join(e.msg[3:]))
