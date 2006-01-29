@@ -6,8 +6,6 @@ import events
 import urk
 import ui
 
-DEBUG = 0
-
 DISCONNECTED = 0
 CONNECTING = 1
 INITIALIZING = 2
@@ -53,6 +51,7 @@ class Network:
         nicks = ("mrurk",)
     
     socket = None
+    DEBUG = False
     
     def __init__(self, server="irc.default.org", port=6667, nicks=[], 
                     fullname="", name=None, **kwargs):
@@ -149,8 +148,8 @@ class Network:
             self.buffer = (self.buffer + result).split('\r\n')
             
             for line in self.buffer[:-1]:
-                if DEBUG:
-                    print "<<< %s" % line
+                if self.DEBUG:
+                    print "<< %s" % line
         
                 self.got_msg(line)
                 
@@ -163,8 +162,8 @@ class Network:
                 self.source = ui.fork(self.on_read, self.socket.recv, 8192)
 
     def raw(self, msg):
-        if DEBUG:
-            print ">>> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
+        if self.DEBUG:
+            print ">> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
         
         if self.status >= INITIALIZING:
             self.socket.send(msg + "\r\n")
