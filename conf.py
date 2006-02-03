@@ -52,6 +52,6 @@ def save(*args):
 events.register('Exit', 'post', save)
 
 if os.access(CONF_FILE,os.R_OK):
-    conf = eval(file(CONF_FILE).read().strip())
+    conf = eval(file(CONF_FILE, "U").read().strip())
 else:
     conf = {}

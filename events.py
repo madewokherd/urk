@@ -2,6 +2,10 @@ import sys
 import os
 import traceback
 import imp
+import marshal
+import py_compile
+
+magic = imp.get_magic()
 
 class error(Exception):
     pass
@@ -68,17 +72,44 @@ def get_modulename(s_name):
         name = name[:-len(os.extsep+"py")]
     return name
 
+def pycfile_getcode(filename):
+    f = file(filename,"rb")
+    f.read(8) #skip the header-like stuff
+    code = marshal.load(f)
+    f.close()
+    return code
+
+def pyfile_getcode(filename):
+    f = file(filename,"U")
+    source = f.read()
+    f.close()
+    return compile(source, filename, "exec")
+
 #load a .py file into a new module object without affecting sys.modules
+#compile to .pyo or .pyc just like real python 
 def load_pyfile(filename):
     name = get_modulename(filename)
     module = imp.new_module(name)
     module.__file__ = filename
-    # FIXME: we should use .pyc or .pyo files if available for performance++
-    f = file(filename,"r")
-    try:
-        exec f.read() in module.__dict__
-    finally:
-        f.close()
+    # go go gadget OBSCURE COPIED CODE
+    #this is from compileall, line 57
+    cfile = filename + (__debug__ and 'c' or 'o')
+    ftime = os.stat(filename).st_mtime
+    try: ctime = os.stat(cfile).st_mtime
+    except os.error: ctime = 0
+    
+    if (ctime < ftime):
+        try:
+            py_compile.compile(filename)
+        except:
+            code = pyfile_getcode(filename)
+    else:
+        try:
+            code = pycfile_getcode(cfile)
+        except:
+            code = pyfile_getcode(filename)
+    
+    exec code in module.__dict__
     return module
 
 #take a given script name and turn it into a filename
