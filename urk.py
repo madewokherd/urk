@@ -56,11 +56,10 @@ copyright = "2005 %s" % ', '.join(authors)
 def main():
     for script_path in set(sys.path[1:6:2]):
         try:
+            suffix = os.extsep+"py"
             for script in os.listdir(script_path):
-                for suffix in imp.get_suffixes():
-                    if script.endswith(suffix[0]):
-                        events.load(script)
-                        break
+                if script.endswith(suffix):
+                    events.load(script)
                     
         except OSError:
             pass

@@ -24,7 +24,7 @@ trigger_sequence = ("setup", "pre", "def", "on", "post")
 
 if 'events' not in globals():
     events = {}
-    loaded = {} # FIXME: dict for when we need some info on it
+    loaded = {}
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
@@ -64,54 +64,40 @@ def register(e_name, e_stage, f_ref, s_name=""):
 # turn a filename (or module name) and trim it to the name of the module
 def get_modulename(s_name):
     name = os.path.basename(s_name)
-    for suffix, dummy, dummy in imp.get_suffixes():
-        if name.endswith(suffix):
-            name = name[:-len(suffix)]
+    if name.endswith(os.extsep+"py"):
+        name = name[:-len(os.extsep+"py")]
     return name
 
-#take a given script name and turn it into a tuple for use with load_module
+#load a .py file into a new module object without affecting sys.modules
+def load_pyfile(filename):
+    name = get_modulename(filename)
+    module = imp.new_module(name)
+    module.__file__ = filename
+    # FIXME: we should use .pyc or .pyo files if available for performance++
+    f = file(filename,"r")
+    try:
+        exec f.read() in module.__dict__
+    finally:
+        f.close()
+    return module
+
+#take a given script name and turn it into a filename
 def find_script(s_name):
     # split the directory and filename
     dirname = os.path.dirname(s_name)
-    filename = get_modulename(s_name)
+    name = get_modulename(s_name)
     
-    return (filename,) + imp.find_module(filename, (dirname and [dirname]) or None)
+    for i in dirname and (dirname) or sys.path:
+        filename = os.path.join(i, name+os.extsep+"py")
+        if os.access(filename, os.R_OK):
+            return filename
+    #else:
+    raise ImportError("No urk script %s found" % s_name) 
 
-# Load a python script and register
-# the functions defined in it for events.
-# Return True if we loaded the script, False if it was already loaded
-def load(s_name, reloading = False):
-    args = find_script(s_name)
-    f = args[1]
-    filename = args[2]
-    name = args[0]
-    
-    if not reloading and name in loaded:
-        f.close()
-        return False
-    
-    if reloading:
-        reloading = name in loaded
-    
-    loaded[name] = filename
-    
-    try:
-        if reloading or name not in sys.modules:
-            imported = imp.load_module(*args)
-        else:
-            imported = sys.modules[name]
-    finally:
-        if not reloading:
-            del loaded[name]
-        f.close()
-    
-    if reloading:
-        unload(name, True)
-    
-    loaded[name] = filename
-    
+# register the events defined by obj
+def register_all(name, obj):
     # we look through everything defined in the file    
-    for f in dir(imported):
+    for f in dir(obj):
         # for each bit of the event sequence
         for e_stage in trigger_sequence:
 
@@ -119,7 +105,7 @@ def load(s_name, reloading = False):
             if f.startswith(e_stage):
             
                 # get a reference to a function
-                f_ref = getattr(imported, f)
+                f_ref = getattr(obj, f)
                 
                 # normalise to the event name                
                 e_name = f.replace(e_stage, "", 1)
@@ -128,6 +114,27 @@ def load(s_name, reloading = False):
                 register(e_name, e_stage, f_ref, name)
                 
                 break
+    
+
+# Load a python script and register
+# the functions defined in it for events.
+# Return True if we loaded the script, False if it was already loaded
+def load(s_name, module=None):
+    name = get_modulename(s_name)
+    filename = find_script(s_name)
+    
+    if name in loaded:
+        return False
+    
+    loaded[name] = None
+    
+    try:
+        loaded[name] = imported = load_pyfile(filename)
+    except:
+        del loaded[name]
+        raise
+    
+    register_all(name, imported)
     
     return True
 
@@ -141,8 +148,7 @@ def is_loaded(s_name):
 def unload(s_name, reloading = False):
     name = get_modulename(s_name)
     
-    if not reloading:
-        del loaded[name]
+    del loaded[name]
 
     for e_name in list(events):
         for e_stage in list(events[e_name]):
@@ -210,7 +216,7 @@ def onCommandLoad(e):
     name = e.args[0]
     try:
         if not load(name):
-            raise CommandError("The script is already loaded")
+            raise CommandError("The script is already loaded; use /reload instead")
         else:
             e.window.write("* The script '%s' has been loaded." % name)
     except:
@@ -226,9 +232,16 @@ def onCommandUnload(e):
 
 def onCommandReload(e):
     name = e.args[0]
+    s_name = get_modulename(name)
+    temp = loaded[s_name]
+    if name not in loaded:
+        raise CommandError("The script isn't loaded yet; use /load instead") 
+    unload(name)
     try:
-        load(name, reloading=True)
+        load(name)
     except:
+        loaded[s_name] = temp
+        register_all(s_name, temp) 
         e.window.write(traceback.format_exc(), line_ending='')
         raise CommandError("Error loading the script")
 
