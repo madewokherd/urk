@@ -209,7 +209,7 @@ def onCommandPyexec(e):
 def onCommandLoad(e):
     name = e.args[0]
     try:
-        if load(name):
+        if not load(name):
             raise CommandError("The script is already loaded")
         else:
             e.window.write("* The script '%s' has been loaded." % name)
