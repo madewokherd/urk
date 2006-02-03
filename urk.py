@@ -59,8 +59,11 @@ def main():
             suffix = os.extsep+"py"
             for script in os.listdir(script_path):
                 if script.endswith(suffix):
-                    events.load(script)
-                    
+                    try:
+                        events.load(script)
+                    except:
+                        traceback.print_exc()
+                        print "Failed loading script %s." % script
         except OSError:
             pass
     
