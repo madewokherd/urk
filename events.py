@@ -101,6 +101,7 @@ def load_pyfile(filename):
     if (ctime < ftime):
         try:
             py_compile.compile(filename)
+            code = pycfile_getcode(cfile)
         except:
             code = pyfile_getcode(filename)
     else:
@@ -264,15 +265,15 @@ def onCommandUnload(e):
 def onCommandReload(e):
     name = e.args[0]
     s_name = get_modulename(name)
-    temp = loaded[s_name]
-    if name not in loaded:
+    if s_name not in loaded:
+        temp = loaded[s_name]
         raise CommandError("The script isn't loaded yet; use /load instead") 
     unload(name)
     try:
         load(name)
     except:
         loaded[s_name] = temp
-        register_all(s_name, temp) 
+        register_all(s_name, temp)
         e.window.write(traceback.format_exc(), line_ending='')
         raise CommandError("Error loading the script")
 
