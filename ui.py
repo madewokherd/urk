@@ -28,6 +28,7 @@ PRIORITY_LOW = gobject.PRIORITY_LOW
 
 def set_clipboard(text):
     gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
+    gtk.clipboard_get(gtk.gdk.SELECTION_SECONDARY).set_text(text)
 
 class Source:
     __slots__ = ['enabled']
