@@ -107,7 +107,7 @@ Not yet implemented.
 
 About scripting:
 
-urk scripts are python souce files that contain definitions of functions with 
+urk scripts are python source files that contain definitions of functions with 
 certain "magic" names, like onText (for when someone sends a channel or private 
 message). See www.python.org for help on writing python code. The format for 
 onText is:
