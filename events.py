@@ -2,10 +2,8 @@ import sys
 import os
 import traceback
 import imp
-import marshal
-import py_compile
 
-magic = imp.get_magic()
+pyending = os.extsep + 'py'
 
 class error(Exception):
     pass
@@ -26,9 +24,8 @@ class data:
 
 trigger_sequence = ("setup", "pre", "def", "on", "post")
 
-if 'events' not in globals():
-    events = {}
-    loaded = {}
+events = {}
+loaded = {}
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
@@ -66,65 +63,24 @@ def register(e_name, e_stage, f_ref, s_name=""):
     events[e_name][e_stage] += [(f_ref, s_name)]
 
 # turn a filename (or module name) and trim it to the name of the module
-def get_modulename(s_name):
-    name = os.path.basename(s_name)
-    if name.endswith(os.extsep+"py"):
-        name = name[:-len(os.extsep+"py")]
-    return name
-
-def pycfile_getcode(filename):
-    f = file(filename,"rb")
-    f.read(8) #skip the header-like stuff
-    code = marshal.load(f)
-    f.close()
-    return code
-
-def pyfile_getcode(filename):
-    f = file(filename,"U")
-    source = f.read()
-    f.close()
-    return compile(source, filename, "exec")
-
-#load a .py file into a new module object without affecting sys.modules
-#compile to .pyo or .pyc just like real python 
-def load_pyfile(filename):
-    name = get_modulename(filename)
-    module = imp.new_module(name)
-    module.__file__ = filename
-    # go go gadget OBSCURE COPIED CODE
-    #this is from compileall, line 57
-    cfile = filename + (__debug__ and 'c' or 'o')
-    ftime = os.stat(filename).st_mtime
-    try: ctime = os.stat(cfile).st_mtime
-    except os.error: ctime = 0
-    
-    if (ctime < ftime):
-        try:
-            py_compile.compile(filename)
-            code = pycfile_getcode(cfile)
-        except:
-            code = pyfile_getcode(filename)
-    else:
-        try:
-            code = pycfile_getcode(cfile)
-        except:
-            code = pyfile_getcode(filename)
-    
-    exec code in module.__dict__
-    return module
+def get_scriptname(name):
+    s_name = os.path.basename(name)
+    if s_name.endswith(pyending):
+        s_name = s_name[:-len(pyending)]
+    return s_name
 
 #take a given script name and turn it into a filename
-def find_script(s_name):
+def get_filename(name):
     # split the directory and filename
-    dirname = os.path.dirname(s_name)
-    name = get_modulename(s_name)
+    dirname = os.path.dirname(name)
+    s_name = get_scriptname(name)
     
-    for i in dirname and (dirname) or sys.path:
-        filename = os.path.join(i, name+os.extsep+"py")
+    for path in dirname and (dirname,) or sys.path:
+        filename = os.path.join(path, s_name + pyending)
         if os.access(filename, os.R_OK):
             return filename
-    #else:
-    raise ImportError("No urk script %s found" % s_name) 
+
+    raise ImportError("No urk script %s found" % name) 
 
 # register the events defined by obj
 def register_all(name, obj):
@@ -146,47 +102,58 @@ def register_all(name, obj):
                 register(e_name, e_stage, f_ref, name)
                 
                 break
+
+#load a .py file into a new module object without affecting sys.modules
+def load_pyfile(filename):
+    s_name = get_scriptname(filename)
+
+    module = imp.new_module(s_name)
+    module.__file__ = filename
     
+    f = file(filename,"U")
+    source = f.read()
+    f.close()
+
+    exec compile(source, filename, "exec") in module.__dict__
+    return module
 
 # Load a python script and register
 # the functions defined in it for events.
 # Return True if we loaded the script, False if it was already loaded
-def load(s_name, module=None):
-    name = get_modulename(s_name)
-    filename = find_script(s_name)
+def load(name):
+    s_name = get_scriptname(name)
+    filename = get_filename(name)
     
-    if name in loaded:
+    if s_name in loaded:
         return False
     
-    loaded[name] = None
+    loaded[s_name] = None
     
     try:
-        loaded[name] = imported = load_pyfile(filename)
+        loaded[s_name] = load_pyfile(filename)
     except:
-        del loaded[name]
+        del loaded[s_name]
         raise
     
-    register_all(name, imported)
+    register_all(s_name, loaded[s_name])
     
     return True
 
 # Is the script with the given name loaded?
-def is_loaded(s_name):
-    name = get_modulename(s_name)
-    
-    return name in loaded
+def is_loaded(name):
+    return get_scriptname(name) in loaded
 
 # Remove any function which was defined in the given script
-def unload(s_name, reloading = False):
-    name = get_modulename(s_name)
+def unload(name):
+    s_name = get_scriptname(name)
     
-    del loaded[name]
+    del loaded[s_name]
 
     for e_name in list(events):
         for e_stage in list(events[e_name]):
             to_check = events[e_name][e_stage]
-            
-            events[e_name][e_stage] = [(f, m) for f, m in to_check if m != name]
+
+            events[e_name][e_stage] = [(f, m) for f, m in to_check if m != s_name]
             
             if not events[e_name][e_stage]:
                 del events[e_name][e_stage]
@@ -217,6 +184,8 @@ def run(text, window, network):
         
         if not c_data.done:
             c_data.window.write("* /%s: No such command exists" % (c_data.name))
+
+# Script stuff starts here
 
 def onCommandPyeval(e):
     loc = sys.modules.copy()
@@ -264,11 +233,15 @@ def onCommandUnload(e):
 
 def onCommandReload(e):
     name = e.args[0]
-    s_name = get_modulename(name)
+    s_name = get_scriptname(name)
+
     if s_name not in loaded:
-        temp = loaded[s_name]
         raise CommandError("The script isn't loaded yet; use /load instead") 
-    unload(name)
+    
+    temp = loaded[s_name]
+    
+    unload(s_name)
+
     try:
         load(name)
     except:
@@ -290,5 +263,3 @@ for name in globals():
     if name.startswith('onCommand'):
         register(name[2:], "on", globals()[name], '_events')
 del name
-
-#load('events')
