@@ -63,7 +63,7 @@ def onCommandAlias(e):
 def onCommandEdit(e):
     filename = ''
     try:
-        filename = events.find_script(e.args[0])
+        filename = events.get_filename(e.args[0])
     except ImportError:
         pass
     if not filename:
