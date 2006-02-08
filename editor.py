@@ -14,7 +14,7 @@ import urk
 
 class InfoWidget(gtk.HBox):
     def close(self, *args):
-        self._parent.remove(self)
+        self._parent.hide_info()
 
     def __init__(self, parent):
         gtk.HBox.__init__(self)
@@ -34,6 +34,9 @@ class InfoWidget(gtk.HBox):
 class ScriptEditorWidget(gtk.VBox):
     def show_info(self):
         self.pack_start(self.info, expand=False)
+    
+    def hide_info(self):
+        self.remove(self.info)
 
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
@@ -76,6 +79,7 @@ class ScriptEditorWidget(gtk.VBox):
             if events.is_loaded(self.filename):            
                 try:
                     events.reload(self.filename)
+                    self.hide_info()
                 except ImportError:
                     self.info.label.set_text("Oe noe, Import")
                     self.show_info()
