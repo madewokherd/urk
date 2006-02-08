@@ -161,6 +161,24 @@ def unload(name):
         if not events[e_name]:
             del events[e_name]
 
+def reload(name):
+    s_name = get_scriptname(name)
+
+    if s_name not in loaded:
+        return False
+    
+    temp = loaded[s_name]
+    
+    unload(s_name)
+
+    try:
+        load(name)
+        return True
+    except:
+        loaded[s_name] = temp
+        register_all(s_name, temp)
+        raise
+
 def run(text, window, network):
     split = text.split(' ')
 
@@ -216,10 +234,10 @@ def onCommandPyexec(e):
 def onCommandLoad(e):
     name = e.args[0]
     try:
-        if not load(name):
-            raise CommandError("The script is already loaded; use /reload instead")
-        else:
+        if load(name):
             e.window.write("* The script '%s' has been loaded." % name)
+        else:
+            raise CommandError("The script is already loaded; use /reload instead")
     except:
         e.window.write(traceback.format_exc(), line_ending='')
         raise CommandError("Error loading the script")
@@ -233,22 +251,14 @@ def onCommandUnload(e):
 
 def onCommandReload(e):
     name = e.args[0]
-    s_name = get_scriptname(name)
-
-    if s_name not in loaded:
-        raise CommandError("The script isn't loaded yet; use /load instead") 
     
-    temp = loaded[s_name]
-    
-    unload(s_name)
-
     try:
-        load(name)
+        if reload(name):
+            e.window.write("* The script '%s' has been reloaded." % name)
+        else:
+            raise CommandError("The script isn't loaded yet; use /load instead") 
     except:
-        loaded[s_name] = temp
-        register_all(s_name, temp)
         e.window.write(traceback.format_exc(), line_ending='')
-        raise CommandError("Error loading the script")
 
 def onCommandScripts(e):
     e.window.write("Loaded scripts:")
