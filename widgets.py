@@ -430,6 +430,13 @@ class TextOutput(gtk.TextView):
                 if c_data.menu:
                     menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
                     return True
+
+            data = events.data(menu=[])
+            events.trigger("MainMenu", data)
+                    
+            if data.menu:
+                menu_from_list(data.menu).popup(None, None, None, event.button, event.time)
+                return True
     
     def mouseup(self, widget, event):
         if event.button == 1 and not self.get_buffer().get_selection_bounds():
@@ -697,8 +704,6 @@ class UrkUITabs(gtk.Window):
 
         self.tabs.set_scrollable(True)
         self.tabs.set_property("can-focus", False)
-        
-        
 
         def window_change(notebook, wptr, page_num):
             events.trigger("Active", notebook.get_nth_page(page_num))
@@ -706,7 +711,8 @@ class UrkUITabs(gtk.Window):
         self.tabs.connect("switch-page", window_change)
 
         box = gtk.VBox(False)
-        box.pack_start(menu, expand=False)
+        if not conf.get('ui-gtk/dont_show_menubar'):
+            box.pack_start(menu, expand=False)
         box.pack_end(self.tabs)
 
         gtk.Window.add(self, box)
