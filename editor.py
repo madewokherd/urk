@@ -12,8 +12,29 @@ import ui
 from conf import conf
 import urk
 
+class InfoWidget(gtk.HBox):
+    def close(self, *args):
+        self._parent.remove(self)
+
+    def __init__(self, parent):
+        gtk.HBox.__init__(self)
+        
+        self._parent = parent
+        
+        self.label = gtk.Label()
+        self.close_button = gtk.Button(stock='gtk-close')
+        
+        self.close_button.connect('clicked', self.close)
+        
+        self.pack_start(self.label)
+        self.pack_start(self.close_button, expand=False)
+        
+        self.show_all()      
 
 class ScriptEditorWidget(gtk.VBox):
+    def show_info(self):
+        self.pack_start(self.info, expand=False)
+
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
             self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
@@ -52,26 +73,34 @@ class ScriptEditorWidget(gtk.VBox):
 
             file(self.filename, "wb").write(text)
 
-            if events.is_loaded(self.filename):
-                events.load(self.filename, True)
+            if events.is_loaded(self.filename):            
+                try:
+                    events.reload(self.filename)
+                except ImportError:
+                    self.info.label.set_text("Oe noe, Import")
+                    self.show_info()
+                except SyntaxError:
+                    self.info.label.set_text("Oe noe, Syntax")
+                    self.show_info()
     
     def update_title(self):
-        self.win.set_title("%s (%s)" % (events.get_modulename(self.filename),self.filename))
+        self.win.set_title("%s (%s)" % (events.get_scriptname(self.filename),self.filename))
     
     def __init__(self):
         gtk.VBox.__init__(self)
         
+        self.info = InfoWidget(self)
         self.edit_widget()
-
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-
-        self.pack_start(topbox)
         
         save_button = gtk.Button("Save")
         save_button.connect("clicked", self.save)
         self.pack_end(save_button, expand=False)
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+        
+        self.pack_end(topbox)
 
         self.show_all()
 
