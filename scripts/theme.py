@@ -14,8 +14,7 @@ textareas = {
 ui.set_style("view", textareas)
 ui.set_style("nicklist", textareas)
 
-#take an event e, trigger the highlight event if necessary, and return a
-# (formatted) string
+#take an event e and trigger the highlight event if necessary
 def hilight_text(e):
     if not hasattr(e,"hilight"):
         e.hilight = []
