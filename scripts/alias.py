@@ -13,11 +13,6 @@ aliases = conf.get("aliases",{
     'clear':'window.output.clear()',
     })
 
-#if we're reloading, we need to get rid of old onCommand events
-for i in globals().copy():
-    if i.startswith("onCommand"):
-        del globals()[i]
-
 class CommandHandler:
     __slots__ = ["command"]
     def __init__(self, command):
