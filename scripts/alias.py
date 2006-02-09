@@ -45,7 +45,7 @@ def onCommandAlias(e):
         aliases[name] = command
         conf['aliases'] = aliases
         e.window.write("* Created an alias %s%s to %s" % (conf.get('command-prefix','/'),name,command))
-        events.load(__name__,reloading=True)
+        events.reload(__name__)
     elif len(e.args) == 1:
         name = e.args[0].lower()
         if name in aliases:
