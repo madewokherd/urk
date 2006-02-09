@@ -531,7 +531,6 @@ class TextOutput(gtk.TextView):
         buffer.create_mark("end", buffer.get_end_iter(), False)
         def scroll(*args):
             if self.to_scroll:
-                buffer.place_cursor(buffer.get_end_iter())
                 self.scroll_mark_onscreen(buffer.get_mark("end"))
 
         self.connect("size-allocate", scroll)
@@ -608,10 +607,13 @@ class FindBox(gtk.HBox):
             
         buffer = self.win.output.get_buffer()
         
-        if buffer.get_selection_bounds() and button == self.down:
-            _, cursor_iter = buffer.get_selection_bounds()
+        if buffer.get_selection_bounds():
+            if button == self.down:
+                _, cursor_iter = buffer.get_selection_bounds()
+            else:
+                cursor_iter, _ = buffer.get_selection_bounds()
         else:
-           cursor_iter = buffer.get_iter_at_mark(buffer.get_insert())
+           cursor_iter = buffer.get_end_iter()
     
         if button == self.up:
             cursor = cursor_iter.backward_search(
