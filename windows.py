@@ -53,17 +53,17 @@ def StatusWindow(self):
     self.write = get_default_write(self)
     self.connect("key-press-event", get_default_transfer_text(self))
 
-    topbox = gtk.ScrolledWindow()
-    topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-    topbox.add(self.output)
-
-    self.pack_start(topbox)
-
     botbox = gtk.HBox()
     botbox.pack_start(self.input)
     botbox.pack_end(self.nick_label, expand=False)
 
     self.pack_end(botbox, expand=False)
+    
+    topbox = gtk.ScrolledWindow()
+    topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+    topbox.add(self.output)
+
+    self.pack_end(topbox)
 
     self.show_all()
      
@@ -117,16 +117,16 @@ def ChannelWindow(self):
         conf["ui-gtk/nicklist-width"] = rectangle.width
     nlbox.connect("size-allocate", save_nicklist_width)
     
-    pane = gtk.HPaned()  
-    pane.pack1(topbox, resize=True, shrink=False)
-    pane.pack2(nlbox, resize=False, shrink=True)
-    
-    self.pack_start(pane)
-    
     botbox = gtk.HBox()
     botbox.pack_start(self.input)
     botbox.pack_end(self.nick_label, expand=False)
     
     self.pack_end(botbox, expand=False)
+    
+    pane = gtk.HPaned()  
+    pane.pack1(topbox, resize=True, shrink=False)
+    pane.pack2(nlbox, resize=False, shrink=True)
+    
+    self.pack_end(pane)
 
     self.show_all()
