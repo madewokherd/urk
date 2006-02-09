@@ -38,12 +38,18 @@ class EditorWidget(gtk.VBox):
             
             buffer.set_check_brackets(True)
             buffer.set_highlight(True)
+            
+            buffer.connect('modified-changed', self.update_title)
+            buffer.set_modified(False)
     else:
         def edit_widget(self):
             self.output = gtk.TextView()
             
             self.output.modify_font(pango.FontDescription('monospace 9'))
             self.output.set_wrap_mode(gtk.WRAP_WORD)
+            
+            buffer.connect('modified-changed', self.update_title)
+            buffer.set_modified(False)
 
     def save(self, *args):
         if self.filename:
@@ -54,7 +60,9 @@ class EditorWidget(gtk.VBox):
                 )
 
             file(self.filename, "wb").write(text)
-
+            
+            self.output.get_buffer().set_modified(False)
+            
             if events.is_loaded(self.filename):            
                 try:
                     events.reload(self.filename)
@@ -75,9 +83,9 @@ class EditorWidget(gtk.VBox):
                 
                     self.win.status.push(0, "SyntaxError: %s" % e.msg)
     
-    def update_title(self):
+    def update_title(self, *args):
         self.win.set_title(
-            "%s (%s)" % (events.get_scriptname(self.filename), self.filename)
+            "%s%s (%s)" % (self.output.get_buffer().get_modified() and '*' or '', events.get_scriptname(self.filename), self.filename)
             )
     
     def __init__(self, window):
@@ -161,6 +169,7 @@ def edit(filename):
 
     widget.output.get_buffer().set_text(file(filename).read())
     widget.filename = filename
+    widget.output.get_buffer().set_modified(False)
     widget.update_title()
 
     if GTK_SOURCE_VIEW:
