@@ -531,6 +531,7 @@ class TextOutput(gtk.TextView):
         buffer.create_mark("end", buffer.get_end_iter(), False)
         def scroll(*args):
             if self.to_scroll:
+                buffer.place_cursor(buffer.get_end_iter())
                 self.scroll_mark_onscreen(buffer.get_mark("end"))
 
         self.connect("size-allocate", scroll)
@@ -591,6 +592,79 @@ class WindowLabel(gtk.EventBox):
         self.update()
         self.show_all()
         
+class FindBox(gtk.HBox):
+    def remove(self, *args):
+        self.parent.remove(self)
+        self.win.focus()
+        
+    def enter(self, entry):
+        self.clicked(self.up)
+
+    def clicked(self, button):
+        text = self.textbox.get_text()
+
+        if not text:
+            return
+            
+        buffer = self.win.output.get_buffer()
+        
+        if buffer.get_selection_bounds() and button == self.down:
+            _, cursor_iter = buffer.get_selection_bounds()
+        else:
+           cursor_iter = buffer.get_iter_at_mark(buffer.get_insert())
+    
+        if button == self.up:
+            cursor = cursor_iter.backward_search(
+                text, gtk.TEXT_SEARCH_VISIBLE_ONLY
+                )
+        elif button == self.down:
+            cursor = cursor_iter.forward_search(
+                text, gtk.TEXT_SEARCH_VISIBLE_ONLY
+                )
+
+        if not cursor:
+            return
+            
+        fr, to = cursor
+        
+        if button == self.up:
+            buffer.place_cursor(fr)
+            self.win.output.scroll_to_iter(fr, 0)
+        elif button == self.down:
+            buffer.place_cursor(to)
+            self.win.output.scroll_to_iter(to, 0)
+            
+        buffer.select_range(*cursor)
+        
+        cursor_iter = buffer.get_iter_at_mark(buffer.get_insert())
+
+    def __init__(self, window):
+        gtk.HBox.__init__(self)
+        
+        self.win = window
+
+        self.textbox = gtk.Entry()
+        
+        self.textbox.connect('focus-out-event', self.remove)
+        self.textbox.connect('activate', self.enter)
+        
+        self.up = gtk.Button(stock='gtk-go-up')
+        self.down = gtk.Button(stock='gtk-go-down')
+        
+        self.up.connect('clicked', self.clicked)
+        self.down.connect('clicked', self.clicked)
+        
+        self.up.props.can_focus = False
+        self.down.props.can_focus = False
+                
+        self.pack_start(gtk.Label('Find:'), expand=False)
+        self.pack_start(self.textbox)
+
+        self.pack_start(self.up, expand=False)
+        self.pack_start(self.down, expand=False)
+
+        self.show_all()
+
 class UrkUITabs(gtk.Window):
     def set_title(self, title=None):
         if title is None:

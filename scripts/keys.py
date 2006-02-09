@@ -42,3 +42,12 @@ def onKeyPress(e):
 
     elif e.key == '^w':
         ui.windows.manager.get_active().close()
+        
+    elif e.key == '^f':
+        window = ui.windows.manager.get_active()
+        
+        find = ui.widgets.FindBox(window)
+        
+        window.pack_start(find, expand=False)
+        
+        find.textbox.grab_focus()
