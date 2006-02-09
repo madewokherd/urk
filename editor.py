@@ -40,7 +40,6 @@ class EditorWidget(gtk.VBox):
             buffer.set_highlight(True)
             
             buffer.connect('modified-changed', self.update_title)
-            buffer.set_modified(False)
     else:
         def edit_widget(self):
             self.output = gtk.TextView()
@@ -49,7 +48,6 @@ class EditorWidget(gtk.VBox):
             self.output.set_wrap_mode(gtk.WRAP_WORD)
             
             buffer.connect('modified-changed', self.update_title)
-            buffer.set_modified(False)
 
     def save(self, *args):
         if self.filename:
@@ -66,7 +64,7 @@ class EditorWidget(gtk.VBox):
             if events.is_loaded(self.filename):            
                 try:
                     events.reload(self.filename)
-                    self.win.status.push(0, "Saved %s" % self.filename)
+                    self.win.status.push(0, "Saved and reloaded %s" % self.filename)
 
                 except ImportError, e:
                     self.win.status.push(0, "ImportError: %s" % e.msg)
@@ -82,6 +80,9 @@ class EditorWidget(gtk.VBox):
                     self.output.scroll_to_iter(cursor, 0)
                 
                     self.win.status.push(0, "SyntaxError: %s" % e.msg)
+            
+            else:
+                self.win.status.push(0, "Saved %s" % self.filename)
     
     def update_title(self, *args):
         self.win.set_title(
@@ -167,8 +168,8 @@ def edit(filename):
     if GTK_SOURCE_VIEW:
         widget.output.get_buffer().begin_not_undoable_action()
 
-    widget.output.get_buffer().set_text(file(filename).read())
     widget.filename = filename
+    widget.output.get_buffer().set_text(file(filename).read())
     widget.output.get_buffer().set_modified(False)
     widget.update_title()
 
