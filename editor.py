@@ -12,42 +12,7 @@ import ui
 from conf import conf
 import urk
 
-class InfoWidget(gtk.HBox):
-    def close(self, *args):
-        self._parent.hide_info()
-
-    def __init__(self, parent):
-        gtk.HBox.__init__(self)
-
-        self._parent = parent
-        
-        self.label = gtk.Label()
-        self.close_button = gtk.Button(stock='gtk-close')
-        
-        self.close_button.connect('clicked', self.close)
-        
-        self.pack_start(self.label)
-        self.pack_start(self.close_button, expand=False)
-        
-        self.label.modify_base(
-            gtk.STATE_NORMAL,
-            gtk.gdk.Color(
-                red=int(1*65535),
-                green=int(1*65535),
-                blue=int(1*65535)
-                )
-            )
-        
-        self.show_all()      
-
 class EditorWidget(gtk.VBox):
-    def show_info(self):
-        self.pack_start(self.info, expand=False)
-    
-    def hide_info(self):
-        if self.info in self.get_children():
-            self.remove(self.info)
-
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
             self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
@@ -118,7 +83,6 @@ class EditorWidget(gtk.VBox):
         
         self.win = window
         
-        self.info = InfoWidget(self)
         self.edit_widget()
         
         topbox = gtk.ScrolledWindow()
