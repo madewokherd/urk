@@ -58,7 +58,7 @@ class EditorWidget(gtk.VBox):
                     events.reload(self.filename)
                     self.win.status.push(0, "Saved %s" % self.filename)
 
-                except ImportError:
+                except ImportError, e:
                     self.win.status.push(0, "ImportError: %s" % e.msg)
 
                 except SyntaxError, e:
