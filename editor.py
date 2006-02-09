@@ -17,18 +17,20 @@ class EditorWidget(gtk.VBox):
         def edit_widget(self):
             self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
             
-            self.output.set_auto_indent(True)
             self.output.set_show_line_numbers(True)
             self.output.set_show_line_markers(True)
+            
+            self.output.set_auto_indent(True)
             self.output.set_insert_spaces_instead_of_tabs(True)
+            self.output.set_tabs_width(4)
+
             self.output.set_show_margin(True)
             self.output.set_margin(80)
+
             self.output.modify_font(pango.FontDescription('monospace 9'))
             self.output.set_wrap_mode(gtk.WRAP_WORD)
-            self.output.set_tabs_width(4)
-            
-            buffer = self.output.get_buffer()
 
+            buffer = self.output.get_buffer()
             buffer.set_language(
                 gtksourceview.SourceLanguagesManager()
                     .get_language_from_mime_type('text/x-python')
