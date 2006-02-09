@@ -18,7 +18,7 @@ class InfoWidget(gtk.HBox):
 
     def __init__(self, parent):
         gtk.HBox.__init__(self)
-        
+
         self._parent = parent
         
         self.label = gtk.Label()
@@ -29,14 +29,24 @@ class InfoWidget(gtk.HBox):
         self.pack_start(self.label)
         self.pack_start(self.close_button, expand=False)
         
+        self.label.modify_base(
+            gtk.STATE_NORMAL,
+            gtk.gdk.Color(
+                red=int(1*65535),
+                green=int(1*65535),
+                blue=int(1*65535)
+                )
+            )
+        
         self.show_all()      
 
-class ScriptEditorWidget(gtk.VBox):
+class EditorWidget(gtk.VBox):
     def show_info(self):
         self.pack_start(self.info, expand=False)
     
     def hide_info(self):
-        self.remove(self.info)
+        if self.info in self.get_children():
+            self.remove(self.info)
 
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
@@ -44,6 +54,7 @@ class ScriptEditorWidget(gtk.VBox):
             
             self.output.set_auto_indent(True)
             self.output.set_show_line_numbers(True)
+            self.output.set_show_line_markers(True)
             self.output.set_insert_spaces_instead_of_tabs(True)
             self.output.set_show_margin(True)
             self.output.set_margin(80)
@@ -52,10 +63,11 @@ class ScriptEditorWidget(gtk.VBox):
             self.output.set_tabs_width(4)
             
             buffer = self.output.get_buffer()
-            language = gtksourceview.SourceLanguagesManager(). \
-                            get_language_from_mime_type('text/x-python')
-            
-            buffer.set_language(language)
+
+            buffer.set_language(
+                gtksourceview.SourceLanguagesManager()
+                    .get_language_from_mime_type('text/x-python')
+                    )
             
             buffer.set_check_brackets(True)
             buffer.set_highlight(True)
@@ -66,7 +78,7 @@ class ScriptEditorWidget(gtk.VBox):
             self.output.modify_font(pango.FontDescription('monospace 9'))
             self.output.set_wrap_mode(gtk.WRAP_WORD)
 
-    def save(self, button):
+    def save(self, *args):
         if self.filename:
             buffer = self.output.get_buffer()
             text = buffer.get_text(
@@ -79,26 +91,35 @@ class ScriptEditorWidget(gtk.VBox):
             if events.is_loaded(self.filename):            
                 try:
                     events.reload(self.filename)
-                    self.hide_info()
+                    self.win.status.push(0, "Saved %s" % self.filename)
+
                 except ImportError:
-                    self.info.label.set_text("Oe noe, Import")
-                    self.show_info()
-                except SyntaxError:
-                    self.info.label.set_text("Oe noe, Syntax")
-                    self.show_info()
+                    self.win.status.push(0, "ImportError: %s" % e.msg)
+
+                except SyntaxError, e:
+                    buffer = self.output.get_buffer()
+                    
+                    cursor = buffer.get_iter_at_line_offset(
+                        e.lineno-1, e.offset
+                        )
+                    
+                    buffer.place_cursor(cursor)
+                    self.output.scroll_to_iter(cursor, 0)
+                
+                    self.win.status.push(0, "SyntaxError: %s" % e.msg)
     
     def update_title(self):
-        self.win.set_title("%s (%s)" % (events.get_scriptname(self.filename),self.filename))
+        self.win.set_title(
+            "%s (%s)" % (events.get_scriptname(self.filename), self.filename)
+            )
     
-    def __init__(self):
+    def __init__(self, window):
         gtk.VBox.__init__(self)
+        
+        self.win = window
         
         self.info = InfoWidget(self)
         self.edit_widget()
-        
-        save_button = gtk.Button("Save")
-        save_button.connect("clicked", self.save)
-        self.pack_end(save_button, expand=False)
         
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -107,9 +128,67 @@ class ScriptEditorWidget(gtk.VBox):
         self.pack_end(topbox)
 
         self.show_all()
+        
+def get_menu_for(editor):
+    return (
+        ('ScriptMenu', None, '_Script'),
+            ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, editor.save),
+        )
+
+menu_ui = """
+<ui>
+ <menubar name="MenuBar">
+  <menu action="ScriptMenu">
+   <menuitem action="Save"/>
+  </menu>
+ </menubar>
+</ui>
+"""
+
+class EditorWindow(gtk.Window):
+    def __init__(self):
+        gtk.Window.__init__(self)
+        
+        self.set_title('Edit-o-rama') # XXX replace this
+        
+        try:
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+            
+        self.set_default_size(640, 480)
+        #self.set_border_width(5)
+
+        self.editor = EditorWidget(self)
+        self.status = gtk.Statusbar()
+        self.status.set_has_resize_grip(True)
+
+        actiongroup = gtk.ActionGroup('Edit')
+        actiongroup.add_actions(get_menu_for(self.editor))
+
+        uimanager = gtk.UIManager()
+        uimanager.add_ui_from_string(menu_ui)
+        uimanager.insert_action_group(actiongroup, 0)
+    
+        accelgroup = uimanager.get_accel_group()
+        self.add_accel_group(accelgroup)
+        for action in actiongroup.list_actions():
+            action.set_accel_group(accelgroup)
+        
+        actiongroup.get_action('Save').create_menu_item()
+
+        box = gtk.VBox()
+        box.pack_start(uimanager.get_widget("/MenuBar"), expand=False)
+        box.pack_start(self.editor)
+        box.pack_end(self.status, expand=False)
+        
+        self.add(box)    
+        self.show_all()
 
 def edit(filename):
-    widget = main()
+    widget = EditorWindow().editor
     
     if GTK_SOURCE_VIEW:
         widget.output.get_buffer().begin_not_undoable_action()
@@ -122,23 +201,4 @@ def edit(filename):
         widget.output.get_buffer().end_not_undoable_action()
 
 def main():
-    win = gtk.Window()
-    win.set_title('Edit-o-rama') # XXX replace this
-    
-    try:
-        w.set_icon(
-            gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
-            )
-    except:
-        pass
-
-    win.set_default_size(640, 480)
-    win.set_border_width(5)
-    
-    widget = ScriptEditorWidget()
-    widget.win = win    #This seems a bit wrong..
-    
-    win.add(widget)    
-    win.show_all()
-    
-    return widget
+    EditorWindow()
