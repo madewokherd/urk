@@ -395,7 +395,7 @@ class TextOutput(gtk.TextView):
         buffer = self.get_buffer()
         
         cc = buffer.get_char_count()
-        
+
         buffer.insert(buffer.get_end_iter(), text + line_ending)
         
         buffer.apply_tag_by_name(
@@ -526,23 +526,22 @@ class TextOutput(gtk.TextView):
         self.set_size_request(0, -1)
 
         self.to_scroll = True
+        self.scroller = gtk.Adjustment()
 
-        buffer = self.get_buffer()
-        buffer.create_mark("end", buffer.get_end_iter(), False)
         def scroll(*args):
             if self.to_scroll:
-                self.scroll_mark_onscreen(buffer.get_mark("end"))
+                self.scroller.value = self.scroller.upper - self.scroller.page_size
 
         self.connect("size-allocate", scroll)
         
-        def connect_adjustments(self, hadj, vadj):
+        def connect_adjustments(self, _adj, vadj):
             if vadj:
                 def set_scroll(adj):
-                    def really_set_scroll():
-                        self.to_scroll = adj.value + adj.page_size >= adj.upper
-                    ui.register_idle(really_set_scroll)
-            
+                    self.to_scroll = adj.value + adj.page_size >= adj.upper
+
                 vadj.connect("value-changed", set_scroll)
+                
+            self.scroller = vadj
 
         self.connect("set-scroll-adjustments", connect_adjustments)
 
