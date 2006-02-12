@@ -581,14 +581,10 @@ class WindowLabel(gtk.EventBox):
         if event.button == 3: # right click
             c_data = events.data(window=self.win, menu=[])
             events.trigger("WindowMenu", c_data)
-            
-            import sys
-            
+
             c_data.menu += [
                 None,
                 ("Close", gtk.STOCK_CLOSE, self.win.close),
-                ("Bah", lambda: sys.stdout.write("Bah\n")),
-                ("Bah2", lambda: sys.stdout.write("Bah2\n")),
                 ]
             
             menu = gtk.Menu()
