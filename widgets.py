@@ -61,35 +61,36 @@ def set_style(widget, style):
     
     styles[widget] = style
     
-def menu_from_list(alist, menuitem=None):
-    menu = gtk.Menu()
+def menu_from_list(alist):
+    last = None
+    for item in alist:
+        if item != last:
+            if item:
+                if len(item) == 2:
+                    name, function = item
+                    
+                    menuitem = gtk.ImageMenuItem(name)
+                    
+                elif len(item) == 3:
+                    name, stock_id, function = item
+                    
+                    menuitem = gtk.ImageMenuItem(stock_id)
+                    
+                if isinstance(function, list):
+                    submenu = gtk.Menu()
+                    for subitem in menu_from_list(function):
+                        submenu.append(subitem)
+                    menuitem.set_submenu(submenu)
 
-    def callback(action, f): f()
-    
-    for item, next in zip(alist, alist[1:] + [None]): 
-        if item:
-            if len(item) == 2:
-                name, function = item
-                
-                menuitem = gtk.ImageMenuItem(name)
-                
-            elif len(item) == 3:
-                name, stock_id, function = item
-                
-                menuitem = gtk.ImageMenuItem(stock_id)
-                
-            if isinstance(function, list):
-                menuitem.set_submenu(menu_from_list(function))
+                else:
+                    menuitem.connect("activate", lambda a, f: f(), function)
+
+                yield menuitem
+
             else:
-                menuitem.connect("activate", callback, function)
+                yield gtk.SeparatorMenuItem()
                 
-            menu.append(menuitem)
-
-        elif menuitem and next:
-            menu.append(gtk.SeparatorMenuItem())
-       
-    menu.show_all()         
-    return menu
+        last = item
 
 class Nicklist:
     def click(self, widget, event):
@@ -330,11 +331,10 @@ def word_from_pos(text, pos):
 
         return fr + to, pos - len(fr), pos + len(to)
  
-def get_iter_at_event(view, event):
-    x, y = event.get_coords()       
-    x, y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
-    
-    return view.get_iter_at_location(x, y)
+def get_iter_at_coords(view, x, y):
+    return view.get_iter_at_location(
+        *view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
+        )
 
 def get_event_at_iter(view, iter):
     buffer = view.get_buffer()
@@ -417,30 +417,39 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(end_i + cc)
                 )
     
-    def mousedown(self, widget, event):
-        if event.button == 3:
-            hover_iter = get_iter_at_event(self, event)
+    def popup(self, widget, menu):       
+        hover_iter = get_iter_at_coords(self, *self.hover_coords)
+        
+        menuitems = []
+        if not hover_iter.ends_line():
+            c_data = get_event_at_iter(self, hover_iter)
+            c_data.menu = []
             
-            if not hover_iter.ends_line():
-                c_data = get_event_at_iter(self, hover_iter)
-                c_data.menu = []
-
-                events.trigger("RightClick", c_data)
+            events.trigger("RightClick", c_data)
             
-                if c_data.menu:
-                    menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
-                    return True
-
+            menuitems = c_data.menu
+            
+        if not menuitems:
             data = events.data(menu=[])
             events.trigger("MainMenu", data)
-                    
-            if data.menu:
-                menu_from_list(data.menu).popup(None, None, None, event.button, event.time)
-                return True
+            
+            menuitems = data.menu
+
+        for child in menu.get_children():
+            menu.remove(child)
+        
+        for item in menu_from_list(menuitems):
+            menu.append(item)
+            
+        menu.show_all()
+    
+    def mousedown(self, widget, event):
+        if event.button == 3:
+            self.hover_coords = event.get_coords()
     
     def mouseup(self, widget, event):
         if event.button == 1 and not self.get_buffer().get_selection_bounds():
-            hover_iter = get_iter_at_event(self, event)
+            hover_iter = get_iter_at_coords(self, event.x, event.y)
         
             if not hover_iter.ends_line():
                 c_data = get_event_at_iter(self, hover_iter)
@@ -467,7 +476,7 @@ class TextOutput(gtk.TextView):
         if self.linking:
             self.clear_hover()
 
-        hover_iter = get_iter_at_event(self, event)
+        hover_iter = get_iter_at_coords(self, event.x, event.y)
 
         if not hover_iter.ends_line():        
             h_data = get_event_at_iter(self, hover_iter)
@@ -522,6 +531,10 @@ class TextOutput(gtk.TextView):
         self.connect("button-press-event", self.mousedown)
         self.connect("button-release-event", self.mouseup)
         self.connect("leave-notify-event", self.clear_hover)
+          
+        self.hover_coords = 0, 0
+        
+        self.connect("populate-popup", self.popup)
         
         self.set_size_request(0, -1)
 
@@ -569,14 +582,20 @@ class WindowLabel(gtk.EventBox):
             c_data = events.data(window=self.win, menu=[])
             events.trigger("WindowMenu", c_data)
             
+            import sys
+            
             c_data.menu += [
                 None,
-                ("Close", gtk.STOCK_CLOSE, self.win.close)
+                ("Close", gtk.STOCK_CLOSE, self.win.close),
+                ("Bah", lambda: sys.stdout.write("Bah\n")),
+                ("Bah2", lambda: sys.stdout.write("Bah2\n")),
                 ]
             
-            menu_from_list(
-                c_data.menu
-                ).popup(None, None, None, event.button, event.time)
+            menu = gtk.Menu()
+            for item in menu_from_list(c_data.menu):
+                menu.append(item)
+            menu.show_all()
+            menu.popup(None, None, None, event.button, event.time)
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)
@@ -594,9 +613,6 @@ class FindBox(gtk.HBox):
     def remove(self, *args):
         self.parent.remove(self)
         self.win.focus()
-        
-    def enter(self, entry):
-        self.clicked(self.up)
 
     def clicked(self, button):
         text = self.textbox.get_text()
@@ -644,11 +660,6 @@ class FindBox(gtk.HBox):
         
         self.win = window
 
-        self.textbox = gtk.Entry()
-        
-        self.textbox.connect('focus-out-event', self.remove)
-        self.textbox.connect('activate', self.enter)
-        
         self.up = gtk.Button(stock='gtk-go-up')
         self.down = gtk.Button(stock='gtk-go-down')
         
@@ -657,6 +668,11 @@ class FindBox(gtk.HBox):
         
         self.up.props.can_focus = False
         self.down.props.can_focus = False
+        
+        self.textbox = gtk.Entry()
+        
+        self.textbox.connect('focus-out-event', self.remove)
+        self.textbox.connect('activate', self.clicked, self.up)
                 
         self.pack_start(gtk.Label('Find:'), expand=False)
         self.pack_start(self.textbox)
@@ -751,7 +767,9 @@ class UrkUITabs(gtk.Window):
             data = events.data(menu=[])
             events.trigger("MainMenu", data)
 
-            menu = menu_from_list(data.menu)
+            menu = gtk.Menu()
+            for item in menu_from_list(data.menu):
+                menu.append(item)
             menu.show_all()
             
             urk_menu.set_submenu(menu)
