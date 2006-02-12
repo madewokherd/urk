@@ -62,6 +62,9 @@ def set_style(widget, style):
     styles[widget] = style
     
 def menu_from_list(alist):
+    while alist and not alist[-1]:
+        alist.pop(-1)
+
     last = None
     for item in alist:
         if item != last:
@@ -109,7 +112,11 @@ class Nicklist:
             events.trigger("ListRightClick", c_data)
             
             if c_data.menu:
-                menu_from_list(c_data.menu).popup(None, None, None, event.button, event.time)
+                menu = gtk.Menu()
+                for item in menu_from_list(c_data.menu):
+                    menu.append(item)
+                menu.show_all()
+                menu.popup(None, None, None, event.button, event.time)
     
     def __getitem__(self, pos):
         return self.view.get_model()[pos][0]
