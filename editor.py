@@ -13,6 +13,19 @@ from conf import conf
 import urk
 
 class EditorWidget(gtk.VBox):
+    def load(self, filename):
+        buffer = self.output.get_buffer()
+
+        if GTK_SOURCE_VIEW:
+            buffer.begin_not_undoable_action()
+
+        buffer.set_text(file(filename).read())
+        buffer.set_modified(False)
+        self.win.title()
+
+        if GTK_SOURCE_VIEW:
+            buffer.end_not_undoable_action()
+
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
             self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
@@ -39,7 +52,7 @@ class EditorWidget(gtk.VBox):
             buffer.set_check_brackets(True)
             buffer.set_highlight(True)
             
-            buffer.connect('modified-changed', self.update_title)
+            buffer.connect('modified-changed', self.win.title)
     else:
         def edit_widget(self):
             self.output = gtk.TextView()
@@ -47,7 +60,8 @@ class EditorWidget(gtk.VBox):
             self.output.modify_font(pango.FontDescription('monospace 9'))
             self.output.set_wrap_mode(gtk.WRAP_WORD)
             
-            buffer.connect('modified-changed', self.update_title)
+            buffer = self.output.get_buffer()
+            buffer.connect('modified-changed', self.win.title)
 
     def save(self, *args):
         if self.filename:
@@ -83,19 +97,17 @@ class EditorWidget(gtk.VBox):
             
             else:
                 self.win.status.push(0, "Saved %s" % self.filename)
-    
-    def update_title(self, *args):
-        self.win.set_title(
-            "%s%s (%s)" % (self.output.get_buffer().get_modified() and '*' or '', events.get_scriptname(self.filename), self.filename)
-            )
-    
-    def __init__(self, window):
+
+    def __init__(self, window, filename):
         gtk.VBox.__init__(self)
         
         self.win = window
+        self.filename = filename
         
         self.edit_widget()
-        
+        if self.filename:
+            self.load(self.filename)
+
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         topbox.add(self.output)
@@ -121,25 +133,20 @@ menu_ui = """
 """
 
 class EditorWindow(gtk.Window):
-    def __init__(self):
-        gtk.Window.__init__(self)
-        
-        self.set_title('Edit-o-rama') # XXX replace this
-        
-        try:
-            self.set_icon(
-                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
-                )
-        except:
-            pass
-            
-        self.set_default_size(640, 480)
-        #self.set_border_width(5)
+    def title(self, *args):
+        if self.editor.output.get_buffer().get_modified():
+            modified = '*'
+        else:
+            modified = ''
+    
+        self.set_title(
+            "%s%s (%s)" % (
+                modified,
+                events.get_scriptname(self.editor.filename),
+                self.editor.filename
+                ))
 
-        self.editor = EditorWidget(self)
-        self.status = gtk.Statusbar()
-        self.status.set_has_resize_grip(True)
-
+    def menu(self):
         actiongroup = gtk.ActionGroup('Edit')
         actiongroup.add_actions(get_menu_for(self.editor))
 
@@ -153,28 +160,35 @@ class EditorWindow(gtk.Window):
             action.set_accel_group(accelgroup)
         
         actiongroup.get_action('Save').create_menu_item()
+        
+        return uimanager.get_widget("/MenuBar")
+
+    def __init__(self, filename):
+        gtk.Window.__init__(self)
+        
+        try:
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+            
+        self.set_default_size(640, 480)
+
+        self.editor = EditorWidget(self, filename)
+
+        self.status = gtk.Statusbar()
+        self.status.set_has_resize_grip(True)
+        
+        menu = self.menu()
 
         box = gtk.VBox()
-        box.pack_start(uimanager.get_widget("/MenuBar"), expand=False)
+        box.pack_start(menu, expand=False)
         box.pack_start(self.editor)
         box.pack_end(self.status, expand=False)
         
         self.add(box)    
         self.show_all()
 
-def edit(filename):
-    widget = EditorWindow().editor
-    
-    if GTK_SOURCE_VIEW:
-        widget.output.get_buffer().begin_not_undoable_action()
-
-    widget.filename = filename
-    widget.output.get_buffer().set_text(file(filename).read())
-    widget.output.get_buffer().set_modified(False)
-    widget.update_title()
-
-    if GTK_SOURCE_VIEW:
-        widget.output.get_buffer().end_not_undoable_action()
-
-def main():
-    EditorWindow()
+def main(filename=None):
+    EditorWindow(filename)
