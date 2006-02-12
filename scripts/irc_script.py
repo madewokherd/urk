@@ -447,8 +447,15 @@ def onStart(e):
         nw.connect()
 
 def onConnect(e):
-    for command in conf.get('networks', {}).get(e.network.name, {}).get('perform', []):
+    network_info = conf.get('networks', {}).get(e.network.name, {})
+
+    for command in network_info.get('perform', []):
         events.run(command, e.window, e.network)
+    
+    tojoin = ','.join(network_info.get('join', [])
+    if tojoin:
+        events.run('join %s' % tojoin)
+    
     if hasattr(e.network,'temp_perform'):
         for command in e.network.temp_perform:
             events.run(command, e.window, e.network)
