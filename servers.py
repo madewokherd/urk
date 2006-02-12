@@ -5,90 +5,127 @@ import ui
 from conf import conf
 import urk
 
-class NetworkInfo(gtk.VBox):
+def server_get_data(network_info):
+    if 'port' in network_info:
+        return "%s:%s" % (
+            network_info.get('server', '') , network_info['port']
+            )
+    else:
+        return network_info.get('server', '')
+        
+def server_set_data(text, network_info):
+    if ':' in text:
+        network_info['server'], port = text.rsplit(':',1)
+        network_info['port'] = int(port)
+    else:
+        network_info['server'] = text
+        if 'port' in network_info:
+            del network_info['port']
+            
+def channels_get_data(network_info):
+    return '\n'.join(network_info.get('join', []))
+            
+def channels_set_data(text, network_info):
+    network_info['join'] = []
+    
+    for line in text.split('\n'):
+        for chan in line.split(','):
+            network_info['join'].append(chan.strip())
+    
+def perform_get_data(network_info):
+    return '\n'.join(network_info.get('perform', []))
+            
+def perform_set_data(text, network_info):
+    network_info['perform'] = [line for line in text.split('\n') if line]
+    
+def autoconnect_set_data(do_autoconnect, network): 
+    if 'start_networks' not in conf:
+        conf['start_networks'] = []
+
+    # note (n in C) != w
+    if (network in conf.get('start_networks')) != do_autoconnect:
+        if do_autoconnect:
+            conf.get('start_networks').append(network)
+        else:
+            conf.get('start_networks').remove(network)
+
+class NetworkInfo(gtk.Frame):
     def show(self, network):
         for child in self.get_children():
             self.remove(child)
     
         network_info = conf.get('networks', {}).get(network, {})
 
-        table = gtk.Table(3, 2)
+        table = gtk.Table(4, 2)
         table.set_row_spacings(3)
         
         # server
         label = gtk.Label('Server:')
 
         data = gtk.Entry()
-        if 'port' in network_info:
-            data.set_text("%s:%s" % (network_info.get('server', '') , network_info['port']))
-        else:
-            data.set_text(str(network_info.get('server', '')))
-        
-        def edit(widget, event):
-            text = widget.get_text()
-            if ':' in text:
-                network_info['server'], port = widget.get_text().rsplit(':',1)
-                network_info['port'] = int(port)
-            else:
-                network_info['server'] = widget.get_text()
-                if 'port' in network_info:
-                    del network_info['port']
-                    
-        data.connect('key-release-event', edit)
+        data.set_text(server_get_data(network_info))
+        data.connect(
+            'key-release-event', 
+            lambda w, e: server_set_data(w.get_text(), network_info)
+            )
 
-        table.attach(label, 0, 1, 0, 1)
-        table.attach(data, 1, 2, 0, 1)
+        table.attach(label, 0, 1, 0, 1, xoptions=gtk.FILL)
+        table.attach(data, 1, 2, 0, 1, xoptions=gtk.FILL)
+        
+        def get_text_from_textview(textview):
+            buffer = textview.get_buffer()
+            return buffer.get_text(
+                buffer.get_start_iter(), buffer.get_end_iter()
+                )
+        
+        # channels
+        label = gtk.Label('Channels:')
+
+        data = gtk.TextView()
+        data.get_buffer().set_text(channels_get_data(network_info))
+        data.connect(
+            'key-release-event', 
+            lambda w, e: channels_set_data(get_text_from_textview(w), network_info)
+            )
+
+        table.attach(label, 0, 1, 1, 2, xoptions=gtk.FILL)
+        table.attach(data, 1, 2, 1, 2, xoptions=gtk.FILL)
         
         # perform
         label = gtk.Label('Perform:')
 
         data = gtk.TextView()
-        data.get_buffer().set_text(
-            '\n'.join(str(p) for p in network_info.get('perform', []))
+        data.get_buffer().set_text(perform_get_data(network_info))
+        data.connect(
+            'key-release-event',
+            lambda w, e: perform_set_data(get_text_from_textview(w), network_info)
             )
-        
-        def edit(widget, event):
-            buffer = widget.get_buffer()
-            
-            perform = buffer.get_text(
-                        buffer.get_start_iter(), buffer.get_end_iter()
-                        ).split('\n')
 
-            network_info['perform'] = [p for p in perform if p]
-                    
-        data.connect('key-release-event', edit)
-
-        table.attach(label, 0, 1, 1, 2)
-        table.attach(data, 1, 2, 1, 2)
+        table.attach(label, 0, 1, 2, 3, xoptions=gtk.FILL)
+        table.attach(data, 1, 2, 2, 3, xoptions=gtk.FILL)
 
         # autoconnect
         data = gtk.CheckButton(label='Connect on startup')
-        data.set_active(network in conf.get('start_networks', []))    
+        data.set_active(network in conf.get('start_networks', []))  
+        data.connect(
+            'toggled',
+            lambda w: autoconnect_set_data(w.get_active(), network)
+            )  
         
-        def edit(widget):
-            if 'start_networks' not in conf:
-                conf['start_networks'] = []
+        table.attach(data, 1, 2, 3, 4, xoptions=gtk.FILL)
 
-            # note (n in C) != w
-            if (network in conf.get('start_networks')) != widget.get_active():
-                if widget.get_active():
-                    conf.get('start_networks').append(network)
-                else:
-                    conf.get('start_networks').remove(network)
-
-        data.connect('toggled', edit)    
+        box = gtk.HBox()
+        box.pack_start(table, padding=5)
+        self.add(box)
         
-        table.attach(data, 1, 2, 2, 3)
-        table.show_all()
-
-        self.add(table)
+        self.set_label(network)
+        self.show_all()
 
 class ServerWidget(gtk.VBox):
     def edit_network(self, cell, path_string, new_text):
         network_list = self.networks.get_model()
     
         networks = conf.get('networks')
-        
         if network_list[path_string][0] in networks:
             networks[new_text] = networks.pop(network_list[path_string][0])
         else:
@@ -190,26 +227,29 @@ class ServerWidget(gtk.VBox):
         gtk.VBox.__init__(self)
         self.set_spacing(5)
         
+        serverlist = gtk.VBox()
+        serverlist.set_spacing(5)
+
+        serverlist_buttons = gtk.HButtonBox()
+        serverlist_buttons.set_layout(gtk.BUTTONBOX_START)
+        
+        serverlist_window = gtk.ScrolledWindow()
+        serverlist_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        serverlist_window.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        serverlist_window.add(self.networks)
+        
+        serverlist_buttons.add(self.buttons['add'])
+        serverlist_buttons.add(self.buttons['remove'])
+        
+        serverlist.pack_start(serverlist_window, expand=True)
+        serverlist.pack_start(serverlist_buttons, expand=False)
+        
         hb = gtk.HBox()
         hb.set_spacing(5)
-
-        vb = gtk.VButtonBox()
-        vb.set_layout(gtk.BUTTONBOX_START)
-        
-        sw = gtk.ScrolledWindow()
-        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        sw.set_shadow_type(gtk.SHADOW_ETCHED_IN)
-        sw.add(self.networks)
-        
-        vb.add(self.buttons['add'])
-        vb.add(self.buttons['remove'])
-        
-        hb.pack_start(sw, expand=True)
-        hb.pack_start(vb, expand=False)
+        hb.pack_start(serverlist, expand=False)
+        hb.pack_start(self.infobox)
         
         self.pack_start(hb)
-
-        self.pack_start(self.infobox, expand=False)
         
         hb = gtk.HButtonBox()
         hb.set_layout(gtk.BUTTONBOX_END)
