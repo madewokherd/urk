@@ -733,33 +733,7 @@ class UrkUITabs(gtk.Window):
         if self.get_active() == window:
             self.set_title()
 
-    def __init__(self):
-        # threading stuff
-        gtk.gdk.threads_init()
-        
-        gtk.Window.__init__(self)
-        
-        try:
-            self.set_icon(
-                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
-                )
-        except:
-            pass
-
-        self.connect("delete_event", self.exit)
-
-        # layout
-        xy = conf.get("xy", (-1, -1))
-        wh = conf.get("wh", (500, 500))
-
-        self.move(*xy)
-        self.set_default_size(*wh)
-        
-        def save_xywh(*args):
-            conf["xy"] = self.get_position()
-            conf["wh"] = self.get_size()
-        self.connect("configure_event", save_xywh)
-        
+    def menu(self):
         def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
             e.menu += [('Editor', editor.main)]
@@ -791,6 +765,35 @@ class UrkUITabs(gtk.Window):
         menu.append(urk_menu)
         menu.append(help_menu)
         
+        return menu
+    
+    def __init__(self):
+        # threading stuff
+        gtk.gdk.threads_init()
+        
+        gtk.Window.__init__(self)
+        
+        try:
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+
+        self.connect("delete_event", self.exit)
+
+        # layout
+        xy = conf.get("xy", (-1, -1))
+        wh = conf.get("wh", (500, 500))
+
+        self.move(*xy)
+        self.set_default_size(*wh)
+        
+        def save_xywh(*args):
+            conf["xy"] = self.get_position()
+            conf["wh"] = self.get_size()
+        self.connect("configure_event", save_xywh)
+        
         self.tabs = gtk.Notebook()
         
         self.tabs.set_property(
@@ -805,9 +808,11 @@ class UrkUITabs(gtk.Window):
             events.trigger("Active", notebook.get_nth_page(page_num))
             
         self.tabs.connect("switch-page", window_change)
+        
+        menu = self.menu()
 
         box = gtk.VBox(False)
-        if not conf.get('ui-gtk/dont_show_menubar'):
+        if conf.get('ui-gtk/show_menubar', True):
             box.pack_start(menu, expand=False)
         box.pack_end(self.tabs)
 
