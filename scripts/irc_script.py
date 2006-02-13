@@ -454,7 +454,7 @@ def onConnect(e):
     
     tojoin = ','.join(network_info.get('join', []))
     if tojoin:
-        events.run('join %s' % tojoin)
+        events.run('join %s' % tojoin, e.window, e.network)
     
     if hasattr(e.network,'temp_perform'):
         for command in e.network.temp_perform:
