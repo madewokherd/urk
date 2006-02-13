@@ -107,7 +107,7 @@ def ChannelWindow(self):
     nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
     nlbox.add(self.nicklist)
 
-    nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 50), -1)
+    nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 0), -1)
 
     botbox = gtk.HBox()
     botbox.pack_start(self.input)
@@ -121,12 +121,13 @@ def ChannelWindow(self):
     
     nl_pos = [None]    
     def move_nicklist(paned, event):
-        nl_pos[0] = paned.get_position()
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            nl_pos[0] = paned.get_position()
     
-    def drop_nicklist(paned, event):   
+    def drop_nicklist(paned, event):
         width = paned.allocation.width
         pos = paned.get_position()
-        
+
         if pos == nl_pos[0]:
             if width - pos <= 10:
                 conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
@@ -139,7 +140,9 @@ def ChannelWindow(self):
                 paned.set_position(width)
                 
         else:
-            conf["ui-gtk/nicklist-width"] = width - pos
+            conf["ui-gtk/nicklist-width"] = width - pos - 6
+            
+        nl_pos[0] = None
         
     pane.connect("button-press-event", move_nicklist)
     pane.connect("button-release-event", drop_nicklist)
