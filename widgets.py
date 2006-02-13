@@ -95,13 +95,13 @@ def menu_from_list(alist):
                 
         last = item
 
-class Nicklist:
+class Nicklist(gtk.TreeView):
     def click(self, widget, event):
         if event.button == 3:
             x, y = event.get_coords()
             x, y = int(x), int(y)
     
-            (data,), path, x, y = self.view.get_path_at_pos(x, y)
+            (data,), path, x, y = self.get_path_at_pos(x, y)
         
             c_data = events.data(
                         window=self.win,
@@ -119,73 +119,58 @@ class Nicklist:
                 menu.popup(None, None, None, event.button, event.time)
     
     def __getitem__(self, pos):
-        return self.view.get_model()[pos][0]
+        return self.get_model()[pos][0]
         
     def __setitem__(self, pos, item):
-        self.view.get_model()[pos] = [item]
+        self.get_model()[pos] = [item]
     
     def __len__(self):
-        return self.view.get_model().iter_n_children(None)
+        return len(self.get_model())
     
     def index(self, item):
-        return list(self).index(item)
+        for i, x in enumerate(self):
+            if x == item:
+                return i
+                
+        return -1
         
     def append(self, item):
-        self.view.get_model().append([item])
+        self.get_model().append([item])
  
     def insert(self, pos, item):
-        self.view.get_model().insert(pos, [item])
+        self.get_model().insert(pos, [item])
         
     def extend(self, items):
         for i in items:
             self.append(i)
-            
-    def __iadd__(self, items):
-        self.extend(items)
-        
+
     def remove(self, item):
-        item = self.index(item)
-    
-        self.view.get_model().remove(
-            self.view.get_model().iter_nth_child(None, item)
+        self.get_model().remove(
+            self.get_model().iter_nth_child(None, self.index(item))
             )
-            
-    def pop(self, item=-1):
-        if item < 0:
-            item += len(self)
-        
-        result = self[item]
-        
-        self.view.get_model().remove(
-            self.view.get_model().iter_nth_child(None, item)
-            )
-        return result
     
     def clear(self):
-        self.view.get_model().clear()
-    
-    def __getslice__(self, *args):
-        return list(self).__getslice__(*args)
+        self.get_model().clear()
         
     def __iter__(self):
-        return (r[0] for r in self.view.get_model())
+        return (r[0] for r in self.get_model())
 
     def __init__(self, window):
         self.win = window
         
-        self.view = gtk.TreeView(gtk.ListStore(str))
-        self.view.set_size_request(0, -1)
-        self.view.set_headers_visible(False)
+        gtk.TreeView.__init__(self, gtk.ListStore(str))
 
-        self.view.insert_column_with_attributes(
+        self.set_headers_visible(False)
+
+        self.insert_column_with_attributes(
             0, "", gtk.CellRendererText(), text=0
             )
             
-        self.view.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-        self.view.set_property("fixed-height-mode", True)
-        self.view.connect("button-press-event", self.click)
+        self.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        self.set_property("fixed-height-mode", True)
+        self.connect("button-press-event", self.click)
         
-        style_me(self.view, "nicklist")
+        style_me(self, "nicklist")
 
 # Label used to display/edit your current nick on a network
 class NickEdit(gtk.EventBox):
