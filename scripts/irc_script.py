@@ -452,7 +452,7 @@ def onConnect(e):
     for command in network_info.get('perform', []):
         events.run(command, e.window, e.network)
     
-    tojoin = ','.join(network_info.get('join', [])
+    tojoin = ','.join(network_info.get('join', []))
     if tojoin:
         events.run('join %s' % tojoin)
     
