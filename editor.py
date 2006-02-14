@@ -13,6 +13,16 @@ from conf import conf
 import urk
 
 class EditorWidget(gtk.VBox):
+    def goto(self, line, offset):
+        buffer = self.output.get_buffer()
+                    
+        cursor = buffer.get_iter_at_line_offset(
+            line-1, offset
+            )
+        
+        buffer.place_cursor(cursor)
+        self.output.scroll_to_iter(cursor, 0)
+
     def load(self, text):
         buffer = self.output.get_buffer()
 
@@ -135,16 +145,8 @@ class EditorWindow(gtk.Window):
                     self.status.push(0, "ImportError: %s" % e.msg)
 
                 except SyntaxError, e:
-                    buffer = self.output.get_buffer()
-                    
-                    cursor = buffer.get_iter_at_line_offset(
-                        e.lineno-1, e.offset
-                        )
-                    
-                    buffer.place_cursor(cursor)
-                    self.output.scroll_to_iter(cursor, 0)
-                
                     self.status.push(0, "SyntaxError: %s" % e.msg)
+                    self.editor.goto(e.lineno, e.offset)
             
             else:
                 self.status.push(0, "Saved %s" % self.filename)
