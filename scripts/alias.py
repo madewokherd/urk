@@ -3,6 +3,8 @@ import os
 
 from conf import conf
 import events
+import urk
+import ui
 
 aliases = conf.get("aliases",{
     'op':'"mode "+window.id+" +"+"o"*len(args)+" "+" ".join(args)',
@@ -61,18 +63,22 @@ def onCommandAlias(e):
  /alias -l to see a list of aliases""")
  
 def onCommandEdit(e):
-    filename = ''
-    try:
-        filename = events.get_filename(e.args[0])
-    except ImportError:
-        pass
-    if not filename:
-        import urk
-        filename = os.path.join(urk.userpath,'scripts',e.args[0])
-        if not filename.endswith('.py'):
-            filename += ".py"
+    if e.args:
+        try:
+            filename = events.get_filename(e.args[0])
+            
+            if not filename:
+                filename = os.path.join(urk.userpath,'scripts',e.args[0])
+                if not filename.endswith('.py'):
+                    filename += ".py"
 
-    import ui
-
-    if os.access(filename, os.R_OK):
-        ui.widgets.editor.edit(filename)
+            if os.access(filename, os.R_OK):
+                ui.widgets.editor.main(filename)
+   
+        except ImportError:
+            pass
+            
+    else:
+        ui.widgets.editor.main() 
+    
+    

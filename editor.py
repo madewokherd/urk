@@ -13,18 +13,25 @@ from conf import conf
 import urk
 
 class EditorWidget(gtk.VBox):
-    def load(self, filename):
+    def load(self, text):
         buffer = self.output.get_buffer()
 
         if GTK_SOURCE_VIEW:
             buffer.begin_not_undoable_action()
 
-        buffer.set_text(file(filename).read())
+        buffer.set_text(text)
         buffer.set_modified(False)
-        self.win.title()
 
         if GTK_SOURCE_VIEW:
             buffer.end_not_undoable_action()
+            
+    def save(self):
+        buffer = self.output.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
+
+        self.output.get_buffer().set_modified(False)
+        
+        return text
 
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
@@ -63,50 +70,12 @@ class EditorWidget(gtk.VBox):
             buffer = self.output.get_buffer()
             buffer.connect('modified-changed', self.win.title)
 
-    def save(self, *args):
-        if self.filename:
-            buffer = self.output.get_buffer()
-            text = buffer.get_text(
-                buffer.get_start_iter(),
-                buffer.get_end_iter()
-                )
-
-            file(self.filename, "wb").write(text)
-            
-            self.output.get_buffer().set_modified(False)
-            
-            if events.is_loaded(self.filename):            
-                try:
-                    events.reload(self.filename)
-                    self.win.status.push(0, "Saved and reloaded %s" % self.filename)
-
-                except ImportError, e:
-                    self.win.status.push(0, "ImportError: %s" % e.msg)
-
-                except SyntaxError, e:
-                    buffer = self.output.get_buffer()
-                    
-                    cursor = buffer.get_iter_at_line_offset(
-                        e.lineno-1, e.offset
-                        )
-                    
-                    buffer.place_cursor(cursor)
-                    self.output.scroll_to_iter(cursor, 0)
-                
-                    self.win.status.push(0, "SyntaxError: %s" % e.msg)
-            
-            else:
-                self.win.status.push(0, "Saved %s" % self.filename)
-
-    def __init__(self, window, filename):
+    def __init__(self, window):
         gtk.VBox.__init__(self)
         
         self.win = window
-        self.filename = filename
         
         self.edit_widget()
-        if self.filename:
-            self.load(self.filename)
 
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -116,10 +85,10 @@ class EditorWidget(gtk.VBox):
 
         self.show_all()
         
-def get_menu_for(editor):
+def get_menu_for(w):
     return (
         ('ScriptMenu', None, '_Script'),
-            ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, editor.save),
+            ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, w.save),
         )
 
 menu_ui = """
@@ -142,13 +111,47 @@ class EditorWindow(gtk.Window):
         self.set_title(
             "%s%s (%s)" % (
                 modified,
-                events.get_scriptname(self.editor.filename),
-                self.editor.filename
+                events.get_scriptname(self.filename),
+                self.filename
                 ))
+                
+    def load(self):
+        text = file(self.filename).read()
+
+        self.editor.load(text)
+                
+    def save(self, _action):
+        if self.filename:
+            text = self.editor.save()  
+            
+            file(self.filename, "wb").write(text)          
+            
+            if events.is_loaded(self.filename):            
+                try:
+                    events.reload(self.filename)
+                    self.status.push(0, "Saved and reloaded %s" % self.filename)
+
+                except ImportError, e:
+                    self.status.push(0, "ImportError: %s" % e.msg)
+
+                except SyntaxError, e:
+                    buffer = self.output.get_buffer()
+                    
+                    cursor = buffer.get_iter_at_line_offset(
+                        e.lineno-1, e.offset
+                        )
+                    
+                    buffer.place_cursor(cursor)
+                    self.output.scroll_to_iter(cursor, 0)
+                
+                    self.status.push(0, "SyntaxError: %s" % e.msg)
+            
+            else:
+                self.status.push(0, "Saved %s" % self.filename)
 
     def menu(self):
         actiongroup = gtk.ActionGroup('Edit')
-        actiongroup.add_actions(get_menu_for(self.editor))
+        actiongroup.add_actions(get_menu_for(self))
 
         uimanager = gtk.UIManager()
         uimanager.add_ui_from_string(menu_ui)
@@ -163,8 +166,10 @@ class EditorWindow(gtk.Window):
         
         return uimanager.get_widget("/MenuBar")
 
-    def __init__(self, filename):
+    def __init__(self, filename=''):
         gtk.Window.__init__(self)
+        
+        self.filename = filename
         
         try:
             self.set_icon(
@@ -175,7 +180,11 @@ class EditorWindow(gtk.Window):
             
         self.set_default_size(640, 480)
 
-        self.editor = EditorWidget(self, filename)
+        self.editor = EditorWidget(self)
+
+        if self.filename:
+            self.load()
+            self.title()
 
         self.status = gtk.Statusbar()
         self.status.set_has_resize_grip(True)
