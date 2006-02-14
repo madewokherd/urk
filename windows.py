@@ -119,16 +119,18 @@ def ChannelWindow(self):
     pane.pack1(topbox, resize=True, shrink=False)
     pane.pack2(nlbox, resize=False, shrink=True)
     
-    nl_pos = [None]    
+    nl_info = {'pos': None, 'scroll': None}    
     def move_nicklist(paned, event):
+        nl_info['scroll'] = self.output.to_scroll
+    
         if event.type == gtk.gdk._2BUTTON_PRESS:
-            nl_pos[0] = paned.get_position()
+            nl_info['pos'] = paned.get_position()
     
     def drop_nicklist(paned, event):
         width = paned.allocation.width
         pos = paned.get_position()
 
-        if pos == nl_pos[0]:
+        if pos == nl_info['pos']:
             if width - pos <= 10:
                 conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
 
@@ -142,7 +144,9 @@ def ChannelWindow(self):
         else:
             conf["ui-gtk/nicklist-width"] = width - pos - 6
             
-        nl_pos[0] = None
+        nl_info['pos'] = None
+        
+        self.output.to_scroll = nl_info['scroll']
         
     pane.connect("button-press-event", move_nicklist)
     pane.connect("button-release-event", drop_nicklist)
