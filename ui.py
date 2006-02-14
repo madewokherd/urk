@@ -7,9 +7,9 @@ import commands
 import gobject
 
 #stupid workaround
-sys.peth = list(sys.path)
+__sys_path = list(sys.path)
 import gtk
-sys.path = sys.peth
+sys.path = __sys_path
 
 import urk
 import irc
@@ -279,12 +279,14 @@ def start(command=''):
         window = windows.manager.get_active()
         events.run(command, window, window.network)
         
+        #for i in range(100):
+        #    window.write(file("urk/ui.py").read().splitlines()[i])
+        
     register_idle(trigger_start)
 
     try:
         gtk.threads_enter()
-        #while gtk.events_pending():
-        #    gtk.main_iteration()
+        #while gtk.events_pending(): gtk.main_iteration()
         gtk.main()
         gtk.threads_leave()
     except KeyboardInterrupt:
