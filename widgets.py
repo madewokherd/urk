@@ -602,7 +602,9 @@ class FindBox(gtk.HBox):
         self.parent.remove(self)
         self.win.focus()
 
-    def clicked(self, button):
+    def clicked(self, *args):
+        button = args[-1]
+    
         text = self.textbox.get_text()
 
         if not text:
