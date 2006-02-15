@@ -1,3 +1,6 @@
+import os
+import sys
+
 import gtk
 import pango
 
@@ -23,7 +26,15 @@ class EditorWidget(gtk.VBox):
         buffer.place_cursor(cursor)
         self.output.scroll_to_iter(cursor, 0)
 
-    def load(self, text):
+    def get_text(self):
+        buffer = self.output.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
+
+        self.output.get_buffer().set_modified(False)
+        
+        return text
+    
+    def set_text(self, text):
         buffer = self.output.get_buffer()
 
         if GTK_SOURCE_VIEW:
@@ -34,14 +45,8 @@ class EditorWidget(gtk.VBox):
 
         if GTK_SOURCE_VIEW:
             buffer.end_not_undoable_action()
-            
-    def save(self):
-        buffer = self.output.get_buffer()
-        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
 
-        self.output.get_buffer().set_modified(False)
-        
-        return text
+    text = property(get_text, set_text)
 
     if GTK_SOURCE_VIEW:
         def edit_widget(self):
@@ -99,14 +104,18 @@ def get_menu_for(w):
     return (
         ('ScriptMenu', None, '_Script'),
             ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, w.save),
+            ('Open', gtk.STOCK_OPEN, '_Open', '<Control>O', None, w.open),
         )
 
 menu_ui = """
 <ui>
  <menubar name="MenuBar">
+ 
   <menu action="ScriptMenu">
    <menuitem action="Save"/>
+   <menuitem action="Open"/>
   </menu>
+
  </menubar>
 </ui>
 """
@@ -125,16 +134,49 @@ class EditorWindow(gtk.Window):
                 self.filename
                 ))
                 
-    def load(self):
-        text = file(self.filename).read()
+    def open(self, _action):
+        chooser = gtk.FileChooserDialog(
+            "Blah", self, gtk.FILE_CHOOSER_ACTION_OPEN,
+            (
+                gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                gtk.STOCK_OPEN, gtk.RESPONSE_OK
+            )
+            )
 
-        self.editor.load(text)
+        chooser.set_current_folder(os.path.join(urk.userpath, 'scripts'))
+
+        if chooser.run() == gtk.RESPONSE_OK:
+            self.filename = chooser.get_filename()
+            self.load()
+
+        chooser.destroy()
+                
+    def load(self):
+        if self.filename:
+            self.editor.text = file(self.filename).read()
+            self.title()
                 
     def save(self, _action):
+        if not self.filename:
+            chooser = gtk.FileChooserDialog(
+                "Blah", self, gtk.FILE_CHOOSER_ACTION_SAVE,
+                (
+                    gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_SAVE, gtk.RESPONSE_OK
+                )
+                )
+                
+            chooser.set_current_folder(os.path.join(urk.userpath, 'scripts'))
+            chooser.set_do_overwrite_confirmation(True)
+            chooser.set_default_response(gtk.RESPONSE_OK)
+
+            if chooser.run() == gtk.RESPONSE_OK:
+                self.filename = chooser.get_filename()
+
+            chooser.destroy()
+    
         if self.filename:
-            text = self.editor.save()  
-            
-            file(self.filename, "wb").write(text)          
+            file(self.filename, "wb").write(self.editor.text)          
             
             if events.is_loaded(self.filename):            
                 try:
@@ -150,6 +192,8 @@ class EditorWindow(gtk.Window):
             
             else:
                 self.status.push(0, "Saved %s" % self.filename)
+                
+            self.title()
 
     def menu(self):
         actiongroup = gtk.ActionGroup('Edit')
@@ -184,9 +228,7 @@ class EditorWindow(gtk.Window):
 
         self.editor = EditorWidget(self)
 
-        if self.filename:
-            self.load()
-            self.title()
+        self.load()
 
         self.status = gtk.Statusbar()
         self.status.set_has_resize_grip(True)
