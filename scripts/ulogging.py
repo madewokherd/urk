@@ -3,6 +3,7 @@ import os
 
 from conf import conf
 import ui
+import windows
 import chaninfo
 import urk
 
@@ -65,18 +66,18 @@ def onOwnAction(e):
     f.write('*%s %s' % (e.source, e.text))
 
 def onNotice(e):
-    window = ui.windows.manager.get_active()
+    window = windows.manager.get_active()
     if window.network != e.network:
-        window = ui.get_default_window(e.network)
+        window = windows.get_default(e.network)
         
     f = log_file(e.network, window.id)
 
     f.write('-%s- %s' % (e.source, e.text))
 
 def onOwnNotice(e):
-    window = ui.windows.manager.get_active()
+    window = windows.manager.get_active()
     if window.network != e.network:
-        window = ui.get_default_window(e.network)
+        window = windows.get_default(e.network)
         
     f = log_file(e.network, window.id)
 
@@ -89,9 +90,9 @@ def onCtcp(e):
         f.write('[%s] %s' % (e.source, e.text))
 
 def onCtcpReply(e):
-    window = ui.windows.manager.get_active()
+    window = windows.manager.get_active()
     if window.network != e.network:
-        window = ui.get_default_window(e.network)
+        window = windows.get_default(e.network)
         
     f = log_file(e.network, window.id)
 
@@ -142,7 +143,7 @@ def onQuit(e):
     
     for channame in chaninfo.channels(e.network):
         if chaninfo.ison(e.network, channame, e.source):
-            window = ui.windows.get(ui.ChannelWindow, e.network, channame)
+            window = windows.get(windows.ChannelWindow, e.network, channame)
             if window:
                 f = log_file(e.network, window.id)
                 
@@ -152,7 +153,7 @@ def onNick(e):
     if e.source == e.network.me:
         to_write = 'You are now known as %s' % e.newnick
     
-        for window in ui.get_window_for(network=e.network):
+        for window in windows.get_with(network=e.network):
             f = log_file(e.network, window.id)
             
             f.write(to_write)
@@ -161,7 +162,7 @@ def onNick(e):
     
         for channame in chaninfo.channels(e.network):
             if chaninfo.ison(e.network,channame,e.source):
-                window = ui.windows.get(ui.ChannelWindow, e.network, channame)
+                window = windows.get(windows.ChannelWindow, e.network, channame)
                 if window:
                     f = log_file(e.network, window.id)
                     
@@ -176,14 +177,14 @@ def onRaw(e):
     if not e.quiet:
         if e.msg[1].isdigit():
             if e.msg[1] == '332':
-                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window = windows.get(windows.ChannelWindow, e.network, e.msg[3]) or e.window
                 
                 f = log_file(e.network, window.id)
                 
                 f.write('topic on %s is: %s' % (e.msg[3], e.text))
                 
             elif e.msg[1] == '333':
-                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window = windows.get(windows.ChannelWindow, e.network, e.msg[3]) or e.window
                 
                 f = log_file(e.network, window.id)
                 
@@ -208,7 +209,7 @@ def onDisconnect(e):
     else:
         to_write = '* Disconnected'
 
-    for window in ui.get_window_for(network=e.network):
+    for window in windows.get_with(network=e.network):
         f = log_file(e.network, window.id)
         
         f.write(to_write)

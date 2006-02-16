@@ -1,6 +1,8 @@
 import time
 
 import ui
+import windows
+import widgets
 import chaninfo
 import events
 from conf import conf
@@ -11,8 +13,8 @@ textareas = {
     'font': conf.get('font', 'sans 8'),
     }
 
-ui.set_style("view", textareas)
-ui.set_style("nicklist", textareas)
+widgets.set_style("view", textareas)
+widgets.set_style("nicklist", textareas)
 
 #take an event e and trigger the highlight event if necessary
 def hilight_text(e):
@@ -95,9 +97,9 @@ def onText(e):
     to_write += e.text
     
     if e.hilight:
-        e.window.write(to_write, ui.HILIT)
+        e.window.write(to_write, widgets.HILIT)
     else:
-        e.window.write(to_write, ui.TEXT)
+        e.window.write(to_write, widgets.TEXT)
     
 def onOwnText(e):
     color = "\x02\x04FF00FF"
@@ -115,9 +117,9 @@ def onAction(e):
     to_write = "%s%s*\x0F %s %s" % (prefix(e), color, format_source(e), e.text)
     
     if e.hilight:
-        e.window.write(to_write, ui.HILIT)
+        e.window.write(to_write, widgets.HILIT)
     else:
-        e.window.write(to_write, ui.TEXT)
+        e.window.write(to_write, widgets.TEXT)
     
 def onOwnAction(e):
     color = '\x02\x04FF00FF'
@@ -135,7 +137,7 @@ def onNotice(e):
         to_write += "%s-\x0F%s:%s%s-\x0F " % (color, format_source(e), e.target, color)
     to_write += e.text
     
-    e.window.write(to_write, (e.hilight and ui.HILIT) or ui.TEXT)
+    e.window.write(to_write, (e.hilight and widgets.HILIT) or widgets.TEXT)
 
 def onOwnNotice(e):
     to_write = "%s\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (prefix(e), e.target, e.text)
@@ -151,10 +153,10 @@ def onCtcp(e):
 def onCtcpReply(e):
     to_write = "%s--- %s reply from %s: %s" % (prefix(e), e.name.capitalize(), e.source, ' '.join(e.args))
     
-    window = ui.windows.manager.get_active()
+    window = windows.manager.get_active()
     if window.network != e.network:
-        window = ui.get_default_window(e.network)
-    window.write(to_write, ui.TEXT)
+        window = windows.get_default(e.network)
+    window.write(to_write, widgets.TEXT)
 
 def onJoin(e):
     to_write = "%s%s %sjoined %s" % (prefix(e), format_info_source(e), address(e), e.target)
@@ -170,7 +172,7 @@ def onPart(e):
 def onKick(e):
     to_write = "%s%s kicked %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
-    e.window.write(to_write, (e.target == e.network.me and ui.HILIT) or ui.EVENT)
+    e.window.write(to_write, (e.target == e.network.me and widgets.HILIT) or widgets.EVENT)
         
 def onMode(e):
     if e.source == e.network.me:
@@ -185,7 +187,7 @@ def onQuit(e):
     
     for channame in chaninfo.channels(e.network):
         if chaninfo.ison(e.network, channame, e.source):
-            window = ui.windows.get(ui.ChannelWindow, e.network, channame)
+            window = windows.get(windows.ChannelWindow, e.network, channame)
             if window:
                 window.write(to_write)
 
@@ -196,12 +198,12 @@ def onNick(e):
         to_write = "%s%s is now known as \x02%s\x02" % (prefix(e), e.source, e.newnick)
     
     if e.source == e.network.me:
-        for window in ui.get_window_for(network=e.network):
+        for window in windows.get_with(network=e.network):
             window.write(to_write)
     else:
         for channame in chaninfo.channels(e.network):
             if chaninfo.ison(e.network,channame,e.source):
-                window = ui.windows.get(ui.ChannelWindow, e.network, channame)
+                window = windows.get(windows.ChannelWindow, e.network, channame)
                 if window:
                     window.write(to_write)
 
@@ -214,14 +216,14 @@ def onRaw(e):
     if not e.quiet:
         if e.msg[1].isdigit():
             if e.msg[1] == '332':
-                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window = windows.get(windows.ChannelWindow, e.network, e.msg[3]) or e.window
                 window.write(
                     "%sTopic on %s is: %s" % 
                         (prefix(e), e.msg[3], e.text)
                         )
                 
             elif e.msg[1] == '333':
-                window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3]) or e.window
+                window = windows.get(windows.ChannelWindow, e.network, e.msg[3]) or e.window
                 window.write(
                     "%sTopic on %s set by %s at time %s" % 
                         (prefix(e), e.msg[3], e.msg[4], time.ctime(int(e.msg[5])))
@@ -262,5 +264,8 @@ def onDisconnect(e):
     if e.error:
         to_write += ' (%s)' % e.error
 
-    for window in ui.get_window_for(network=e.network):
-        window.write(to_write, (window.role == ui.StatusWindow and ui.TEXT) or ui.EVENT)
+    for window in windows.get_with(network=e.network):
+        if isinstance(window, windows.StatusWindow):
+            window.write(to_write, widgets.TEXT)
+        else:
+            window.write(to_write, widgets.EVENT)

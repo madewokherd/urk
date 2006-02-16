@@ -7,11 +7,22 @@ import pango
 from conf import conf
 import events
 import parse_mirc
-import ui
 import urk
+import windows
 
 import servers
 import editor
+
+# Window activity Constants
+HILIT = 4
+TEXT = 2
+EVENT = 1
+
+ACTIVITY_MARKUP = {
+    HILIT: "<span style='italic' foreground='#00F'>%s</span>",
+    TEXT: "<span foreground='red'>%s</span>",
+    EVENT: "<span foreground='#363'>%s</span>",
+    }
 
 # This holds all tags for all windows ever
 if 'tag_table' not in globals():
@@ -28,6 +39,17 @@ if 'tag_table' not in globals():
 
     #FIXME: MEH hates dictionaries, they remind him of the bad words
     styles = {}
+    
+def about(*args):
+    about = gtk.AboutDialog()
+    
+    about.set_name(urk.name+" (GTK+ Frontend)")
+    about.set_version(".".join(str(x) for x in urk.version))
+    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
+    about.set_website(urk.website)
+    about.set_authors(urk.authors)
+    
+    about.show_all()
 
 def style_me(widget, style):
     widget.set_style(styles.get(style))
@@ -562,9 +584,9 @@ class WindowLabel(gtk.EventBox):
         title = self.win.title
         title = title.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
         
-        for a_type in sorted(ui.activity_markup, reverse=True):
+        for a_type in sorted(ACTIVITY_MARKUP, reverse=True):
             if self.win.activity == a_type:
-                title = ui.activity_markup[a_type] % title
+                title = ACTIVITY_MARKUP[a_type] % title
                 break
             
         self.label.set_markup(title)
@@ -677,7 +699,7 @@ class UrkUITabs(gtk.Window):
         if title is None:
             w = self.get_active()
             
-            if w.role != ui.StatusWindow:
+            if isinstance(w, windows.StatusWindow):
                 if w.network.status:
                     server = w.network.server
                 else:
@@ -744,7 +766,7 @@ class UrkUITabs(gtk.Window):
         
         help_menu.set_submenu(gtk.Menu())
         about_item = gtk.ImageMenuItem("gtk-about")
-        about_item.connect("activate", ui.urk_about)
+        about_item.connect("activate", about)
 
         help_menu.get_submenu().append(about_item)
         

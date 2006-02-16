@@ -3,6 +3,7 @@ import time
 import events
 import urk
 import ui
+import windows
 
 def ctcp(network, user, msg):
     param_list = msg.split(' ')
@@ -21,11 +22,11 @@ def emote(network, user, msg):
     e_data.target = str(user)
     e_data.text = msg
     e_data.network = network
-    e_data.window = ui.get_default_window(network)
+    e_data.window = windows.get_default(network)
     events.trigger('OwnAction', e_data)
 
 def onCommandMe(e):
-    if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
+    if isinstance(e.window, windows.ChannelWindow) or isinstance(e.window, windows.QueryWindow):
         emote(e.network, e.window.id, ' '.join(e.args))
     else:
         raise events.CommandError("There's no one here to speak to.")

@@ -3,6 +3,7 @@ import time
 import events
 from conf import conf
 import ui
+import windows
 import irc
 
 COMMAND_PREFIX = conf.get('command_prefix', '/')
@@ -186,7 +187,7 @@ def onDisconnect(e):
                     server(network=e.network)
             def do_announce_reconnect():
                 if not e.network.status:
-                    ui.get_default_window(e.network).write("* Will reconnect in %s seconds.." % delay)
+                    windows.get_default(e.network).write("* Will reconnect in %s seconds.." % delay)
                     e.network._reconnect_source = ui.register_timer(delay*1000,do_reconnect)
             e.network._reconnect_source = ui.register_idle(do_announce_reconnect)
 
@@ -206,7 +207,7 @@ def defInput(e):
         e.done = True
 
 def onCommandSay(e):
-    if e.window.role in (ui.ChannelWindow, ui.QueryWindow):
+    if isinstance(e.window, windows.ChannelWindow) or isinstance(e.window, windows.QueryWindow):
         e.network.msg(e.window.id, ' '.join(e.args))
     else:
         raise events.CommandError("There's no one here to speak to.")
@@ -218,28 +219,28 @@ def onCommandNotice(e):
     e.network.notice(e.args[0], ' '.join(e.args[1:]))
 
 def onCommandQuery(e):
-    ui.windows.new(ui.QueryWindow, e.network, e.args[0]).activate()
+    windows.new(windows.QueryWindow, e.network, e.args[0]).activate()
 
 # make /nick work offline
 def onCommandNick(e):
     if not e.network.status:
         e_data = events.data()
         e_data.network = e.network
-        e_data.window = ui.get_default_window(e.network)
+        e_data.window = windows.get_default(e.network)
         e_data.source = e.network.me
         e_data.newnick = e.args[0]
         events.trigger('Nick', e_data)
         e.network.nicks[0] = e.args[0]
         e.network.me = e.args[0]
         
-        for w in ui.get_window_for(network=e.network):
+        for w in windows.get_with(network=e.network):
             w.nick_label.update()
     else:
         e.network.raw('NICK :%s' % e.args[0])
 
 def defNick(e):
     if e.source != e.network.me:
-        window = ui.windows.get(ui.QueryWindow, e.network, e.source)
+        window = windows.get(windows.QueryWindow, e.network, e.source)
         if window:
             window.id = e.newnick
 
@@ -264,7 +265,7 @@ def onCommandJoin(e):
             e.network.join(' '.join(e.args))
         else:
             raise events.CommandError("We're not connected.")
-    elif e.window.role == ui.ChannelWindow:
+    elif isinstance(e.window, windows.ChannelWindow):
         e.window.network.join(e.window.id)
     else:
         raise events.CommandError("You must supply a channel.")
@@ -282,13 +283,13 @@ def server(server=None,port=6667,network=None,connect=True):
     
     if not network:
         network = irc.Network(**network_info)
-        ui.windows.new(ui.StatusWindow, network, "status").activate()
+        windows.new(windows.StatusWindow, network, "status").activate()
     else:
         if "server" in network_info:
             network.name = network_info['name']
             network.server = network_info['server']
             if not network.status:
-                window = ui.get_default_window(network)
+                window = windows.get_default(network)
                 if window:
                     window.update()
         if "port" in network_info:
@@ -298,7 +299,7 @@ def server(server=None,port=6667,network=None,connect=True):
         network.quit()
     if connect:
         network.connect()
-        ui.get_default_window(network).write(
+        windows.get_default(network).write(
             "* Connecting to %s on port %s" % (network.server, network.port)
             )
     
@@ -350,12 +351,12 @@ def onCommandIrcurl(e):
             if e.network and e.network.server == host:
                 network = e.network
             else:
-                for w in list(ui.windows):
+                for w in list(windows):
                     if w.network and w.network.server == host:
                         network = w.network
                         break
                 else:
-                    for w in list(ui.windows):
+                    for w in list(windows):
                         if w.network and w.network.server == 'irc.default.org':
                             network = server(host,port,w.network)
                             break
@@ -372,7 +373,7 @@ def onCommandIrcurl(e):
             action = 'join %s' % target
         
         if network.status == irc.CONNECTED:
-            events.run(action,ui.get_default_window(network),network)
+            events.run(action, windows.get_default(network), network)
         else:
             if not hasattr(network,'temp_perform'):
                 network.temp_perform = [action]
@@ -405,7 +406,7 @@ needschan = {
     
 def defCommand(e):
     if not e.done: 
-        if e.name in needschan and e.window.role == ui.ChannelWindow:
+        if e.name in needschan and isinstance(e.window, windows.ChannelWindow):
             valid_chan_prefixes = e.network.isupport.get('CHANTYPES', '#&+')
             chan_pos = needschan[e.name]
             
@@ -442,7 +443,7 @@ def onStart(e):
 
         nw = irc.Network(**network_info)
         
-        ui.windows.new(ui.StatusWindow, nw, 'status').activate()
+        windows.new(windows.StatusWindow, nw, 'status').activate()
 
         nw.connect()
 

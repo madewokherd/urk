@@ -5,6 +5,7 @@ from conf import conf
 import events
 import urk
 import ui
+import windows
 
 DISCONNECTED = 0
 CONNECTING = 1
@@ -124,7 +125,7 @@ class Network:
             self.disconnect(error=error[1])
             #we should immediately retry if we failed to open the socket and there are hosts left
             if self.status == DISCONNECTED and not self.failedlasthost:
-                ui.get_default_window(self).write("* Retrying with next available host")
+                windows.get_default(self).write("* Retrying with next available host")
                 self.connect()
         else:
             self.source = source = ui.Source()
@@ -175,7 +176,7 @@ class Network:
                     msg=pmsg,
                     text=pmsg[-1],
                     network=self,
-                    window=ui.get_default_window(self)
+                    window=windows.get_default(self)
                     )
         
         if "!" in pmsg[0]:
@@ -222,7 +223,7 @@ class Network:
         if self.me != self.nicks[0]:
             e_data = events.data(
                         network=self,
-                        window=ui.get_default_window(self),
+                        window=windows.get_default(self),
                         source=self.me,
                         newnick=self.nicks[0]
                         )
@@ -261,7 +262,7 @@ class Network:
                     target=str(target),
                     text=msg,
                     network=self,
-                    window=ui.get_default_window(self)
+                    window=windows.get_default(self)
                     )
         events.trigger('OwnText', e_data)
 
@@ -273,7 +274,7 @@ class Network:
                     target=str(target),
                     text=msg,
                     network=self,
-                    window=ui.get_default_window(self)
+                    window=windows.get_default(self)
                     )
         events.trigger('OwnNotice', e_data)
 

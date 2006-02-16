@@ -1,5 +1,6 @@
 import events
 import ui
+import windows
 import chaninfo
 from conf import conf
 
@@ -13,7 +14,7 @@ def set_target(e):
     e._target = e.text[e._target_fr:e._target_to]
 
 def is_nick(e):
-    return e.window.role == ui.ChannelWindow and \
+    return isinstance(e.window, windows.ChannelWindow) and \
             chaninfo.ison(e.window.network, e.window.id, e._target)
     
 def is_url(e):
@@ -104,7 +105,7 @@ def onClick(e):
     elif is_chan(e):
         if not chaninfo.ischan(e.window.network, e._target):
             e.window.network.join(e._target)
-        window = ui.windows.get(ui.ChannelWindow, e.window.network, e._target)
+        window = windows.get(windows.ChannelWindow, e.window.network, e._target)
         if window:
             window.activate()
 

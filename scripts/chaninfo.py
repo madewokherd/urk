@@ -1,5 +1,6 @@
 import events
 import ui
+import windows
 
 def prefix(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
@@ -22,7 +23,7 @@ def nicklist_add(network, channel, nick):
     p = prefix(network, channel, nick)
     k = sort_key(network, channel, nick)
     
-    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
+    window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
         lower_limit , upper_limit = 0, len(window.nicklist)
         while lower_limit < upper_limit:
@@ -36,12 +37,12 @@ def nicklist_add(network, channel, nick):
 def nicklist_del(network, channel, nick):
     p = prefix(network, channel, nick)
     
-    window = ui.windows.get(ui.ChannelWindow, network, channel.name)
+    window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
         window.nicklist.remove(p)
 
 def setupListRightClick(e):
-    if e.window.role == ui.ChannelWindow:
+    if isinstance(e.window, windows.ChannelWindow):
         if e.data[0] in e.window.network.isupport["PREFIX"].split(")")[1]:
             e.nick = e.data[1:]
         else:
@@ -119,7 +120,7 @@ def setupJoin(e):
         #If the channel window already existed, and we're joining, then we 
         #didn't clear out the nicklist when we left. That means we have to clear
         #it out now.
-        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)
+        window = windows.get(windows.ChannelWindow, e.network, e.target)
         if window:
             window.nicklist.clear()
     nicklist_add(e.network, channel, e.source)
@@ -242,7 +243,7 @@ def setupRaw(e):
                 channel.got_names = True
             channel.getting_names = False
             
-            window = ui.windows.get(ui.ChannelWindow, e.network, e.msg[3])
+            window = windows.get(windows.ChannelWindow, e.network, e.msg[3])
             if window:
                 window.nicklist.clear()
                 nicks = list(channel.nicks)

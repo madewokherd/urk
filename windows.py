@@ -1,11 +1,127 @@
 import gtk
 import pango
 
-import ui
+import irc
 from conf import conf
+import widgets
+
+def append(window):
+    manager.add(window)
+
+def remove(window):
+    manager.remove(window)
+
+def new(wclass, network, id):
+    w = get(wclass, network, id)
+    
+    if not w:
+        w = wclass(network or irc.Network(), id)
+        append(w)
+
+    return w
+    
+def get(windowclass, network, id):
+    if network:
+        id = network.norm_case(id)
+        
+    for w in manager:
+        if (type(w), w.network, w.id) == (windowclass, network, id):
+            return w
+  
+def get_with(wclass=None, network=None, id=None):
+    if network and id:
+        id = network.norm_case(id)
+
+    for w in list(manager):
+        for to_find, found in zip((wclass, network, id), (type(w), w.network, w.id)):
+            if to_find and to_find != found:
+                break
+        else:
+            yield w
+            
+    print
+            
+def get_default(network):
+    #print [w for w in manager], [w for w in __windows]
+   # print
+
+    window = manager.get_active()
+
+    if window.network == network:
+        print "active:", window, window.network, window.id
+        return window
+
+    # There can be only one...
+    for window in get_with(network=network):
+        print "in get_with:", window, window.network, window.id
+        return window
+
+class Window(gtk.VBox):
+    def mutate(self, newclass, network, id):
+        self.hide()
+    
+        for child in self.get_children():
+            self.remove(child)
+
+        self.__class__ = newclass
+        self.__init__(network, id)
+
+    def get_id(self):
+        if self.network:
+            return self.network.norm_case(self.__id)
+        else:
+            return self.__id
+            
+    def set_id(self, id):
+        self.__id = id
+        self.update()
+
+    id = property(get_id, set_id)
+    
+    def get_title(self):
+        return self.__id
+
+    def __get_title(self):
+        return self.get_title()
+    
+    def set_title(self, title):
+        self.update()
+        
+    title = property(__get_title, set_title)
+
+    def get_activity(self):
+        return self.__activity
+    
+    def set_activity(self, value):
+        self.__activity = value
+        self.update()
+        
+    activity = property(get_activity, set_activity)
+    
+    def focus(self):
+        pass
+    
+    def activate(self):
+        manager.set_active(self)
+        self.focus()
+    
+    def close(self):
+        events.trigger("Close", self)
+        remove(self)
+        
+    def update(self):
+        manager.update(self)
+
+    def __init__(self, network, id):
+        gtk.VBox.__init__(self, False)
+        
+        self.network = network
+        self.__id = id
+        
+        self.__activity = 0
 
 def get_default_write(self):  
-    def def_f(text, activity_type=ui.EVENT, line_ending='\n'):
+    def def_f(text, activity_type=widgets.EVENT, line_ending='\n'):
         if ui.windows.manager.get_active() != self:
             self.activity = max(self.activity, activity_type)
 
@@ -22,135 +138,178 @@ def get_default_transfer_text(self):
             
     return def_f
 
-def StatusWindow(self):    
-    if hasattr(self, "output"):
-        if self.output.parent:
-            self.output.parent.remove(self.output)
-        
-    else:
-        self.output = ui.widgets.TextOutput(self)
-        
-    if hasattr(self, "input"):
-        if self.input.parent:
-            self.input.parent.remove(self.input)
-
-    else:
-        self.input = ui.widgets.TextInput(self)
-
-    self.nick_label = ui.widgets.NickEdit(self)
-
-    def get_title():
-        # Something about self.network.isupport
-        if self.network.status:
-            return "%s" % self.network.server
-        else:
-            return "[%s]" % self.network.server
-    self.get_title = get_title
-
-    self.focus = self.input.grab_focus
-    self.write = get_default_write(self)
-    self.connect("key-press-event", get_default_transfer_text(self))
-
-    botbox = gtk.HBox()
-    botbox.pack_start(self.input)
-    botbox.pack_end(self.nick_label, expand=False)
-
-    self.pack_end(botbox, expand=False)
+class StatusWindow(Window):
+    def __init__(self, network, id):    
+        Window.__init__(self, network, id)
     
-    topbox = gtk.ScrolledWindow()
-    topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-    topbox.add(self.output)
-
-    self.pack_end(topbox)
-
-    self.show_all()
-     
-def QueryWindow(self):
-    StatusWindow(self)
-    
-    def get_title():
-        return ui.Window.get_title(self)
-    self.get_title = get_title
-
-def ChannelWindow(self):
-    if hasattr(self, "output"):
-        if self.output.parent:
-            self.output.parent.remove(self.output)
-        
-    else:
-        self.output = ui.widgets.TextOutput(self)
-        
-    if hasattr(self, "input"):
-        if self.input.parent:
-            self.input.parent.remove(self.input)
-
-    else:
-        self.input = ui.widgets.TextInput(self)
-
-    self.nicklist = ui.widgets.Nicklist(self)
-    self.nick_label = ui.widgets.NickEdit(self)
-
-    self.focus = self.input.grab_focus
-    self.write = get_default_write(self)
-
-    self.connect("key-press-event", get_default_transfer_text(self))
-
-    def get_title():
-        return ui.Window.get_title(self)
-    self.get_title = get_title
-    
-    topbox = gtk.ScrolledWindow()
-    topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-    topbox.add(self.output)
-    
-    nlbox = gtk.ScrolledWindow()
-    nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
-    nlbox.add(self.nicklist)
-
-    nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 0), -1)
-
-    botbox = gtk.HBox()
-    botbox.pack_start(self.input)
-    botbox.pack_end(self.nick_label, expand=False)
-    
-    self.pack_end(botbox, expand=False)
-    
-    pane = gtk.HPaned()
-    pane.pack1(topbox, resize=True, shrink=False)
-    pane.pack2(nlbox, resize=False, shrink=True)
-    
-    nl_info = {'pos': None, 'scroll': None}    
-    def move_nicklist(paned, event):
-        nl_info['scroll'] = self.output.to_scroll
-    
-        if event.type == gtk.gdk._2BUTTON_PRESS:
-            nl_info['pos'] = paned.get_position()
-    
-    def drop_nicklist(paned, event):
-        width = paned.allocation.width
-        pos = paned.get_position()
-
-        if pos == nl_info['pos']:
-            if width - pos <= 10:
-                conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
-
-                if conf_nicklist <= 10:
-                    paned.set_position(width - 200)
-                else:
-                    paned.set_position(width - conf_nicklist)
-            else:
-                paned.set_position(width)
-                
-        else:
-            conf["ui-gtk/nicklist-width"] = width - pos - 6
+        if hasattr(self, "output"):
+            if self.output.parent:
+                self.output.parent.remove(self.output)
             
-        nl_info['pos'] = None
-        
-        self.output.to_scroll = nl_info['scroll']
-        
-    pane.connect("button-press-event", move_nicklist)
-    pane.connect("button-release-event", drop_nicklist)
-    
-    self.pack_end(pane)
+        else:
+            self.output = widgets.TextOutput(self)
+            
+        if hasattr(self, "input"):
+            if self.input.parent:
+                self.input.parent.remove(self.input)
 
-    self.show_all()
+        else:
+            self.input = widgets.TextInput(self)
+
+        self.nick_label = widgets.NickEdit(self)
+
+        def get_title():
+            # Something about self.network.isupport
+            if self.network.status:
+                return "%s" % self.network.server
+            else:
+                return "[%s]" % self.network.server
+        self.get_title = get_title
+
+        self.focus = self.input.grab_focus
+        self.write = get_default_write(self)
+        self.connect("key-press-event", get_default_transfer_text(self))
+
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+
+        self.pack_end(botbox, expand=False)
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+
+        self.pack_end(topbox)
+
+        self.show_all()
+     
+class QueryWindow(Window):
+    def __init__(self, network, id):    
+        Window.__init__(self, network, id)
+    
+        if hasattr(self, "output"):
+            if self.output.parent:
+                self.output.parent.remove(self.output)
+            
+        else:
+            self.output = widgets.TextOutput(self)
+            
+        if hasattr(self, "input"):
+            if self.input.parent:
+                self.input.parent.remove(self.input)
+
+        else:
+            self.input = widgets.TextInput(self)
+
+        self.nick_label = widgets.NickEdit(self)
+
+        def get_title():
+            return ui.Window.get_title(self)
+        self.get_title = get_title
+
+        self.focus = self.input.grab_focus
+        self.write = get_default_write(self)
+        self.connect("key-press-event", get_default_transfer_text(self))
+
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+
+        self.pack_end(botbox, expand=False)
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+
+        self.pack_end(topbox)
+
+        self.show_all()
+
+class ChannelWindow(Window):
+    def __init__(self, network, id):
+        Window.__init__(self, network, id)
+    
+        if hasattr(self, "output"):
+            if self.output.parent:
+                self.output.parent.remove(self.output)
+            
+        else:
+            self.output = widgets.TextOutput(self)
+            
+        if hasattr(self, "input"):
+            if self.input.parent:
+                self.input.parent.remove(self.input)
+
+        else:
+            self.input = widgets.TextInput(self)
+
+        self.nicklist = widgets.Nicklist(self)
+        self.nick_label = widgets.NickEdit(self)
+
+        self.focus = self.input.grab_focus
+        self.write = get_default_write(self)
+
+        self.connect("key-press-event", get_default_transfer_text(self))
+
+        def get_title():
+            return ui.Window.get_title(self)
+        self.get_title = get_title
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+        
+        nlbox = gtk.ScrolledWindow()
+        nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
+        nlbox.add(self.nicklist)
+
+        nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 0), -1)
+
+        botbox = gtk.HBox()
+        botbox.pack_start(self.input)
+        botbox.pack_end(self.nick_label, expand=False)
+        
+        self.pack_end(botbox, expand=False)
+        
+        pane = gtk.HPaned()
+        pane.pack1(topbox, resize=True, shrink=False)
+        pane.pack2(nlbox, resize=False, shrink=True)
+        
+        nl_info = {'pos': None, 'scroll': None}    
+        def move_nicklist(paned, event):
+            nl_info['scroll'] = self.output.to_scroll
+        
+            if event.type == gtk.gdk._2BUTTON_PRESS:
+                nl_info['pos'] = paned.get_position()
+        
+        def drop_nicklist(paned, event):
+            width = paned.allocation.width
+            pos = paned.get_position()
+
+            if pos == nl_info['pos']:
+                if width - pos <= 10:
+                    conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
+
+                    if conf_nicklist <= 10:
+                        paned.set_position(width - 200)
+                    else:
+                        paned.set_position(width - conf_nicklist)
+                else:
+                    paned.set_position(width)
+                    
+            else:
+                conf["ui-gtk/nicklist-width"] = width - pos - 6
+                
+            nl_info['pos'] = None
+            
+            self.output.to_scroll = nl_info['scroll']
+            
+        pane.connect("button-press-event", move_nicklist)
+        pane.connect("button-release-event", drop_nicklist)
+        
+        self.pack_end(pane)
+
+        self.show_all()
+
+import ui

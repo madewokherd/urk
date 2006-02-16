@@ -1,4 +1,5 @@
 import ui
+import windows
 
 shortcuts = {
     '^b': '\x02',
@@ -38,7 +39,7 @@ def onKeyPress(e):
 
     # tabbed browsing
     elif e.key == '^t':
-        ui.windows.new(ui.StatusWindow, None, 'status').activate()
+        ui.windows.new(windows.StatusWindow, None, 'status').activate()
 
     elif e.key == '^w':
         ui.windows.manager.get_active().close()

@@ -1,5 +1,6 @@
 import irc
 import ui
+import windows
 import chaninfo
 
 # FIXME: meh still might want rid of these, I'm not sure yet
@@ -7,37 +8,38 @@ import chaninfo
 def onActive(w):
     w.activity = 0
 
-    ui.register_idle(ui.windows.manager.set_title)
+    ui.register_idle(windows.manager.set_title)
 
 def onNick(e):
     if e.source == e.network.me:
-        for w in ui.get_window_for(network=e.network):
+        for w in windows.get_default(network=e.network):
+            print "inside onNick:", w
             w.nick_label.update(e.newnick)     
 
 def onExit(e):
-    for n in set(w.network for w in ui.windows):
+    for n in set(w.network for w in windows.manager):
         n.quit()
 
 def preJoin(e):
     if e.source == e.network.me:
-        window = ui.windows.get(ui.StatusWindow, e.network, 'status')
+        window = windows.get(windows.StatusWindow, e.network, 'status')
         
         if window:
-            window.mutate(ui.ChannelWindow, e.network, e.target)
+            window.mutate(windows.ChannelWindow, e.network, e.target)
             window.focus()
             
         else:
-            ui.windows.new(ui.ChannelWindow, e.network, e.target).activate()
+            windows.new(windows.ChannelWindow, e.network, e.target).activate()
 
-    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+    e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
 def preText(e):
     if e.target == e.network.me:
-        e.window = ui.windows.new(ui.QueryWindow, e.network, e.source)
+        e.window = windows.new(windows.QueryWindow, e.network, e.source)
     else:
         e.window = \
-            ui.windows.get(ui.ChannelWindow, e.network, e.target) or \
-            ui.windows.get(ui.QueryWindow, e.network, e.source) or \
+            windows.get(windows.ChannelWindow, e.network, e.target) or \
+            windows.get(windows.QueryWindow, e.network, e.source) or \
             e.window
 
 preAction = preText
@@ -45,37 +47,37 @@ preAction = preText
 def preNotice(e):
     if e.target != e.network.me:
         e.window = \
-            ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+            windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
 def preOwnText(e):
     e.window = \
-        ui.windows.get(ui.ChannelWindow, e.network, e.target) or \
-        ui.windows.get(ui.QueryWindow, e.network, e.target) or \
+        windows.get(windows.ChannelWindow, e.network, e.target) or \
+        windows.get(windows.QueryWindow, e.network, e.target) or \
         e.window
 
 preOwnAction = preOwnText
 
 def postPart(e):
     if e.source == e.network.me:
-        window = ui.windows.get(ui.ChannelWindow, e.network, e.target)        
+        window = windows.get(windows.ChannelWindow, e.network, e.target)        
         
         if window:
-            cwindows = list(ui.get_window_for(
+            cwindows = list(windows.get_with(
                                 network=window.network,
-                                role=ui.ChannelWindow
+                                wclass=windows.ChannelWindow
                                 ))
                             
             if len(cwindows) == 1:
-                window.mutate(ui.StatusWindow, e.network, 'status')
+                window.mutate(windows.StatusWindow, e.network, 'status')
                 window.focus()
             else:
                 window.close()
 
 def onClose(window):
-    if window.role == ui.ChannelWindow: 
-        cwindows = list(ui.get_window_for(
+    if isinstance(window, windows.ChannelWindow): 
+        cwindows = list(windows.get_with(
                             network=window.network,
-                            role=ui.ChannelWindow
+                            wclass=windows.ChannelWindow
                             ))
         
         if len(cwindows) == 1:
@@ -84,27 +86,27 @@ def onClose(window):
         elif chaninfo.ischan(window.network, window.id):
             window.network.part(window.id) 
         
-    elif window.role == ui.StatusWindow:
+    elif isinstance(window, windows.StatusWindow):
         window.network.quit()
         
-    if len(ui.windows) == 1:
-        ui.windows.new(ui.StatusWindow, irc.Network(), "status")
+    if len(windows) == 1:
+        windows.new(windows.StatusWindow, irc.Network(), "status")
 
 def onConnect(e):
-    window = ui.get_default_window(e.network)
+    window = windows.get_default(e.network)
     if window:
         window.update()
 
 onDisconnect = onConnect
 
 def setupPart(e):
-    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+    e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
 setupTopic = setupPart
 
 def setupKick(e):
-    e.window = ui.windows.get(ui.ChannelWindow, e.network, e.channel) or e.window
+    e.window = windows.get(windows.ChannelWindow, e.network, e.channel) or e.window
 
 def setupMode(e):
     if e.target != e.network.me:
-        e.window = ui.windows.get(ui.ChannelWindow, e.network, e.target) or e.window
+        e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window

@@ -15,23 +15,22 @@ class ConsoleWriter:
         except:
             self.window.write(traceback.format_exc())
 
-def ConsoleWindow(self):
-    windows.StatusWindow(self)
-    
-    def get_title():
-        return ui.Window.get_title(self)
-    self.get_title = get_title
-    
-    writer = ConsoleWriter(self)
-    
-    sys.stdout = writer
-    sys.stderr = writer
-    
-    self.globals = {'window': self}
-    self.locals = {}
+class ConsoleWindow(windows.StatusWindow):
+    def __init__(self):
+        def get_title():
+            return ui.Window.get_title(self)
+        self.get_title = get_title
+        
+        writer = ConsoleWriter(self)
+        
+        sys.stdout = writer
+        sys.stderr = writer
+        
+        self.globals = {'window': self}
+        self.locals = {}
 
 def onClose(window):
-    if window.role == ConsoleWindow:
+    if isinstance(window, ConsoleWindow):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 
@@ -39,7 +38,7 @@ def onCommandConsole(e):
     ui.windows.new(ConsoleWindow, None, "console").activate() 
 
 def onCommandSay(e):
-    if e.window.role == ConsoleWindow:
+    if isinstance(e.window, ConsoleWindow):
         e.window.globals.update(sys.modules)
         e.__dict__
         text = ' '.join(e.args)
