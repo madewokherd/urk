@@ -39,21 +39,13 @@ def get_with(wclass=None, network=None, id=None):
         else:
             yield w
             
-    print
-            
 def get_default(network):
-    #print [w for w in manager], [w for w in __windows]
-   # print
-
     window = manager.get_active()
-
     if window.network == network:
-        print "active:", window, window.network, window.id
         return window
 
     # There can be only one...
     for window in get_with(network=network):
-        print "in get_with:", window, window.network, window.id
         return window
 
 class Window(gtk.VBox):
@@ -65,6 +57,13 @@ class Window(gtk.VBox):
 
         self.__class__ = newclass
         self.__init__(network, id)
+        self.update()
+        
+    def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
+        if ui.windows.manager.get_active() != self:
+            self.activity = max(self.activity, activity_type)
+
+        self.output.write(text, activity_type, line_ending)
 
     def get_id(self):
         if self.network:
@@ -119,15 +118,6 @@ class Window(gtk.VBox):
         self.__id = id
         
         self.__activity = 0
-
-def get_default_write(self):  
-    def def_f(text, activity_type=widgets.EVENT, line_ending='\n'):
-        if ui.windows.manager.get_active() != self:
-            self.activity = max(self.activity, activity_type)
-
-        self.output.write(text, activity_type, line_ending)
-        
-    return def_f
     
 def get_default_transfer_text(self):
     def def_f(widget, event):
@@ -139,6 +129,13 @@ def get_default_transfer_text(self):
     return def_f
 
 class StatusWindow(Window):
+    def get_title(self):
+        # Something about self.network.isupport
+        if self.network.status:
+            return "%s" % self.network.server
+        else:
+            return "[%s]" % self.network.server
+
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
     
@@ -158,16 +155,7 @@ class StatusWindow(Window):
 
         self.nick_label = widgets.NickEdit(self)
 
-        def get_title():
-            # Something about self.network.isupport
-            if self.network.status:
-                return "%s" % self.network.server
-            else:
-                return "[%s]" % self.network.server
-        self.get_title = get_title
-
         self.focus = self.input.grab_focus
-        self.write = get_default_write(self)
         self.connect("key-press-event", get_default_transfer_text(self))
 
         botbox = gtk.HBox()
@@ -204,12 +192,7 @@ class QueryWindow(Window):
 
         self.nick_label = widgets.NickEdit(self)
 
-        def get_title():
-            return ui.Window.get_title(self)
-        self.get_title = get_title
-
         self.focus = self.input.grab_focus
-        self.write = get_default_write(self)
         self.connect("key-press-event", get_default_transfer_text(self))
 
         botbox = gtk.HBox()
@@ -248,13 +231,8 @@ class ChannelWindow(Window):
         self.nick_label = widgets.NickEdit(self)
 
         self.focus = self.input.grab_focus
-        self.write = get_default_write(self)
 
         self.connect("key-press-event", get_default_transfer_text(self))
-
-        def get_title():
-            return ui.Window.get_title(self)
-        self.get_title = get_title
         
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)

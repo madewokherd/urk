@@ -700,15 +700,16 @@ class UrkUITabs(gtk.Window):
             w = self.get_active()
             
             if isinstance(w, windows.StatusWindow):
+                title = "%s - %s" % (w.network.me, w.title)
+            
+            else:
                 if w.network.status:
                     server = w.network.server
                 else:
                     server = "[%s]" % w.network.server
                     
                 title = "%s - %s - %s" % (w.network.me, server, w.title)
-            else:
-                title = "%s - %s" % (w.network.me, w.title)
-        
+
         gtk.Window.set_title(self, "%s - urk" % title)
 
     def __iter__(self):

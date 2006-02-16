@@ -1,5 +1,5 @@
-import ui
 import windows
+import widgets
 
 shortcuts = {
     '^b': '\x02',
@@ -21,33 +21,33 @@ def onKeyPress(e):
         e.window.output.y = e.window.output.y + e.window.output.height / 2
 
     elif e.key in ('^Page_Up', '^Page_Down'):
-        windows = list(ui.windows.manager)
-        index = windows.index(e.window) + ((e.key == '^Page_Down') and 1 or -1)
-        if 0 <= index < len(windows):
-	    windows[index].activate()
+        winlist = list(windows.manager)
+        index = winlist.index(e.window) + ((e.key == '^Page_Down') and 1 or -1)
+        if 0 <= index < len(winlist):
+            winlist[index].activate()
 
     elif e.key == '!a':
-        windows = list(ui.windows.manager)
-        windows = windows[windows.index(e.window):]+windows
-        w = [w for w in windows if w.activity >= ui.HILIT]
+        winlist = list(windows.manager)
+        winlist = winlist[winlist.index(e.window):]+winlist
+        w = [w for w in winlist if w.activity >= ui.HILIT]
         
         if not w:
-            w = [w for w in windows if w.activity >= ui.TEXT]
+            w = [w for w in winlist if w.activity >= widgets.TEXT]
         
         if w:
-            ui.windows.manager.set_active(w[0])
+            windows.manager.set_active(w[0])
 
     # tabbed browsing
     elif e.key == '^t':
-        ui.windows.new(windows.StatusWindow, None, 'status').activate()
+        windows.new(windows.StatusWindow, None, 'status').activate()
 
     elif e.key == '^w':
-        ui.windows.manager.get_active().close()
+        windows.manager.get_active().close()
         
     elif e.key == '^f':
-        window = ui.windows.manager.get_active()
+        window = windows.manager.get_active()
         
-        find = ui.widgets.FindBox(window)
+        find = widgets.FindBox(window)
         
         window.pack_start(find, expand=False)
         

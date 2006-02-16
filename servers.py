@@ -1,7 +1,7 @@
 import gtk
 
 import events
-import ui
+import windows
 from conf import conf
 import urk
 
@@ -172,7 +172,7 @@ class ServerWidget(gtk.VBox):
         
         if iter:
             network_name = model.get_value(iter, 0)
-            window = ui.windows.manager.get_active()
+            window = windows.manager.get_active()
             network = window.network 
             
             if network and network.status:
