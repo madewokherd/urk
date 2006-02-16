@@ -129,13 +129,15 @@ def start(command=''):
     windows.manager = widgets.UrkUITabs()
     
     def trigger_start():
-        if not len(list(windows.manager)):
-            windows.new(windows.StatusWindow, None, "status").activate()
+        events.trigger("Start")
         
         window = windows.manager.get_active()
-        events.run(command, window, window.network)
         
-        events.trigger("Start")
+        if not window:
+           window =  windows.new(windows.StatusWindow, None, "status")
+           window.activate()
+
+        events.run(command, window, window.network)
 
         #for i in range(100):
         #    window.write(file("urk/ui.py").read().splitlines()[i])

@@ -4,6 +4,7 @@ import pango
 import irc
 from conf import conf
 import widgets
+import events
 
 def append(window):
     manager.add(window)
