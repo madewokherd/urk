@@ -813,6 +813,15 @@ class UrkUITabs(gtk.Window):
 
         self.tabs.set_scrollable(True)
         self.tabs.set_property("can-focus", False)
+        
+        def super_window_change(self, event):
+            if event.type == gtk.gdk.FOCUS_CHANGE and event.in_:
+                window = windows.manager.get_active()
+            
+                if window:
+                    events.trigger('SuperActive', window)
+                
+        self.connect('event', super_window_change)
 
         def window_change(notebook, wptr, page_num):
             events.trigger("Active", notebook.get_nth_page(page_num))
