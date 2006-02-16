@@ -2,7 +2,6 @@ import sys
 import traceback
 
 import windows
-import ui
 from conf import conf
 
 class ConsoleWriter:
@@ -16,11 +15,10 @@ class ConsoleWriter:
             self.window.write(traceback.format_exc())
 
 class ConsoleWindow(windows.StatusWindow):
-    def __init__(self):
-        def get_title():
-            return ui.Window.get_title(self)
-        self.get_title = get_title
-        
+    def get_title(self):
+        return windows.Window.get_title(self)
+
+    def __init__(self):       
         writer = ConsoleWriter(self)
         
         sys.stdout = writer
@@ -35,7 +33,7 @@ def onClose(window):
         sys.stderr = sys.__stderr__
 
 def onCommandConsole(e):
-    ui.windows.new(ConsoleWindow, None, "console").activate() 
+    windows.new(ConsoleWindow, None, "console").activate() 
 
 def onCommandSay(e):
     if isinstance(e.window, ConsoleWindow):
@@ -44,13 +42,13 @@ def onCommandSay(e):
         text = ' '.join(e.args)
         try:
             e.window.write(">>> %s" % text) 
-            result = eval(text,e.window.globals,e.window.locals)
+            result = eval(text, e.window.globals, e.window.locals)
             if result is not None:
                 e.window.write(repr(result))
             e.window.globals['_'] = result
         except SyntaxError:
             try:
-                exec text in e.window.globals,e.window.locals
+                exec text in e.window.globals, e.window.locals
             except:
                 traceback.print_exc()
         except:
@@ -58,4 +56,4 @@ def onCommandSay(e):
 
 def onStart(e):
     if conf.get('start-console'):
-        ui.windows.new(ConsoleWindow, None, "console")
+        windows.new(ConsoleWindow, None, "console")
