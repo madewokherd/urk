@@ -1,6 +1,5 @@
 import time
 
-import ui
 import windows
 import widgets
 import chaninfo

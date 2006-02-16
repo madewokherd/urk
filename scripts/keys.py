@@ -29,7 +29,7 @@ def onKeyPress(e):
     elif e.key == '!a':
         winlist = list(windows.manager)
         winlist = winlist[winlist.index(e.window):]+winlist
-        w = [w for w in winlist if w.activity >= ui.HILIT]
+        w = [w for w in winlist if w.activity >= widgets.HILIT]
         
         if not w:
             w = [w for w in winlist if w.activity >= widgets.TEXT]

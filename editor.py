@@ -11,8 +11,6 @@ except:
     GTK_SOURCE_VIEW = False
 
 import events
-import ui
-from conf import conf
 import urk
 
 class EditorWidget(gtk.VBox):

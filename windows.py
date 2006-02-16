@@ -60,8 +60,14 @@ class Window(gtk.VBox):
         self.__init__(network, id)
         self.update()
         
+    def transfer_text(self, _widget, event):
+        if event.string and not self.input.is_focus():
+            self.input.grab_focus()
+            self.input.set_position(-1)
+            self.input.event(event)
+        
     def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
-        if ui.windows.manager.get_active() != self:
+        if manager.get_active() != self:
             self.activity = max(self.activity, activity_type)
 
         self.output.write(text, activity_type, line_ending)
@@ -119,15 +125,6 @@ class Window(gtk.VBox):
         self.__id = id
         
         self.__activity = 0
-    
-def get_default_transfer_text(self):
-    def def_f(widget, event):
-        if event.string and not self.input.is_focus():
-            self.input.grab_focus()
-            self.input.set_position(-1)
-            self.input.event(event)
-            
-    return def_f
 
 class StatusWindow(Window):
     def get_title(self):
@@ -157,7 +154,7 @@ class StatusWindow(Window):
         self.nick_label = widgets.NickEdit(self)
 
         self.focus = self.input.grab_focus
-        self.connect("key-press-event", get_default_transfer_text(self))
+        self.connect("key-press-event", self.transfer_text)
 
         botbox = gtk.HBox()
         botbox.pack_start(self.input)
@@ -194,7 +191,7 @@ class QueryWindow(Window):
         self.nick_label = widgets.NickEdit(self)
 
         self.focus = self.input.grab_focus
-        self.connect("key-press-event", get_default_transfer_text(self))
+        self.connect("key-press-event", self.transfer_text)
 
         botbox = gtk.HBox()
         botbox.pack_start(self.input)
@@ -211,6 +208,33 @@ class QueryWindow(Window):
         self.show_all()
 
 class ChannelWindow(Window):
+    def move_nicklist(self, paned, event):
+        self.nicklist.scroll = self.output.to_scroll
+    
+        if event.type == gtk.gdk._2BUTTON_PRESS:
+            self.nicklist.pos = paned.get_position()
+        
+    def drop_nicklist(self, paned, event):
+        width = paned.allocation.width
+        pos = paned.get_position()
+
+        if pos == self.nicklist.pos:
+            if width - pos <= 10:
+                conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
+
+                if conf_nicklist <= 10:
+                    paned.set_position(width - 200)
+                else:
+                    paned.set_position(width - conf_nicklist)
+            else:
+                paned.set_position(width)
+                
+        else:
+            conf["ui-gtk/nicklist-width"] = width - pos - 6
+
+        self.nicklist.pos = None
+        self.output.to_scroll = self.nicklist.scroll
+
     def __init__(self, network, id):
         Window.__init__(self, network, id)
     
@@ -232,8 +256,7 @@ class ChannelWindow(Window):
         self.nick_label = widgets.NickEdit(self)
 
         self.focus = self.input.grab_focus
-
-        self.connect("key-press-event", get_default_transfer_text(self))
+        self.connect("key-press-event", self.transfer_text)
         
         topbox = gtk.ScrolledWindow()
         topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -255,40 +278,12 @@ class ChannelWindow(Window):
         pane.pack1(topbox, resize=True, shrink=False)
         pane.pack2(nlbox, resize=False, shrink=True)
         
-        nl_info = {'pos': None, 'scroll': None}    
-        def move_nicklist(paned, event):
-            nl_info['scroll'] = self.output.to_scroll
-        
-            if event.type == gtk.gdk._2BUTTON_PRESS:
-                nl_info['pos'] = paned.get_position()
-        
-        def drop_nicklist(paned, event):
-            width = paned.allocation.width
-            pos = paned.get_position()
-
-            if pos == nl_info['pos']:
-                if width - pos <= 10:
-                    conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
-
-                    if conf_nicklist <= 10:
-                        paned.set_position(width - 200)
-                    else:
-                        paned.set_position(width - conf_nicklist)
-                else:
-                    paned.set_position(width)
-                    
-            else:
-                conf["ui-gtk/nicklist-width"] = width - pos - 6
-                
-            nl_info['pos'] = None
-            
-            self.output.to_scroll = nl_info['scroll']
-            
-        pane.connect("button-press-event", move_nicklist)
-        pane.connect("button-release-event", drop_nicklist)
+        self.nicklist.pos = None
+        self.nicklist.scroll = None
+ 
+        pane.connect("button-press-event", self.move_nicklist)
+        pane.connect("button-release-event", self.drop_nicklist)
         
         self.pack_end(pane)
 
         self.show_all()
-
-import ui

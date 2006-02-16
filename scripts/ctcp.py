@@ -2,7 +2,6 @@ import time
 
 import events
 import urk
-import ui
 import windows
 
 def ctcp(network, user, msg):

@@ -1,13 +1,10 @@
-import ui
 import windows
 import chaninfo
 import events
 from conf import conf
 
 def channel_completer(window, left, right, text):
-    return [
-        w.id for w in ui.windows.manager if isinstance(w, windows.ChannelWindow)
-        ]
+    return [w.id for w in windows.get_with(wclass=windows.ChannelWindow)]
             
 # normal server commands
 srv_commands = ['PING', 'JOIN', 'PART', 'MODE', 'SERVER', 'KICK',

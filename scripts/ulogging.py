@@ -2,7 +2,6 @@ import time
 import os
 
 from conf import conf
-import ui
 import windows
 import chaninfo
 import urk

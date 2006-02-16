@@ -4,7 +4,7 @@ import os
 from conf import conf
 import events
 import urk
-import ui
+import widgets
 
 aliases = conf.get("aliases",{
     'op':'"mode "+window.id+" +"+"o"*len(args)+" "+" ".join(args)',
@@ -73,12 +73,12 @@ def onCommandEdit(e):
                     filename += ".py"
 
             if os.access(filename, os.R_OK):
-                ui.widgets.editor.main(filename)
+                widgets.editor.main(filename)
    
         except ImportError:
             pass
             
     else:
-        ui.widgets.editor.main() 
+        widgets.editor.main() 
     
     

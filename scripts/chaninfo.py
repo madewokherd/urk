@@ -1,5 +1,4 @@
 import events
-import ui
 import windows
 
 def prefix(network, channel, nick):

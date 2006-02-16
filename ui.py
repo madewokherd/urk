@@ -11,7 +11,6 @@ __sys_path = list(sys.path)
 import gtk
 sys.path = __sys_path
 
-import urk
 import irc
 from conf import conf
 import events
