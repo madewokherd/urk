@@ -18,7 +18,9 @@ class ConsoleWindow(windows.StatusWindow):
     def get_title(self):
         return windows.Window.get_title(self)
 
-    def __init__(self):       
+    def __init__(self, network, id):
+        windows.StatusWindow.__init__(self, network, id)
+    
         writer = ConsoleWriter(self)
         
         sys.stdout = writer
