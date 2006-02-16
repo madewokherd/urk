@@ -2,6 +2,7 @@ import ui
 import windows
 import chaninfo
 import events
+from conf import conf
 
 def channel_completer(window, left, right, text):
     return [
@@ -25,10 +26,28 @@ def nick_completer(window, left, right, text):
     candidates += [n for n in chaninfo.nicks(network, window.id) if n not in candidates]
 
     return [n for n in candidates if chaninfo.ison(network, window.id, n)]
+    
+def script_completer(window, left, right, text):
+    return list(events.loaded)
+    
+def network_completer(window, left, right, text):
+    return list(conf.get('networks', ()))
 
-def get_completer_for(window, left, right, text):
+def get_completer_for(window, left, right, text, fulltext):
     if text and text[0] in window.network.isupport.get('CHANTYPES', '#&+'):
         candidates = channel_completer(window, left, right, text)
+        suffix = ''
+        
+    elif fulltext.startswith('/reload '):
+        candidates = script_completer(window, left, right, text)
+        suffix = ''
+    
+    elif fulltext.startswith('/edit '):
+        candidates = script_completer(window, left, right, text)
+        suffix = ''
+        
+    elif fulltext.startswith('/server '):
+        candidates = network_completer(window, left, right, text)
         suffix = ''
         
     elif text.startswith('/'):
@@ -76,7 +95,7 @@ def onKeyPress(e):
             
             text = left.split(' ')[-1]
             
-            recent_completer = get_completer_for(e.window, left, right, text)
+            recent_completer = get_completer_for(e.window, left, right, text, input.text)
 
         recent_completer.next()
     
