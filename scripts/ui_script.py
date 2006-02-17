@@ -88,7 +88,7 @@ def onClose(window):
     elif isinstance(window, windows.StatusWindow):
         window.network.quit()
         
-    if len(windows) == 1:
+    if len(windows.manager) == 1:
         windows.new(windows.StatusWindow, irc.Network(), "status")
 
 def onConnect(e):
