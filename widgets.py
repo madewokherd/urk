@@ -519,7 +519,7 @@ class TextOutput(gtk.TextView):
                     self.get_window(
                         gtk.TEXT_WINDOW_TEXT
                         ).set_cursor(gtk.gdk.Cursor(gtk.gdk.HAND2))
-
+        
         self.get_pointer()
 
     def __init__(self, window):
@@ -714,7 +714,10 @@ class UrkUITabs(gtk.Window):
 
     def __iter__(self):
         return iter(self.tabs.get_children())
-
+    
+    def __len__(self):
+        return self.tabs.get_n_pages()
+    
     def exit(self, *args):
         events.trigger("Exit")
         gtk.main_level() and gtk.main_quit()
