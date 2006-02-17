@@ -418,8 +418,8 @@ class TextOutput(gtk.TextView):
             buffer.get_end_iter()
             )
 
-        for tag_props, start_i, end_i in tag_data:
-            tag_props = tuple(prop_to_gtk(*p) for p in tag_props)
+        for tag in tag_data:
+            tag_props = tuple(prop_to_gtk(*p) for p in tag['data'])
             tag_name = str(hash(tag_props))
                  
             if not tag_table.lookup(tag_name):
@@ -427,8 +427,8 @@ class TextOutput(gtk.TextView):
                 
             buffer.apply_tag_by_name(
                 tag_name, 
-                buffer.get_iter_at_offset(start_i + cc),
-                buffer.get_iter_at_offset(end_i + cc)
+                buffer.get_iter_at_offset(tag['from'] + cc),
+                buffer.get_iter_at_offset(tag['to'] + cc)
                 )
     
     def popup(self, widget, menu):       

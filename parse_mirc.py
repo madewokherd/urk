@@ -25,10 +25,11 @@ def parse_mirc_color(string, pos, open_tags, tags):
     bg = None
     if MIRC_COLOR in open_tags:
         tag = open_tags.pop(MIRC_COLOR)
-        tags += [tag + (pos,)]
-        
-        if len(tag[0]) > 1:
-            bg = tag[0][1][1]
+        tag['to'] = pos
+        tags.append(tag)
+
+        if len(tag['data']) > 1:
+            bg = tag['data'][1][1]
 
     if string[0] in DEC_DIGITS:   
         if string[1:2] in DEC_DIGITS:
@@ -48,76 +49,102 @@ def parse_mirc_color(string, pos, open_tags, tags):
             else:
                 bg = get_mirc_color(string[2:3])
                 color_chars += 2
-        
-        tag = []
-        if fg:
-            tag.append(("foreground",fg))
-        if bg:
-            tag.append(("background",bg))
-        if tag:
-            open_tags[MIRC_COLOR] = (tag, pos) 
+
+            open_tags[MIRC_COLOR] = {
+                'data': (("foreground", fg), ("background", bg)),
+                'from': pos
+                }
+
+        else:
+            open_tags[MIRC_COLOR] = {
+                'data': (("foreground", fg),),
+                'from': pos
+                }
               
     return color_chars
 
-def parse_bersirc_color(string, pos, open_tags, tags):      
-    fg = string[:6]
-    
-    bg = None
+def parse_bersirc_color(string, pos, open_tags, tags):
+    old_bg = None
     if BERS_COLOR in open_tags:
         tag = open_tags.pop(BERS_COLOR)
-        tags += [tag + (pos,)]
+        tag['to'] = pos
+        tags.append(tag)
         
-        if len(tag[0]) > 1:
-            bg = tag[0][1][1]
-    
-    if ishex(fg):
-        if string[6:7] == "," and ishex(string[7:13]):
-            bg = string[7:13]
+        if len(tag['data']) > 1:
+            old_bg = tag['data'][1][1]
+
+    fg = string[:6]
+    for c in fg:
+        if c not in HEX_DIGITS:
+            return 1
+
+    bg = string[7:13]
+    if string[6] == "," and ishex(bg):
+        open_tags[BERS_COLOR] = {
+            'data': (("foreground", "#" + fg), ("background", "#" + bg)),
+            'from': pos
+            }
+        return 14
         
-            open_tags[BERS_COLOR] = ([("foreground", "#" + fg), ("background", "#" + bg)], pos)
-            return 14
-            
-        elif bg:
-            open_tags[BERS_COLOR] = ([("foreground", "#" + fg), ("background", "#" + bg)], pos)
-            return 7
-            
-        else:
-            open_tags[BERS_COLOR] = ([("foreground", "#" + fg)], pos)
-            return 7
-            
+    elif old_bg:
+        open_tags[BERS_COLOR] = {
+            'data': (("foreground", "#" + fg), ("background", "#" + old_bg)),
+            'from': pos
+            }
+        return 7
+        
     else:
-        return 1
+        open_tags[BERS_COLOR] = {
+            'data': (("foreground", "#" + fg),),
+            'from': pos
+            }
+        return 7
     
 def parse_bold(string, pos, open_tags, tags):
     if BOLD in open_tags:
-        tags += [open_tags.pop(BOLD) + (pos,)]
+        tag = open_tags.pop(BOLD)
+        tag['to'] = pos
+        tags.append(tag)
         
     else:
-        open_tags[BOLD] = [("weight", BOLD)], pos
-        
+        open_tags[BOLD] = {
+            'data': (("weight", BOLD),), 
+            'from': pos
+            }
+
     return 1
-    
+
 def parse_underline(string, pos, open_tags, tags):
     if UNDERLINE in open_tags:
-        tags += [open_tags.pop(UNDERLINE) + (pos,)]
+        tag = open_tags.pop(UNDERLINE)
+        tag['to'] = pos
+        tags.append(tag)
         
     else:
-        open_tags[UNDERLINE] = [("underline", UNDERLINE)], pos
+        open_tags[UNDERLINE] = {
+            'data': (("underline", UNDERLINE),),
+            'from': pos
+            }
         
     return 1
 
 def parse_reset(string, pos, open_tags, tags):
-    for tag in open_tags:
-        if isinstance(open_tags[tag], list):
-            for l in open_tags[tag]:
-                tags += [l + (pos,)]
-                
-        else:
-            tags += [open_tags[tag] + (pos,)]
+    for t in open_tags:
+        tag = open_tags[t]
+        tag['to'] = pos
+        tags.append(tag)
 
     open_tags.clear()
     
     return 1
+
+tag_fs = {
+    MIRC_COLOR: parse_mirc_color,
+    BERS_COLOR: parse_bersirc_color,
+    BOLD: parse_bold,
+    UNDERLINE: parse_underline,
+    RESET: parse_reset
+    }
 
 def parse_mirc(string):
     string += RESET
@@ -125,28 +152,21 @@ def parse_mirc(string):
     out = ''
     open_tags = {}
     tags = []
-    last_place = pos = 0
-    
-    tag_fs = {
-        MIRC_COLOR: parse_mirc_color,
-        BERS_COLOR: parse_bersirc_color,
-        BOLD: parse_bold,
-        UNDERLINE: parse_underline,
-        RESET: parse_reset
-        }
+    text_i = outtext_i = 0
 
-    for tag_place, tag_f in [(i, tag_fs[s]) for i, s in enumerate(string) if s in tag_fs]:
-        out += string[last_place:tag_place]
+    for tag_i, char in enumerate(string):
+        if char in tag_fs:
+            out += string[text_i:tag_i]
 
-        pos += tag_place - last_place
-        
-        last_place = tag_place + tag_f(
-                                    string[tag_place+1:], 
-                                    pos, 
-                                    open_tags,
-                                    tags
-                                    )
-    
+            outtext_i += tag_i - text_i
+
+            text_i = tag_i + tag_fs[char](
+                                string[tag_i+1:], 
+                                outtext_i, 
+                                open_tags,
+                                tags
+                                )
+
     return tags, out
 
 if __name__ == "__main__":
@@ -180,38 +200,41 @@ if __name__ == "__main__":
         ]
         
     results = [
-        ([([('weight', '\x02')], 3, 7)], 'notboldnot'),
+        ([{'from': 3, 'data': (('weight', '\x02'),), 'to': 7}], 'notboldnot'),
+        
+        ([{'from': 3, 'data': (('underline', '\x1f'),), 'to': 12}], 'notunderlinenot'),
 
-        ([([('underline', '\x1f')], 3, 12)], 'notunderlinenot'),
+        ([{'from': 0, 'data': (('weight', '\x02'),), 'to': 2}, {'from': 0, 'data': [('underline', '\x1f')], 'to': 2}], 'Hi'),
 
-        ([([('weight', '\x02')], 0, 2), ([('underline', '\x1f')], 0, 2)], 'Hi'),
-
-        ([([('foreground', 'white'), ('background', 'black')], 3, 29), ([('foreground', 'red')], 17, 29)], 'notwhite-on-blackred-on-blacknothing'),
-
-        ([([('foreground', '#0000CC')], 0, 1), ([('foreground', '#0000CC')], 5, 6)], '<nick> text'),
-
-        ([([('foreground', '#770077'), ('background', '#FFFFFF')], 0, 51), ([('foreground', '#000077')], 31, 51)], 'bersirc color with background! setting foreground! reset!'),
+        ([{'from': 3, 'data': (('foreground', 'white'), ('background', 'black')), 'to': 17}, {'from': 17, 'data': (('foreground', 'red'),), 'to': 29}], 'notwhite-on-blackred-on-blacknothing'),
+        
+        ([{'from': 0, 'data': (('foreground', '#0000CC'),), 'to': 1}, {'from': 5, 'data': (('foreground', '#0000CC'),), 'to': 6}], '<nick> text'),
+        
+([{'from': 0, 'data': (('foreground', '#770077'), ('background', '#FFFFFF')), 'to': 31}, {'from': 31, 'data': (('foreground', '#000077'), ('background', '##FFFFFF')), 'to': 51}], 'bersirc color with background! setting foreground! reset!'),
 
         ([], '7700,FFFFbersirc'),
+        
+        ([{'from': 0, 'data': (('foreground', '#0000FF'),), 'to': 6}], '3Hello'),
 
-        ([([('foreground', '#0000FF')], 0, 6)], '3Hello'),
+        ([{'from': 0, 'data': (('foreground', '#0000FF'),), 'to': 6}], ',Hello'),
 
-        ([([('foreground', '#0000FF')], 0, 6)], ',Hello'),
+        ([{'from': 0, 'data': (('foreground', 'red'),), 'to': 5}], 'Hello'),
 
-        ([([('foreground', 'red')], 0, 5)], 'Hello'),
+        ([{'from': 2, 'data': [('weight', '\x02')], 'to': 4}], 'Bold'),
 
-        ([([('weight', '\x02')], 2, 4)], 'Bold'),
+        ([{'from': 0, 'data': (('foreground', 'red'), ('background', '#7F0000')), 'to': 5}, {'from': 5, 'data': (('foreground', '#9C009C'),), 'to': 12}], 'HelloGoodbye'),
 
-        ([([('foreground', 'red'), ('background', '#7F0000')], 0, 12), ([('foreground', '#9C009C')], 5, 12)], 'HelloGoodbye'),
+        ([{'from': 0, 'data': (('foreground', '#ff0000'), ('background', '#00ff00')), 'to': 5}, {'from': 5, 'data': (('foreground', '#0000ff'), ('background', '##00ff00')), 'to': 12}], 'HelloGoodbye'),
+        
+        ([{'from': 0, 'data': (('foreground', '#777777'),), 'to': 1}, {'from': 1, 'data': (('foreground', '#00CCCC'),), 'to': 6}, {'from': 6, 'data': (('foreground', '#777777'),), 'to': 7}], '(stuff)'),
 
-        ([([('foreground', '#ff0000'), ('background', '#00ff00')], 0, 12), ([('foreground', '#0000ff')], 5, 12)], 'HelloGoodbye'),
         ]
         
     #"""
     
-    print parse_mirc(tests[-1])
+    print parse_mirc('\x02\x040000CC-NuclearFallout.WA.US.GameSurge.net\x02\x040000CC')
     
-    r = range(500)    
+    r = range(10000)    
     for i in r:
         for test in tests:
             parse_mirc(test)
@@ -221,9 +244,14 @@ if __name__ == "__main__":
     r = range(1)    
     for i in r:
         for test, result in zip(tests, results):
-            print parse_mirc(test) == result
-        
-   #"""
+
+            if parse_mirc(test) != result:
+                print test
+                print parse_mirc(test)
+                print result
+                print     
+                
+    #"""           
    
 #import dis
 #dis.dis(parse_mirc)
