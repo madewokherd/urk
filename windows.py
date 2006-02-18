@@ -70,7 +70,7 @@ class Window(gtk.VBox):
         if manager.get_active() != self:
             self.activity = max(self.activity, activity_type)
 
-        self.output.write(text, activity_type, line_ending)
+        self.output.write(text, line_ending)
 
     def get_id(self):
         if self.network:
@@ -209,8 +209,6 @@ class QueryWindow(Window):
 
 class ChannelWindow(Window):
     def move_nicklist(self, paned, event):
-        self.nicklist.scroll = self.output.to_scroll
-    
         if event.type == gtk.gdk._2BUTTON_PRESS:
             self.nicklist.pos = paned.get_position()
         
@@ -218,22 +216,28 @@ class ChannelWindow(Window):
         width = paned.allocation.width
         pos = paned.get_position()
 
+        # we didn't drag, so we must've clicked
         if pos == self.nicklist.pos:
+            # if we're "hidden", then we want to unhide
             if width - pos <= 10:
+                # get the normal nicklist width
                 conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
 
+                # if the normal nicklist width is "hidden", then ignore it
                 if conf_nicklist <= 10:
                     paned.set_position(width - 200)
                 else:
                     paned.set_position(width - conf_nicklist)
+
+            # else we hide
             else:
                 paned.set_position(width)
-                
+            
+        # remember the new place we dragged to    
         else:
             conf["ui-gtk/nicklist-width"] = width - pos - 6
 
         self.nicklist.pos = None
-        self.output.to_scroll = self.nicklist.scroll
 
     def __init__(self, network, id):
         Window.__init__(self, network, id)
@@ -279,7 +283,6 @@ class ChannelWindow(Window):
         pane.pack2(nlbox, resize=False, shrink=True)
         
         self.nicklist.pos = None
-        self.nicklist.scroll = None
  
         pane.connect("button-press-event", self.move_nicklist)
         pane.connect("button-release-event", self.drop_nicklist)

@@ -121,9 +121,8 @@ class Nicklist(gtk.TreeView):
     def click(self, widget, event):
         if event.button == 3:
             x, y = event.get_coords()
-            x, y = int(x), int(y)
     
-            (data,), path, x, y = self.get_path_at_pos(x, y)
+            (data,), path, x, y = self.get_path_at_pos(int(x), int(y))
         
             c_data = events.data(
                         window=self.win,
@@ -196,56 +195,46 @@ class Nicklist(gtk.TreeView):
 
 # Label used to display/edit your current nick on a network
 class NickEdit(gtk.EventBox):
-    def update(self, nick=None):
-        nick = nick or self.win.network.me
-            
-        self.label.set_text(nick)
-        self.edit.set_text(nick)
-    
-    def toggle(self, *args):
-        if self.mode == "edit":
-            self.mode = "show"
+    def nick_change(self, entry):
+        oldnick, newnick = self.label.get_text(), entry.get_text()
         
-            self.remove(self.edit)
+        if newnick and newnick != oldnick:
+            events.run('nick %s' % newnick, self.win, self.win.network)
+
+        self.win.input.grab_focus()
+
+    def update(self, nick=None):
+        self.label.set_text(nick or self.win.network.me)
+    
+    def toggle(self, widget, event):
+        if self.label in self.get_children():
+            edit = gtk.Entry()
+            edit.set_text(self.label.get_text())
+            edit.connect("activate", self.nick_change)
+            edit.connect("focus-out-event", self.toggle)
+
+            self.remove(self.label)
+            self.add(edit)
+            
+            edit.show()
+            
+            edit.grab_focus()
+        else:
+            self.remove(widget)
             self.add(self.label)
             
             self.win.input.grab_focus()
 
-        else:
-            self.mode = "edit"
-            
-            self.edit.set_text(self.label.get_text())
-        
-            self.remove(self.label)
-            self.add(self.edit)
-            
-            self.edit.grab_focus()
-
     def __init__(self, window):
         gtk.EventBox.__init__(self)
-        
-        self.mode = "show"
+
         self.win = window
 
         self.label = gtk.Label()
         self.label.set_padding(5, 0)
         self.add(self.label)
-        
-        self.edit = gtk.Entry()
-        self.edit.show()
-
-        def nick_change(*args):
-            oldnick, newnick = self.label.get_text(), self.edit.get_text()
-        
-            if newnick and newnick != oldnick:
-                events.run('nick %s' % newnick, self.win, self.win.network)
-
-            self.win.input.grab_focus()
-                
-        self.edit.connect("activate", nick_change)
 
         self.connect("button-press-event", self.toggle)
-        self.edit.connect("focus-out-event", self.toggle)
         
         self.update()
         
@@ -385,10 +374,12 @@ class TextOutput(gtk.TextView):
             self.forward_display_line(iter)
         yalign = float(self.get_iter_location(iter).y-y)/self.height
         self.scroll_to_iter(iter, 0, True, 0, yalign)
+        
+        self.check_autoscroll()
     
     def get_ymax(self):
         buffer = self.get_buffer()
-        return sum(self.get_line_yrange(self.get_buffer().get_end_iter())) - self.height
+        return sum(self.get_line_yrange(buffer.get_end_iter())) - self.height
     
     def get_height(self):
         return self.get_visible_rect().height
@@ -398,13 +389,13 @@ class TextOutput(gtk.TextView):
     height = property(get_height)
     
     # the unknowing print weird things to our text widget function
-    def write(self, text, activity_type, line_ending='\n'):
+    def write(self, text, line_ending='\n'):
         if not isinstance(text, unicode):
             try:
                 text = codecs.utf_8_decode(text)[0]
             except:
                 text = codecs.latin_1_decode(text)[0]
-        tag_data, text = parse_mirc.parse_mirc(text)
+        tags, text = parse_mirc.parse_mirc(text)
 
         buffer = self.get_buffer()
         
@@ -418,12 +409,14 @@ class TextOutput(gtk.TextView):
             buffer.get_end_iter()
             )
 
-        for tag in tag_data:
-            tag_props = tuple(prop_to_gtk(*p) for p in tag['data'])
-            tag_name = str(hash(tag_props))
+        for tag in tags:
+            tag_data = tag['data']
+
+            tag_props = dict(prop_to_gtk(*p) for p in tag['data'])
+            tag_name = str(tag['data'])
                  
             if not tag_table.lookup(tag_name):
-                buffer.create_tag(tag_name, **dict(tag_props))
+                buffer.create_tag(tag_name, **tag_props)
                 
             buffer.apply_tag_by_name(
                 tag_name, 
@@ -522,10 +515,27 @@ class TextOutput(gtk.TextView):
         
         self.get_pointer()
 
+    def scroll(self, *args):
+        if self.autoscroll:
+            def do_scroll():
+                self.scroller.value = self.scroller.upper - self.scroller.page_size
+                self._scrolling = False
+                
+            if not self._scrolling:
+                self._scrolling = gobject.idle_add(do_scroll)
+    
+    def check_autoscroll(self, *args):
+        def set_to_scroll():
+            self.autoscroll = self.scroller.value + self.scroller.page_size >= self.scroller.upper
+            
+        gobject.idle_add(set_to_scroll)
+
     def __init__(self, window):
         gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
         
         self.win = window
+        
+        self.set_size_request(0, -1)
         
         self.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.set_editable(False)
@@ -541,36 +551,28 @@ class TextOutput(gtk.TextView):
         self.add_events(gtk.gdk.POINTER_MOTION_HINT_MASK)
         self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
 
+        self.connect("populate-popup", self.popup)
         self.connect("motion-notify-event", self.hover)
         self.connect("button-press-event", self.mousedown)
         self.connect("button-release-event", self.mouseup)
         self.connect("leave-notify-event", self.clear_hover)
           
         self.hover_coords = 0, 0
-        
-        self.connect("populate-popup", self.popup)
-        
-        self.set_size_request(0, -1)
 
-        self.to_scroll = True
+        self.autoscroll = True
+        self._scrolling = False
         self.scroller = gtk.Adjustment()
 
-        def scroll(*args):
-            if self.to_scroll:
-                self.scroller.value = self.scroller.upper - self.scroller.page_size
-
-        self.connect("size-allocate", scroll)
-        
-        def connect_adjustments(self, _adj, vadj):
-            if vadj:
-                def set_scroll(adj):
-                    self.to_scroll = adj.value + adj.page_size >= adj.upper
-
-                vadj.connect("value-changed", set_scroll)
-                
+        def setup_scroll(self, _adj, vadj):
             self.scroller = vadj
 
-        self.connect("set-scroll-adjustments", connect_adjustments)
+            self.parent.get_vscrollbar().connect(
+                "button-release-event", self.check_autoscroll
+                )
+            self.connect_after("scroll-event", self.check_autoscroll)
+
+        self.connect("set-scroll-adjustments", setup_scroll)
+        self.connect("size-allocate", self.scroll)
 
         def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
