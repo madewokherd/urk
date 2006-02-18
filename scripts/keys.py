@@ -20,6 +20,12 @@ def onKeyPress(e):
     elif e.key == 'Page_Down':
         e.window.output.y = e.window.output.y + e.window.output.height / 2
 
+    elif e.key == '^Home':
+        e.window.output.y = 0
+    
+    elif e.key == '^End':
+        e.window.output.y = e.window.output.ymax
+
     elif e.key in ('^Page_Up', '^Page_Down'):
         winlist = list(windows.manager)
         index = winlist.index(e.window) + ((e.key == '^Page_Down') and 1 or -1)
@@ -52,3 +58,9 @@ def onKeyPress(e):
         window.pack_start(find, expand=False)
         
         find.textbox.grab_focus()
+    
+    elif len(e.key) == 2 and e.key.startswith('!') and e.key[1].isdigit():
+        n = int(e.key[1])
+        if n and n <= len(windows.manager):
+             list(windows.manager)[n-1].activate()
+        #else e.key == "!0"
