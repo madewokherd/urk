@@ -1,5 +1,4 @@
 import gtk
-import pango
 
 import irc
 from conf import conf
