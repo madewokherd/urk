@@ -120,21 +120,24 @@ menu_ui = """
 
 class EditorWindow(gtk.Window):
     def title(self, *args):
-        if self.editor.output.get_buffer().get_modified():
-            modified = '*'
+        if self.filename:
+            if self.editor.output.get_buffer().get_modified():
+                modified = '*'
+            else:
+                modified = ''
+        
+            self.set_title(
+                '%s%s (%s)' % (
+                    modified,
+                    events.get_scriptname(self.filename),
+                    self.filename
+                    ))
         else:
-            modified = ''
-    
-        self.set_title(
-            "%s%s (%s)" % (
-                modified,
-                events.get_scriptname(self.filename),
-                self.filename
-                ))
+            self.set_title('*New Script')
                 
     def open(self, _action):
         chooser = gtk.FileChooserDialog(
-            "Blah", self, gtk.FILE_CHOOSER_ACTION_OPEN,
+            "Open Script", self, gtk.FILE_CHOOSER_ACTION_OPEN,
             (
                 gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                 gtk.STOCK_OPEN, gtk.RESPONSE_OK
@@ -152,12 +155,11 @@ class EditorWindow(gtk.Window):
     def load(self):
         if self.filename:
             self.editor.text = file(self.filename).read()
-            self.title()
                 
     def save(self, _action):
         if not self.filename:
             chooser = gtk.FileChooserDialog(
-                "Blah", self, gtk.FILE_CHOOSER_ACTION_SAVE,
+                "Save Script", self, gtk.FILE_CHOOSER_ACTION_SAVE,
                 (
                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                     gtk.STOCK_SAVE, gtk.RESPONSE_OK
@@ -190,8 +192,6 @@ class EditorWindow(gtk.Window):
             
             else:
                 self.status.push(0, "Saved %s" % self.filename)
-                
-            self.title()
 
     def menu(self):
         actiongroup = gtk.ActionGroup('Edit')
@@ -227,6 +227,7 @@ class EditorWindow(gtk.Window):
         self.editor = EditorWidget(self)
 
         self.load()
+        self.title()
 
         self.status = gtk.Statusbar()
         self.status.set_has_resize_grip(True)
