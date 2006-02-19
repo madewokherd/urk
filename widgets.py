@@ -319,12 +319,26 @@ class TextInput(gtk.Entry):
 
 gobject.type_register(TextInput)
 
-def prop_to_gtk(prop, val):
+def prop_to_gtk(textview, prop, val):
     if val == parse_mirc.BOLD:
         val = pango.WEIGHT_BOLD
 
     elif val == parse_mirc.UNDERLINE:
         val = pango.UNDERLINE_SINGLE
+        
+    elif prop == 'foreground' and val == parse_mirc.COLOR_99:
+        r = hex(textview.get_style().text[0].red)[-2:]
+        g = hex(textview.get_style().text[0].green)[-2:]
+        b = hex(textview.get_style().text[0].blue)[-2:]
+        
+        val = '#%s%s%s' % (r, g, b)
+        
+    elif prop == 'background' and val == parse_mirc.COLOR_99:
+        r = hex(textview.get_style().base[0].red)[-2:]
+        g = hex(textview.get_style().base[0].green)[-2:]
+        b = hex(textview.get_style().base[0].blue)[-2:]
+        
+        val = '#%s%s%s' % (r, g, b)
         
     return prop, val
         
@@ -414,13 +428,13 @@ class TextOutput(gtk.TextView):
             )
 
         for tag in tags:
-            tag_data = tag['data']
-
-            tag_props = dict(prop_to_gtk(*p) for p in tag['data'])
             tag_name = str(tag['data'])
-                 
+   
             if not tag_table.lookup(tag_name):
-                buffer.create_tag(tag_name, **tag_props)
+                buffer.create_tag(
+                    tag_name,
+                    **dict(prop_to_gtk(self, *tag) for tag in tag['data'])
+                    )
                 
             buffer.apply_tag_by_name(
                 tag_name, 
