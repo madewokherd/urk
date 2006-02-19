@@ -120,6 +120,20 @@ class Window(gtk.VBox):
     def __init__(self, network, id):
         gtk.VBox.__init__(self, False)
         
+        if hasattr(self, "output"):
+            if self.output.parent:
+                self.output.parent.remove(self.output)
+            
+        else:
+            self.output = widgets.TextOutput(self)
+            
+        if hasattr(self, "input"):
+            if self.input.parent:
+                self.input.parent.remove(self.input)
+
+        else:
+            self.input = widgets.TextInput(self)
+        
         self.network = network
         self.__id = id
         
@@ -135,20 +149,6 @@ class StatusWindow(Window):
 
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
-    
-        if hasattr(self, "output"):
-            if self.output.parent:
-                self.output.parent.remove(self.output)
-            
-        else:
-            self.output = widgets.TextOutput(self)
-            
-        if hasattr(self, "input"):
-            if self.input.parent:
-                self.input.parent.remove(self.input)
-
-        else:
-            self.input = widgets.TextInput(self)
 
         self.nick_label = widgets.NickEdit(self)
 
@@ -172,20 +172,6 @@ class StatusWindow(Window):
 class QueryWindow(Window):
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
-    
-        if hasattr(self, "output"):
-            if self.output.parent:
-                self.output.parent.remove(self.output)
-            
-        else:
-            self.output = widgets.TextOutput(self)
-            
-        if hasattr(self, "input"):
-            if self.input.parent:
-                self.input.parent.remove(self.input)
-
-        else:
-            self.input = widgets.TextInput(self)
 
         self.nick_label = widgets.NickEdit(self)
 
@@ -206,54 +192,41 @@ class QueryWindow(Window):
 
         self.show_all()
 
-class ChannelWindow(Window):
-    def move_nicklist(self, paned, event):
-        if event.type == gtk.gdk._2BUTTON_PRESS:
-            self.nicklist.pos = paned.get_position()
+def move_nicklist(paned, event):
+    paned._moving = (
+        event.type == gtk.gdk._2BUTTON_PRESS,
+        paned.get_position()
+        )
         
-    def drop_nicklist(self, paned, event):
-        width = paned.allocation.width
-        pos = paned.get_position()
+def drop_nicklist(paned, event):
+    width = paned.allocation.width
+    pos = paned.get_position()
+    
+    double_click, nicklist_pos = paned._moving
 
-        # we didn't drag, so we must've clicked
-        if pos == self.nicklist.pos:
-            # if we're "hidden", then we want to unhide
-            if width - pos <= 10:
-                # get the normal nicklist width
-                conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
+    if double_click:
+        # if we're "hidden", then we want to unhide
+        if width - pos <= 10:
+            # get the normal nicklist width
+            conf_nicklist = conf.get("ui-gtk/nicklist-width", 200)
 
-                # if the normal nicklist width is "hidden", then ignore it
-                if conf_nicklist <= 10:
-                    paned.set_position(width - 200)
-                else:
-                    paned.set_position(width - conf_nicklist)
-
-            # else we hide
+            # if the normal nicklist width is "hidden", then ignore it
+            if conf_nicklist <= 10:
+                paned.set_position(width - 200)
             else:
-                paned.set_position(width)
-            
-        # remember the new place we dragged to    
+                paned.set_position(width - conf_nicklist)
+
+        # else we hide
         else:
+            paned.set_position(width)
+        
+    else:    
+        if pos != nicklist_pos:
             conf["ui-gtk/nicklist-width"] = width - pos - 6
 
-        self.nicklist.pos = None
-
+class ChannelWindow(Window):
     def __init__(self, network, id):
         Window.__init__(self, network, id)
-    
-        if hasattr(self, "output"):
-            if self.output.parent:
-                self.output.parent.remove(self.output)
-            
-        else:
-            self.output = widgets.TextOutput(self)
-            
-        if hasattr(self, "input"):
-            if self.input.parent:
-                self.input.parent.remove(self.input)
-
-        else:
-            self.input = widgets.TextInput(self)
 
         self.nicklist = widgets.Nicklist(self)
         self.nick_label = widgets.NickEdit(self)
@@ -283,8 +256,8 @@ class ChannelWindow(Window):
         
         self.nicklist.pos = None
  
-        pane.connect("button-press-event", self.move_nicklist)
-        pane.connect("button-release-event", self.drop_nicklist)
+        pane.connect("button-press-event", move_nicklist)
+        pane.connect("button-release-event", drop_nicklist)
         
         self.pack_end(pane)
 
