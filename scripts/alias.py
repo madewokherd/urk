@@ -64,19 +64,15 @@ def onCommandAlias(e):
  
 def onCommandEdit(e):
     if e.args:
-        try:
-            filename = events.get_filename(e.args[0])
-            
-            if not filename:
-                filename = os.path.join(urk.userpath,'scripts',e.args[0])
-                if not filename.endswith('.py'):
-                    filename += ".py"
+        filename = events.get_filename(e.args[0])
+        
+        if not filename:
+            filename = os.path.join(urk.userpath,'scripts',e.args[0])
+            if not filename.endswith('.py'):
+                filename += ".py"
 
-            if os.access(filename, os.R_OK):
-                widgets.editor.main(filename)
-   
-        except ImportError:
-            pass
+        if os.access(filename, os.R_OK):
+            widgets.editor.main(filename)
             
     else:
         widgets.editor.main() 
