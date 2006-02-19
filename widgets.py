@@ -246,13 +246,14 @@ class NickEdit(gtk.EventBox):
 # The entry which you type in to send messages        
 class TextInput(gtk.Entry):
     # Generates an input event
-    def entered_text(self, *args):
+    def entered_text(self, ctrl):
         for line in self.text.splitlines():
             if line:
                 e_data = events.data(
                             window=self.win,
                             text=line,
-                            network=self.win.network
+                            network=self.win.network,
+                            ctrl=ctrl
                             )
                 events.trigger('Input', e_data)
                 
@@ -306,12 +307,15 @@ class TextInput(gtk.Entry):
                 events.data(key=key, string=event.string, window=self.win)
                 )
         
+            if key == "^Return":
+                self.entered_text(True)
+            
             return event.keyval in (up, down, tab)
         
         self.connect('key-press-event', key_event, 'KeyPress')
         self.connect_after('key-press-event', lambda *a: True)
 
-        self.connect('activate', self.entered_text)
+        self.connect('activate', TextInput.entered_text, False)
 
 gobject.type_register(TextInput)
 

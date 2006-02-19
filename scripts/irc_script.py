@@ -197,7 +197,7 @@ def postDisconnect(e):
 
 def defInput(e):
     if not e.done:
-        if e.text.startswith(COMMAND_PREFIX):
+        if e.text.startswith(COMMAND_PREFIX) and not e.ctrl:
             command = e.text[len(COMMAND_PREFIX):]
         else:
             command = 'say - %s' % e.text
