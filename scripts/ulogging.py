@@ -13,26 +13,30 @@ LOG_DIR = conf.get('log_dir', os.path.join(urk.userpath,'logs'))
 if not os.access(LOG_DIR, os.F_OK):
     os.mkdir(LOG_DIR)
 
-open_logs = set()
+ILLEGAL_FILE_CHARS = set(chr(x) for x in range(0,32))|\
+        set(chr(x) for x in range(128,160))|set("/")
+if os.name == "nt":
+    ILLEGAL_FILE_CHARS |= set(r'\|:?"*<>')
+
+open_logs = {}
+
+def replace_illegal(string):
+    return ''.join((c in ILLEGAL_FILE_CHARS) and '_' or c for c in string)
 
 def log_file(network, name, new=False):
-    network_dir = os.path.join(LOG_DIR, network.name)
+    if not new and (network, name) in open_logs:
+        return LogFile(open_logs[(network, name)], 'a')
+    
+    network_dir = os.path.join(LOG_DIR, replace_illegal(network.name))
     if not os.access(network_dir, os.F_OK):
         os.mkdir(network_dir)
     
-    name_dir = os.path.join(LOG_DIR, network.name, name)    
+    name_dir = os.path.join(network_dir, replace_illegal(name))
     if not os.access(name_dir, os.F_OK):
         os.mkdir(name_dir)
-       
-    if new or (network, name) not in open_logs:
-        recent_log = time.strftime(FILENAME)
-        open_logs.add((network, name))
-    else:
-        try:
-            recent_log = sorted(os.listdir(name_dir))[-1]
-        except IndexError:
-            recent_log = time.strftime(FILENAME)
-            open_logs.add((network, name))
+        
+    recent_log = time.strftime(FILENAME)
+    open_logs[(network, name)] = os.path.join(name_dir, recent_log)
 
     return LogFile(os.path.join(name_dir, recent_log), 'a')
     
@@ -42,7 +46,7 @@ class LogFile(file):
 
 def onClose(window):
     if (window.network, window.id) in open_logs:
-        open_logs.remove((window.network, window.id))
+        del open_logs[(window.network, window.id)]
 
 def onText(e):
     f = log_file(e.network, e.window.id)
