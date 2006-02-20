@@ -1,6 +1,6 @@
 import sys #only needed for the stupid workaround
 import os
-import thread
+import threading
 
 import commands
 
@@ -29,12 +29,6 @@ def set_clipboard(text):
     gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
     gtk.clipboard_get(gtk.gdk.SELECTION_SECONDARY).set_text(text)
 
-class Source:
-    __slots__ = ['enabled']
-    enabled = True
-    def unregister(self):
-        self.enabled = False
-
 class GtkSource:
     __slots__ = ['tag']
     def __init__(self, tag):
@@ -54,23 +48,37 @@ def register_timer(time, f, *args, **kwargs):
         return f(*args, **kwargs)
     return GtkSource(gobject.timeout_add(time, callback, priority=priority))
 
-def fork(cb, f, *args, **kwargs):
-    is_stopped = Source()
-    def thread_func():
+class UrkForker(threading.Thread):
+    def unregister(self):
+        self.enabled = False
+
+    def run(self):
         try:
-            result, error = f(*args, **kwargs), None
+            result, error = self.task(*self.args, **self.kwargs), None
         except Exception, e:
             result, error = None, e
             
-        if is_stopped.enabled:
-            def callback():           
-                if is_stopped.enabled:
-                    cb(result, error)
-
+        if self.enabled:
+            def callback():
+                self.callback(result, error)
+        
             gobject.idle_add(callback)
+    
+    def __init__(self, callback, task, args=(), kwargs={}):
+        super(UrkForker, self).__init__()
 
-    thread.start_new_thread(thread_func, ())
-    return is_stopped
+        self.callback = callback
+        self.task = task
+        self.args = args
+        self.kwargs = kwargs
+        
+        self.enabled = True
+
+def fork(cb, f, *args, **kwargs):
+    forker = UrkForker(cb, f, args, kwargs)
+    forker.start()
+    
+    return forker
 
 set_style = widgets.set_style
 
