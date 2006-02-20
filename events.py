@@ -14,7 +14,7 @@ class EventStopError(error):
 class CommandError(error):
     pass
 
-class data:
+class data(object):
     done = False
     quiet = False
     
@@ -29,6 +29,8 @@ loaded = {}
 
 # An event has occurred, the e_name event!
 def trigger(e_name, e_data=None):
+    #print 'Event:', e_name, e_data
+
     failure = True
     error = None
     if e_name in events:
@@ -232,7 +234,11 @@ def onCommandPyexec(e):
             e.window.write(line)
 
 def onCommandLoad(e):
-    name = e.args[0]
+    if e.args:
+        name = e.args[0]
+    else:
+        e.window.write('Usage: /load scriptname')
+
     try:
         if load(name):
             e.window.write("* The script '%s' has been loaded." % name)
@@ -243,15 +249,22 @@ def onCommandLoad(e):
         raise CommandError("Error loading the script")
 
 def onCommandUnload(e):
-    name = e.args[0]
+    if e.args:
+        name = e.args[0]
+    else:
+        e.window.write('Usage: /unload scriptname')
+
     if is_loaded(name):
         unload(name)
     else:
         raise CommandError("No such script is loaded")
 
 def onCommandReload(e):
-    name = e.args[0]
-    
+    if e.args:
+        name = e.args[0]
+    else:
+        e.window.write('Usage: /reload scriptname')
+
     try:
         if reload(name):
             e.window.write("* The script '%s' has been reloaded." % name)
