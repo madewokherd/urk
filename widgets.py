@@ -118,7 +118,7 @@ def menu_from_list(alist):
         last = item
 
 class Nicklist(gtk.TreeView):
-    def click(self, widget, event):
+    def click(self, event):
         if event.button == 3:
             x, y = event.get_coords()
     
@@ -189,14 +189,14 @@ class Nicklist(gtk.TreeView):
             
         self.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         self.set_property("fixed-height-mode", True)
-        self.connect("button-press-event", self.click)
+        self.connect("button-press-event", Nicklist.click)
         
         style_me(self, "nicklist")
 
 # Label used to display/edit your current nick on a network
-class NickEdit(gtk.EventBox):
-    def nick_change(self, entry):
-        oldnick, newnick = self.label.get_text(), entry.get_text()
+class NickEditor(gtk.EventBox):
+    def nick_change(self):
+        oldnick, newnick = self.label.get_text(), self.get_text()
         
         if newnick and newnick != oldnick:
             events.run('nick %s' % newnick, self.win, self.win.network)
@@ -206,11 +206,11 @@ class NickEdit(gtk.EventBox):
     def update(self, nick=None):
         self.label.set_text(nick or self.win.network.me)
     
-    def toggle(self, widget, event):
+    def toggle(self, event):
         if self.label in self.get_children():
             edit = gtk.Entry()
             edit.set_text(self.label.get_text())
-            edit.connect("activate", self.nick_change)
+            edit.connect("activate", NickEditor.nick_change)
             edit.connect("focus-out-event", self.toggle)
 
             self.remove(self.label)
@@ -234,14 +234,14 @@ class NickEdit(gtk.EventBox):
         self.label.set_padding(5, 0)
         self.add(self.label)
 
-        self.connect("button-press-event", self.toggle)
+        self.connect("button-press-event", NickEditor.toggle)
         
         self.update()
-        
-        def set_cursor(widget, *args):
-            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.XTERM))
-        
-        self.connect("realize", set_cursor)
+
+        self.connect(
+            "realize", 
+            lambda *a: self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.XTERM))
+            )
 
 # The entry which you type in to send messages        
 class TextInput(gtk.Entry):
@@ -301,7 +301,7 @@ class TextInput(gtk.Entry):
                     key += c
             
             key += gtk.gdk.keyval_name(event.keyval)
-            
+
             events.trigger(
                 event_type,
                 events.data(key=key, string=event.string, window=self.win)
@@ -313,8 +313,6 @@ class TextInput(gtk.Entry):
             return event.keyval in (up, down, tab)
         
         self.connect('key-press-event', key_event, 'KeyPress')
-        self.connect_after('key-press-event', lambda *a: True)
-
         self.connect('activate', TextInput.entered_text, False)
 
 gobject.type_register(TextInput)
@@ -442,9 +440,9 @@ class TextOutput(gtk.TextView):
                 buffer.get_iter_at_offset(tag['to'] + cc)
                 )
     
-    def popup(self, widget, menu):       
+    def popup(self, menu):    
         hover_iter = get_iter_at_coords(self, *self.hover_coords)
-        
+       
         menuitems = []
         if not hover_iter.ends_line():
             c_data = get_event_at_iter(self, hover_iter)
@@ -468,11 +466,11 @@ class TextOutput(gtk.TextView):
             
         menu.show_all()
     
-    def mousedown(self, widget, event):
+    def mousedown(self, event):
         if event.button == 3:
             self.hover_coords = event.get_coords()
     
-    def mouseup(self, widget, event):
+    def mouseup(self, event):
         if event.button == 1 and not self.get_buffer().get_selection_bounds():
             hover_iter = get_iter_at_coords(self, event.x, event.y)
         
@@ -484,7 +482,7 @@ class TextOutput(gtk.TextView):
             if self.is_focus():
                 self.win.focus()
 
-    def clear_hover(self, *args):
+    def clear_hover(self, _event=None):
         buffer = self.get_buffer()
     
         for fr, to in self.linking:
@@ -497,7 +495,7 @@ class TextOutput(gtk.TextView):
         self.linking = set()
         self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)
 
-    def hover(self, widget, event):
+    def hover(self, event):
         if self.linking:
             self.clear_hover()
 
@@ -533,7 +531,7 @@ class TextOutput(gtk.TextView):
         
         self.get_pointer()
 
-    def scroll(self, *args):
+    def scroll(self, _allocation=None):
         if self.autoscroll:
             def do_scroll():
                 self.scroller.value = self.scroller.upper - self.scroller.page_size
@@ -569,11 +567,11 @@ class TextOutput(gtk.TextView):
         self.add_events(gtk.gdk.POINTER_MOTION_HINT_MASK)
         self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
 
-        self.connect("populate-popup", self.popup)
-        self.connect("motion-notify-event", self.hover)
-        self.connect("button-press-event", self.mousedown)
-        self.connect("button-release-event", self.mouseup)
-        self.connect("leave-notify-event", self.clear_hover)
+        self.connect("populate-popup", TextOutput.popup)
+        self.connect("motion-notify-event", TextOutput.hover)
+        self.connect("button-press-event", TextOutput.mousedown)
+        self.connect("button-release-event", TextOutput.mouseup)
+        self.connect("leave-notify-event", TextOutput.clear_hover)
           
         self.hover_coords = 0, 0
 
@@ -585,12 +583,12 @@ class TextOutput(gtk.TextView):
             self.scroller = vadj
 
             self.parent.get_vscrollbar().connect(
-                "button-release-event", self.check_autoscroll
+                "button-release-event", TextOutput.check_autoscroll
                 )
-            self.connect_after("scroll-event", self.check_autoscroll)
+            self.connect_after("scroll-event", TextOutput.check_autoscroll)
 
         self.connect("set-scroll-adjustments", setup_scroll)
-        self.connect("size-allocate", self.scroll)
+        self.connect("size-allocate", TextOutput.scroll)
 
         def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
@@ -611,7 +609,7 @@ class WindowLabel(gtk.EventBox):
             
         self.label.set_markup(title)
 
-    def tab_popup(self, widget, event):
+    def tab_popup(self, event):
         if event.button == 3: # right click
             c_data = events.data(window=self.win, menu=[])
             events.trigger("WindowMenu", c_data)
@@ -631,7 +629,7 @@ class WindowLabel(gtk.EventBox):
         gtk.EventBox.__init__(self)
 
         self.win = window
-        self.connect("button-press-event", self.tab_popup)
+        self.connect("button-press-event", WindowLabel.tab_popup)
         
         self.label = gtk.Label()        
         self.add(self.label)
@@ -644,9 +642,7 @@ class FindBox(gtk.HBox):
         self.parent.remove(self)
         self.win.focus()
 
-    def clicked(self, *args):
-        button = args[-1]
-    
+    def clicked(self, button):
         text = self.textbox.get_text()
 
         if not text:
@@ -704,7 +700,7 @@ class FindBox(gtk.HBox):
         self.textbox = gtk.Entry()
         
         self.textbox.connect('focus-out-event', self.remove)
-        self.textbox.connect('activate', self.clicked, self.up)
+        self.textbox.connect('activate', FindBox.clicked, self.up)
                 
         self.pack_start(gtk.Label('Find:'), expand=False)
         self.pack_start(self.textbox)
@@ -769,6 +765,19 @@ class UrkUITabs(gtk.Window):
     def menu(self):
         def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+            e.menu += [None]
+            e.menu += [('Editor', editor.main)]
+            e.menu += [None]
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+            e.menu += [None]
+            e.menu += [('Editor', editor.main)]
+            e.menu += [None]
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+            e.menu += [None]
+            e.menu += [('Editor', editor.main)]
+            e.menu += [None]
+            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
+            e.menu += [None]
             e.menu += [('Editor', editor.main)]
 
         events.register('MainMenu', 'on', add_defaults_to_menu, 'ui')
@@ -813,7 +822,7 @@ class UrkUITabs(gtk.Window):
         except:
             pass
 
-        self.connect("delete_event", self.exit)
+        self.connect("delete-event", self.exit)
 
         # layout
         xy = conf.get("xy", (-1, -1))
@@ -821,11 +830,19 @@ class UrkUITabs(gtk.Window):
 
         self.move(*xy)
         self.set_default_size(*wh)
-        
+
+        self._saving = None
         def save_xywh(*args):
-            conf["xy"] = self.get_position()
-            conf["wh"] = self.get_size()
-        self.connect("configure_event", save_xywh)
+            if not self._saving:
+                def save():
+                    conf["xy"] = self.get_position()
+                    conf["wh"] = self.get_size()
+                    
+                    self._saving = None
+                    
+                self._saving = gobject.timeout_add(200, save)
+
+        self.connect("configure-event", save_xywh)
         
         self.tabs = gtk.Notebook()
         
@@ -846,7 +863,7 @@ class UrkUITabs(gtk.Window):
                 
         self.connect('event', super_window_change)
 
-        def window_change(notebook, wptr, page_num):
+        def window_change(notebook, _wptr, page_num):
             events.trigger("Active", notebook.get_nth_page(page_num))
             
         self.tabs.connect("switch-page", window_change)

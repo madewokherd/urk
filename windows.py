@@ -150,7 +150,7 @@ class StatusWindow(Window):
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
 
-        self.nick_label = widgets.NickEdit(self)
+        self.nick_label = widgets.NickEditor(self)
 
         self.focus = self.input.grab_focus
         self.connect("key-press-event", self.transfer_text)
@@ -173,7 +173,7 @@ class QueryWindow(Window):
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
 
-        self.nick_label = widgets.NickEdit(self)
+        self.nick_label = widgets.NickEditor(self)
 
         self.focus = self.input.grab_focus
         self.connect("key-press-event", self.transfer_text)
@@ -229,7 +229,7 @@ class ChannelWindow(Window):
         Window.__init__(self, network, id)
 
         self.nicklist = widgets.Nicklist(self)
-        self.nick_label = widgets.NickEdit(self)
+        self.nick_label = widgets.NickEditor(self)
 
         self.focus = self.input.grab_focus
         self.connect("key-press-event", self.transfer_text)
