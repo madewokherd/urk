@@ -13,12 +13,12 @@ INITIALIZING = 2
 CONNECTED = 3
 
 def parse_irc(msg, server):
-    msg = msg.split(" ")
+    msg = msg.split(' ')
     
     # if our very first character is :
     # then this is the source, 
     # otherwise insert the server as the source
-    if msg[0][0] == ":":
+    if msg[0][0] == ':':
         msg[0] = msg[0][1:]
     else:
         msg.insert(0, server)
@@ -26,12 +26,12 @@ def parse_irc(msg, server):
     # loop through the msg until we find 
     # something beginning with :
     for i, token in enumerate(msg):
-        if token.startswith(":"):
+        if token.startswith(':'):
             # remove the :
             msg[i] = msg[i][1:]
             
             # join up the rest
-            msg[i:] = [" ".join(msg[i:])]
+            msg[i:] = [' '.join(msg[i:])]
             break
     
     # filter out the empty pre-":" tokens and add on the text to the end
@@ -40,7 +40,7 @@ def parse_irc(msg, server):
     # note: this sucks and makes very little sense, but it matches the BNF
     #       as far as we've tested, which seems to be the goal
 
-class Network:
+class Network(object):
     # desired nicknames
     try:
         nicks = (conf.get('nick'),)
