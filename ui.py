@@ -29,7 +29,13 @@ def set_clipboard(text):
     gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
     gtk.clipboard_get(gtk.gdk.SELECTION_SECONDARY).set_text(text)
 
-class GtkSource:
+class Source(object):
+    __slots__ = ['enabled']
+    enabled = True
+    def unregister(self):
+        self.enabled = False
+
+class GtkSource(object):
     __slots__ = ['tag']
     def __init__(self, tag):
         self.tag = tag
