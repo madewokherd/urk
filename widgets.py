@@ -283,6 +283,26 @@ class TextInput(gtk.Entry):
         gtk.Entry.do_grab_focus(self)
         self.text, self.selection = temp
 
+    def keypress(self, event):
+        key = ''
+        for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
+                        (gtk.gdk.SHIFT_MASK, '+'),
+                        (gtk.gdk.MOD1_MASK, '!')):
+            if event.state & k:
+                key += c
+        
+        key += gtk.gdk.keyval_name(event.keyval)
+
+        events.trigger(
+            'KeyPress',
+            events.data(key=key, string=event.string, window=self.win)
+            )
+    
+        if key == "^Return":
+            self.entered_text(True)
+        
+        return event.keyval in (up, down, tab)
+    
     def __init__(self, window):
         gtk.Entry.__init__(self)
         
@@ -291,28 +311,11 @@ class TextInput(gtk.Entry):
         up = gtk.gdk.keyval_from_name("Up")
         down = gtk.gdk.keyval_from_name("Down")
         tab = gtk.gdk.keyval_from_name("Tab")
-        
-        def key_event(widget, event, event_type):
-            key = ''
-            for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
-                            (gtk.gdk.SHIFT_MASK, '+'),
-                            (gtk.gdk.MOD1_MASK, '!')):
-                if event.state & k:
-                    key += c
-            
-            key += gtk.gdk.keyval_name(event.keyval)
 
-            events.trigger(
-                event_type,
-                events.data(key=key, string=event.string, window=self.win)
-                )
+        # we don't want key events to propogate so we stop them in connect_after
+        self.connect('key-press-event', TextInput.keypress)
+        self.connect_after('key-press-event', lambda *a: True)
         
-            if key == "^Return":
-                self.entered_text(True)
-            
-            return event.keyval in (up, down, tab)
-        
-        self.connect('key-press-event', key_event, 'KeyPress')
         self.connect('activate', TextInput.entered_text, False)
 
 gobject.type_register(TextInput)
