@@ -571,6 +571,7 @@ class TextOutput(gtk.TextView):
         self.connect("motion-notify-event", TextOutput.hover)
         self.connect("button-press-event", TextOutput.mousedown)
         self.connect("button-release-event", TextOutput.mouseup)
+        self.connect_after("button-release-event", lambda *a: True)
         self.connect("leave-notify-event", TextOutput.clear_hover)
           
         self.hover_coords = 0, 0
