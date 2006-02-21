@@ -583,7 +583,7 @@ class TextOutput(gtk.TextView):
             self.scroller = vadj
 
             self.parent.get_vscrollbar().connect(
-                "button-release-event", TextOutput.check_autoscroll
+                "button-release-event", self.check_autoscroll
                 )
             self.connect_after("scroll-event", TextOutput.check_autoscroll)
 
