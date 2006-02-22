@@ -1,6 +1,7 @@
 import sys #only needed for the stupid workaround
 import os
 import thread
+import socket
 
 import commands
 
@@ -31,7 +32,8 @@ def set_clipboard(text):
 
 class Source(object):
     __slots__ = ['enabled']
-    enabled = True
+    def __init__(self):
+        self.enabled = True
     def unregister(self):
         self.enabled = False
 
@@ -71,6 +73,77 @@ def fork(cb, f, *args, **kwargs):
 
     thread.start_new_thread(thread_func, ())
     return is_stopped
+
+class SocketSource(object):
+    writeable_tag = None
+    tags = None
+    
+    socket = None
+    
+    def on_connect(self):
+        pass
+
+    def on_readable(self):
+        pass
+
+    def on_disconnect(self, errno, msg):
+        pass
+
+    def __init__(self, socket, on_connect=None, on_readable=None, on_disconnect=None):
+        self.socket = socket
+        
+        if on_connect:
+            self.on_connect = on_connect
+        
+        if on_readable:
+            self.on_readable = on_readable
+        
+        if on_disconnect:
+            self.on_disconnect = on_disconnect
+        
+        self.sources = []
+        
+        self.tags = [gobject.io_add_watch(socket, gobject.IO_ERR, self._on_disconnect)]
+        self.tags.append(gobject.io_add_watch(socket, gobject.IO_HUP, self._on_disconnect))
+        self.writeable_tag = gobject.io_add_watch(socket, gobject.IO_OUT, self._on_writeable)
+        self.tags.append(gobject.io_add_watch(socket, gobject.IO_IN, self._on_readable))
+    
+    def _on_writeable(self, fd, condition):
+        err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+        if err:
+            self.on_disconnect(err, os.strerror(err))
+            self.unregister()
+        else:
+            self.on_connect()
+            if self.writeable_tag:
+                gobject.source_remove(self.writeable_tag)
+                self.writeable_tag = None
+        return True
+    
+    def _on_readable(self, fd, condition):
+        err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+        if err:
+            self.on_disconnect(err, os.strerror(err))
+            self.unregister()
+        else:
+            self.on_readable()
+        return True
+    
+    def _on_disconnect(self, fd, condition):
+        err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+        self.on_disconnect(err, err and os.strerror(err) or "Connection closed by remote host")
+        self.unregister()
+        return True
+    
+    def unregister(self):
+        if self.writeable_tag:
+            gobject.source_remove(self.writeable_tag)
+            self.writeable_tag = None
+        for tag in self.tags:
+            gobject.source_remove(tag)
+        self.tags = ()
+
+register_socket = SocketSource
 
 set_style = widgets.set_style
 
