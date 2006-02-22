@@ -301,6 +301,10 @@ class TextInput(gtk.Entry):
         if key == "^Return":
             self.entered_text(True)
         
+        up = gtk.gdk.keyval_from_name("Up")
+        down = gtk.gdk.keyval_from_name("Down")
+        tab = gtk.gdk.keyval_from_name("Tab")
+
         return event.keyval in (up, down, tab)
     
     def __init__(self, window):
@@ -308,10 +312,6 @@ class TextInput(gtk.Entry):
         
         self.win = window
         
-        up = gtk.gdk.keyval_from_name("Up")
-        down = gtk.gdk.keyval_from_name("Down")
-        tab = gtk.gdk.keyval_from_name("Tab")
-
         # we don't want key events to propogate so we stop them in connect_after
         self.connect('key-press-event', TextInput.keypress)
         self.connect_after('key-press-event', lambda *a: True)
