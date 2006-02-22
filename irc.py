@@ -1,5 +1,7 @@
 import socket
+import errno
 import sys
+import os
 
 from conf import conf
 import events
@@ -40,17 +42,17 @@ def parse_irc(msg, server):
     # note: this sucks and makes very little sense, but it matches the BNF
     #       as far as we've tested, which seems to be the goal
 
-class Network(object):
-    # desired nicknames
+def default_nicks():
     try:
-        nicks = (conf.get('nick'),)
+        nicks = [conf.get('nick')]
         if not nicks[0]:
             import getpass
-            nicks = (getpass.getuser(),)
-            del getpass
+            nicks = [getpass.getuser()]
     except:
-        nicks = ("mrurk",)
-    
+        nicks = ["mrurk"]
+    return nicks
+
+class Network(object):
     socket = None
     DEBUG = False
     
@@ -61,7 +63,7 @@ class Network(object):
         
         self.name = name or server
         
-        self.nicks = nicks or list(self.nicks)
+        self.nicks = nicks or default_nicks()
         self.me = self.nicks[0]
         
         self.fullname = fullname or "urk user"
@@ -95,13 +97,18 @@ class Network(object):
             
             self.failedlasthost = False
             
+            import traceback
+            
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
                     try:
                         self.socket = socket.socket(f, t, p)
-                    except:
-                        continue
-                    self.source = ui.fork(self.on_connect, self.socket.connect,a)
+                        self.socket.settimeout(0)
+                        self.socket.connect(a)
+                    except socket.error, e:
+                        if e[0] != errno.EINPROGRESS:
+                            continue
+                    self.source = ui.register_socket(self.socket, self.on_connect, self.on_readable, self.on_disconnect)
                     self.failedhosts.append((f, t, p, c, a))
                     if set(self.failedhosts) >= set(result):
                         self.failedlasthost = True
@@ -113,55 +120,48 @@ class Network(object):
                     f, t, p, c, a = result[0]
                     try:
                         self.socket = socket.socket(f, t, p)
-                        self.source = ui.fork(self.on_connect, self.socket.connect,a)
-                    except:
-                        self.disconnect(error="Couldn't find a host we can connect to")
+                        self.socket.settimeout(0)
+                        self.socket.connect(a)
+                        self.source = ui.register_socket(self.socket, self.on_connect, self.on_readable, self.on_disconnect)
+                    except socket.error, e:
+                        if e[0] != errno.EINPROGRESS:
+                            self.disconnect(error="Couldn't find a host we can connect to")
                 else:
                     self.disconnect(error="Couldn't find a host we can connect to")
     
-    #called when socket.open() returns
-    def on_connect(self, result, error):
-        if error:
-            self.disconnect(error=error[1])
-            #we should immediately retry if we failed to open the socket and there are hosts left
-            if self.status == DISCONNECTED and not self.failedlasthost:
-                windows.get_default(self).write("* Retrying with next available host")
-                self.connect()
-        else:
-            self.source = source = ui.Source()
-            self.status = INITIALIZING
-            self.failedhosts[:] = ()
+    #called when the socket becomes open
+    def on_connect(self):
+        self.status = INITIALIZING
+        self.failedhosts[:] = ()
 
-            events.trigger('SocketConnect', events.data(network=self))
-            
-            if source.enabled:
-                self.source = ui.fork(self.on_read, self.socket.recv, 8192)
+        events.trigger('SocketConnect', events.data(network=self))
         
-    #called when we read data or failed to read data
-    def on_read(self, result, error):
-        if error:
-            self.disconnect(error=error[1])
-        elif not result:
-            self.disconnect(error="Connection closed by remote host")
-        else:
-            self.source = source = ui.Source()
+    #called when we can read from the socket
+    def on_readable(self):
+        reply = self.socket.recv(8192)
+        
+        if reply:
+            self.buffer = self.buffer + reply
             
-            self.buffer = (self.buffer + result).split('\r\n')
+            lines, self.buffer = self.buffer.rsplit("\r\n",1)
             
-            for line in self.buffer[:-1]:
+            for line in lines.split('\r\n'):
                 if self.DEBUG:
                     print "<< %s" % line
-        
-                self.got_msg(line)
-                
-            if self.buffer:
-                self.buffer = self.buffer[-1]
-            else:
-                self.buffer = ''
-            
-            if source.enabled:
-                self.source = ui.fork(self.on_read, self.socket.recv, 8192)
 
+                self.got_msg(line)
+        else:
+            err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            self.disconnect(error=os.strerror(err))
+        
+        return True
+    
+    def on_disconnect(self, errno, msg):
+        if errno:
+            self.disconnect(msg)
+        else:
+            self.disconnect()
+    
     def raw(self, msg):
         if self.DEBUG:
             print ">> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
