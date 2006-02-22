@@ -97,8 +97,6 @@ class Network(object):
             
             self.failedlasthost = False
             
-            import traceback
-            
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
                     try:
@@ -138,7 +136,11 @@ class Network(object):
         
     #called when we can read from the socket
     def on_readable(self):
-        reply = self.socket.recv(8192)
+        try:
+            reply = self.socket.recv(8192)
+        except:
+            import traceback
+            traceback.print_exc()
         
         if reply:
             self.buffer = self.buffer + reply
@@ -152,7 +154,10 @@ class Network(object):
                 self.got_msg(line)
         else:
             err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-            self.disconnect(error=os.strerror(err))
+            if err:
+                self.disconnect(error=os.strerror(err))
+            else:
+                self.disconnect(error="Connection closed by remote host")
         
         return True
     
