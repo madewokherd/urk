@@ -1,6 +1,6 @@
 import sys #only needed for the stupid workaround
 import os
-import threading
+import thread
 
 import commands
 
@@ -54,37 +54,23 @@ def register_timer(time, f, *args, **kwargs):
         return f(*args, **kwargs)
     return GtkSource(gobject.timeout_add(time, callback, priority=priority))
 
-class UrkForker(threading.Thread):
-    def unregister(self):
-        self.enabled = False
-
-    def run(self):
+def fork(cb, f, *args, **kwargs):
+    is_stopped = Source()
+    def thread_func():
         try:
-            result, error = self.task(*self.args, **self.kwargs), None
+            result, error = f(*args, **kwargs), None
         except Exception, e:
             result, error = None, e
             
-        if self.enabled:
-            def callback():
-                self.callback(result, error)
-        
+        if is_stopped.enabled:
+            def callback():           
+                if is_stopped.enabled:
+                    cb(result, error)
+
             gobject.idle_add(callback)
-    
-    def __init__(self, callback, task, args=(), kwargs={}):
-        super(UrkForker, self).__init__()
 
-        self.callback = callback
-        self.task = task
-        self.args = args
-        self.kwargs = kwargs
-        
-        self.enabled = True
-
-def fork(cb, f, *args, **kwargs):
-    forker = UrkForker(cb, f, args, kwargs)
-    forker.start()
-    
-    return forker
+    thread.start_new_thread(thread_func, ())
+    return is_stopped
 
 set_style = widgets.set_style
 
