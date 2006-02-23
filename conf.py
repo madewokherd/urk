@@ -5,39 +5,44 @@ import os
 
 CONF_FILE = os.path.join(urk.userpath,'urk.conf')
 
-def pprint(x, depth=-2):
+def pprint(obj, depth=-2):
     depth += 2
     
-    s_list = []
+    string = []
 
-    if isinstance(x, dict):
-        s_list += ['{', '\n']
-    
-        for key in x:
-            s_list += ['%s%s%s' % (' '*depth, repr(key), ':')]
-            s_list += pprint(x[key], depth)
-            
-        s_list += ['%s%s' % (' '*depth, '}')]
-        s_list += [',\n']
+    if isinstance(obj, dict):
+        if obj:
+            string.append('{\n')
         
-    elif isinstance(x, list):
-        s_list += ['[', '\n']
-    
-        for item in x:
-            s_list += ['%s' % (' '*depth)]
-            s_list += pprint(item, depth)
+            for key in obj:
+                string.append('%s%s%s' % (' '*depth, repr(key), ': '))
+                string += pprint(obj[key], depth)
+                
+            string.append('%s%s' % (' '*depth, '},\n'))
             
-        s_list += ['%s%s' % (' '*depth, ']')]
-        s_list += [',\n']
+        else:
+            string.append('{},\n')
+        
+    elif isinstance(obj, list):
+        if obj:
+            string.append('[\n')
+        
+            for item in obj:
+                string.append('%s' % (' '*depth))
+                string += pprint(item, depth)
+                
+            string.append('%s%s' % (' '*depth, '],\n'))
+            
+        else:
+            string.append('[],\n')
         
     else:
-        s_list += ['%s,' % repr(x), '\n']
+        string.append('%s,\n' % (repr(obj),))
         
-    if depth == 0:
-        return ''.join(s_list[:-1])
-    
+    if depth:
+        return string
     else:
-        return s_list
+        return ''.join(string)[:-2]
 
 def save(*args):
     new_file = not os.access(CONF_FILE,os.F_OK)
@@ -55,3 +60,6 @@ if os.access(CONF_FILE,os.R_OK):
     conf = eval(file(CONF_FILE, "U").read().strip())
 else:
     conf = {}
+    
+if __name__ == '__main__':
+    print pprint(conf)
