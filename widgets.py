@@ -190,6 +190,7 @@ class Nicklist(gtk.TreeView):
         self.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         self.set_property("fixed-height-mode", True)
         self.connect("button-press-event", Nicklist.click)
+        self.connect_after("button-release-event", lambda *a: True)
         
         style_me(self, "nicklist")
 
