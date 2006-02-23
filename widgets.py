@@ -769,19 +769,6 @@ class UrkUITabs(gtk.Window):
     def menu(self):
         def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-            e.menu += [None]
-            e.menu += [('Editor', editor.main)]
-            e.menu += [None]
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-            e.menu += [None]
-            e.menu += [('Editor', editor.main)]
-            e.menu += [None]
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-            e.menu += [None]
-            e.menu += [('Editor', editor.main)]
-            e.menu += [None]
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-            e.menu += [None]
             e.menu += [('Editor', editor.main)]
 
         events.register('MainMenu', 'on', add_defaults_to_menu, 'ui')
