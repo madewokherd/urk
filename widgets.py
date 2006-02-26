@@ -586,6 +586,15 @@ class TextOutput(gtk.TextView):
 
         def setup_scroll(self, _adj, vadj):
             self.scroller = vadj
+            
+            drag_mask = gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK|gtk.gdk.BUTTON3_MASK
+            def check_autoscroll_if_dragging(w, event, drag_mask=drag_mask):
+                if event.get_state() & drag_mask:
+                    self.check_autoscroll()
+            
+            self.parent.get_vscrollbar().connect(
+                "motion-notify-event", check_autoscroll_if_dragging
+                )
 
             self.parent.get_vscrollbar().connect(
                 "button-release-event", self.check_autoscroll
