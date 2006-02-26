@@ -159,23 +159,21 @@ else:
         ('sensible-browser', ('sensible-browser')),
         )
     def open_file(filename):
+        flags = gobject.SPAWN_LEAVE_DESCRIPTORS_OPEN | gobject.SPAWN_SEARCH_PATH
+        filename = str(filename) #gobject won't accept unicode strings
         if conf.get('open-file-command'):
-            import subprocess
             command = conf['open-file-command'].split(' ') + [filename]
             try:
-                process = os.spawnvp(os.P_NOWAIT,command[0], command)
-                _kill_the_zombies(process)
+                gobject.spawn_async(command,flags=flags)
             except OSError:
                 print "Unable to start %s" % command
         elif open_file_cmd:
             try:
                 command = open_file_cmd + (filename,)
-                process = os.spawnvp(os.P_NOWAIT,command[0], command)
-                _kill_the_zombies(process)
+                gobject.spawn_async(command,flags=flags)
             except OSError:
                 print "Unable to start %s" % command
         else:
-            import subprocess
             paths = os.getenv("PATH") or os.defpath
             for cmdfile, cmd in os_commands:
                 for path in paths.split(os.pathsep):
@@ -183,17 +181,11 @@ else:
                         globals()['open_file_cmd'] = cmd
                         try:
                             command = cmd + (filename,)
-                            process = os.spawnvp(os.P_NOWAIT,command[0], command)
-                            _kill_the_zombies(process)
+                            gobject.spawn_async(command,flags=flags)
                         except OSError:
                             print "Unable to start %s" % command
                         return
             print "Unable to find a method to open %s." % filename
-    #ugly hack to make sure we get rid of zombie processes
-    def _kill_the_zombies(process):
-        pid, status = os.waitpid(process,os.WNOHANG)
-        if pid == 0:
-            register_timer(5000, _kill_the_zombies, process)
 
 def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
