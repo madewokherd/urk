@@ -91,6 +91,8 @@ class SocketSource(object):
 
     def __init__(self, socket, on_connect=None, on_readable=None, on_disconnect=None):
         self.socket = socket
+        self._connected = False
+        self._sendbuffer = ""
         
         if on_connect:
             self.on_connect = on_connect
@@ -114,8 +116,13 @@ class SocketSource(object):
             self.on_disconnect(err, os.strerror(err))
             self.unregister()
         else:
-            self.on_connect()
-            if self.writeable_tag:
+            if not self._connected:
+                self.on_connect()
+                self._connected = True
+            if self._sendbuffer:
+                n = self.socket.send(self._sendbuffer, socket.MSG_DONTWAIT)
+                self._sendbuffer = string[n:]
+            if not self._sendbuffer and self.writeable_tag:
                 gobject.source_remove(self.writeable_tag)
                 self.writeable_tag = None
         return True
@@ -134,6 +141,17 @@ class SocketSource(object):
         self.on_disconnect(err, err and os.strerror(err) or "Connection closed by remote host")
         self.unregister()
         return True
+    
+    def write(self, string):
+        #socket.send doesn't guarantee all the data will be sent and sendall may block
+        #the solution is to use this function
+        if self._sendbuffer:
+            self._sendbuffer += string
+        else:
+            n = self.socket.send(string, socket.MSG_DONTWAIT)
+            self._sendbuffer = string[n:]
+            if self._sendbuffer and not self.writeable_tag:
+                self.writeable_tag = gobject.io_add_watch(self.socket, gobject.IO_OUT, self._on_writeable)
     
     def unregister(self):
         if self.writeable_tag:

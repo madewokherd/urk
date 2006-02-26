@@ -172,7 +172,8 @@ class Network(object):
             print ">> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
         
         if self.status >= INITIALIZING:
-            self.socket.send(msg + "\r\n")
+            #have ui do the writing for us so we know all the data will be sent
+            self.source.write(msg + "\r\n")
         
     def got_msg(self, msg):
         pmsg = parse_irc(msg, self.server)
