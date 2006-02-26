@@ -56,10 +56,13 @@ def save(*args):
 
 events.register('Exit', 'post', save)
 
-if os.access(CONF_FILE,os.R_OK):
+try:
     conf = eval(file(CONF_FILE, "U").read().strip())
-else:
-    conf = {}
+except IOError, e:
+    if e.args[0] == 2:
+        conf = {}
+    else:
+        raise
     
 if __name__ == '__main__':
     print pprint(conf)
