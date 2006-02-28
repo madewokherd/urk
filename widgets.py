@@ -714,7 +714,7 @@ class FindBox(gtk.HBox):
         self.textbox = gtk.Entry()
         
         self.textbox.connect('focus-out-event', self.remove)
-        self.textbox.connect('activate', FindBox.clicked, self.up)
+        self.textbox.connect('activate', self.clicked, self.up)
                 
         self.pack_start(gtk.Label('Find:'), expand=False)
         self.pack_start(self.textbox)
