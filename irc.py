@@ -104,7 +104,7 @@ class Network(object):
                         self.socket.settimeout(0)
                         self.socket.connect(a)
                     except socket.error, e:
-                        if e[0] != errno.EINPROGRESS:
+                        if e[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                             continue
                     self.source = ui.register_socket(self.socket, self.on_connect, self.on_readable, self.on_disconnect)
                     self.failedhosts.append((f, t, p, c, a))
@@ -122,7 +122,7 @@ class Network(object):
                         self.socket.connect(a)
                         self.source = ui.register_socket(self.socket, self.on_connect, self.on_readable, self.on_disconnect)
                     except socket.error, e:
-                        if e[0] != errno.EINPROGRESS:
+                        if e[0] not in (errno.EINPROGRESS, errno.EWOULDBLOCK):
                             self.disconnect(error="Couldn't find a host we can connect to")
                 else:
                     self.disconnect(error="Couldn't find a host we can connect to")
