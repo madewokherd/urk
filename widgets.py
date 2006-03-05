@@ -588,11 +588,12 @@ class TextOutput(gtk.TextView):
             self.scroller = vadj
             
             if gtk.pygtk_version < (2,8): #account for pygtk 2.6
-                def set_scroll(adj):
-                    self.to_scroll = adj.value + adj.page_size >= adj.upper
-                
-                vadj.connect("value-changed", set_scroll)
-            else: #this is better but it needs get_vscrollbar
+                if vadj:
+                    def set_scroll(adj):
+                        self.autoscroll = adj.value + adj.page_size >= adj.upper
+    
+                    vadj.connect("value-changed", set_scroll)
+            else:
                 drag_mask = gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK|gtk.gdk.BUTTON3_MASK
                 def check_autoscroll_if_dragging(w, event, drag_mask=drag_mask):
                     if event.get_state() & drag_mask:
