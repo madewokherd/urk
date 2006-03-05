@@ -587,19 +587,25 @@ class TextOutput(gtk.TextView):
         def setup_scroll(self, _adj, vadj):
             self.scroller = vadj
             
-            drag_mask = gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK|gtk.gdk.BUTTON3_MASK
-            def check_autoscroll_if_dragging(w, event, drag_mask=drag_mask):
-                if event.get_state() & drag_mask:
-                    self.check_autoscroll()
+            if gtk.pygtk_version < (2,8): #account for pygtk 2.6
+                def set_scroll(adj):
+                    self.to_scroll = adj.value + adj.page_size >= adj.upper
+                
+                vadj.connect("value-changed", set_scroll)
+            else: #this is better but it needs get_vscrollbar
+                drag_mask = gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK|gtk.gdk.BUTTON3_MASK
+                def check_autoscroll_if_dragging(w, event, drag_mask=drag_mask):
+                    if event.get_state() & drag_mask:
+                        self.check_autoscroll()
             
-            self.parent.get_vscrollbar().connect(
-                "motion-notify-event", check_autoscroll_if_dragging
-                )
+                self.parent.get_vscrollbar().connect(
+                    "motion-notify-event", check_autoscroll_if_dragging
+                    )
 
-            self.parent.get_vscrollbar().connect(
-                "button-release-event", self.check_autoscroll
-                )
-            self.connect_after("scroll-event", TextOutput.check_autoscroll)
+                self.parent.get_vscrollbar().connect(
+                    "button-release-event", self.check_autoscroll
+                    )
+                self.connect_after("scroll-event", TextOutput.check_autoscroll)
 
         self.connect("set-scroll-adjustments", setup_scroll)
         self.connect("size-allocate", TextOutput.scroll)
