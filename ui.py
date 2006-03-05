@@ -105,8 +105,7 @@ class SocketSource(object):
         
         self.sources = []
         
-        self.tags = [gobject.io_add_watch(socket, gobject.IO_ERR, self._on_disconnect)]
-        self.tags.append(gobject.io_add_watch(socket, gobject.IO_HUP, self._on_disconnect))
+        self.tags = [gobject.io_add_watch(socket, gobject.IO_ERR|gobject.IO_HUP, self._on_disconnect)]
         self.writeable_tag = gobject.io_add_watch(socket, gobject.IO_OUT, self._on_writeable)
         self.tags.append(gobject.io_add_watch(socket, gobject.IO_IN, self._on_readable))
     
@@ -120,7 +119,7 @@ class SocketSource(object):
                 self.on_connect()
                 self._connected = True
             if self._sendbuffer:
-                n = self.socket.send(self._sendbuffer, socket.MSG_DONTWAIT)
+                n = self.socket.send(self._sendbuffer)
                 self._sendbuffer = string[n:]
             if not self._sendbuffer and self.writeable_tag:
                 gobject.source_remove(self.writeable_tag)
@@ -148,7 +147,7 @@ class SocketSource(object):
         if self._sendbuffer:
             self._sendbuffer += string
         else:
-            n = self.socket.send(string, socket.MSG_DONTWAIT)
+            n = self.socket.send(string)
             self._sendbuffer = string[n:]
             if self._sendbuffer and not self.writeable_tag:
                 self.writeable_tag = gobject.io_add_watch(self.socket, gobject.IO_OUT, self._on_writeable)
