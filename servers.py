@@ -5,6 +5,9 @@ import windows
 from conf import conf
 import urk
 
+if 'networks' not in conf:
+    conf['networks'] = {}
+
 def server_get_data(network_info):
     if 'port' in network_info:
         return "%s:%s" % (
@@ -135,27 +138,36 @@ class ServerWidget(gtk.VBox):
         network_list.set_value(iter, 0, new_text)
         
     def add_network(self, button):
-        network_list = self.networks.get_model()
-    
-        if 'networks' not in conf:
-            conf['networks'] = {}
-    
         name = 'NewNetwork'
-        
         while name in conf.get('networks'):
             name += '_'
 
         conf['networks'][name] = {}
-        network_list.append([name])
+        network_list = self.networks.get_model()
+        path = network_list.append([name])
+        
+        # presumably we're meant to use the thing append returns but that
+        # doesn't work
+        path = (len(network_list)-1)
+
+        self.networks.set_cursor(
+            path,
+            focus_column=self.networks.get_column(0),
+            start_editing=True
+            )
         
     def remove_network(self, button):
         model, iter = self.networks.get_selection().get_selected()
 
         if iter:
-            if model.get_value(iter, 0) in conf.get('start_networks',()):
-                conf['start_networks'].remove(model.get_value(iter, 0))
-            del conf['networks'][model.get_value(iter, 0)]
+            name = model.get_value(iter, 0)
+            if name in conf.get('start_networks', ()):
+                conf['start_networks'].remove(name)
+            del conf['networks'][name]
             model.remove(iter)
+            
+        if len(model):
+            self.networks.set_cursor((len(model)-1,))
             
     def on_selection_changed(self, selection):
         model, iter = selection.get_selected()
