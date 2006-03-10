@@ -67,6 +67,10 @@ def postHilight(e):
     if e.hilight:
         tray.window_hilighted(e.window, e.source)
 
+def onText(e):
+    if isinstance(e.window, windows.QueryWindow):
+        tray.window_hilighted(e.window, e.source)
+
 def onActive(window):
     tray.window_activated(window)
     
