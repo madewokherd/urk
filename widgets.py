@@ -207,7 +207,7 @@ class NickEditor(gtk.EventBox):
     def update(self, nick=None):
         self.label.set_text(nick or self.win.network.me)
     
-    def toggle(self, event):
+    def toggle(self, widget, event):
         if self.label in self.get_children():
             edit = gtk.Entry()
             edit.set_text(self.label.get_text())
@@ -235,7 +235,7 @@ class NickEditor(gtk.EventBox):
         self.label.set_padding(5, 0)
         self.add(self.label)
 
-        self.connect("button-press-event", NickEditor.toggle)
+        self.connect("button-press-event", self.toggle)
         
         self.update()
 
