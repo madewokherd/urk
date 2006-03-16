@@ -4,8 +4,9 @@ http://urk.sourceforge.net/
 
 Overview:
 
-urk is an IRC client written purely in python for linux/gnome. It has a built-in
-scripting system (also python), which is used to implement much of the client.
+urk is an IRC client written purely in python for linux/gnome. It has a powerful
+built-in scripting system (also python), which is used to implement much of the
+client.
 
 
 Requirements/User installation:
@@ -15,24 +16,20 @@ them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
 
+If you use Windows, there are special instructions below just for you, because installing on windows would normally be too confusing for a normal human to figure it out without special knowledge.
+
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
 
 
-Windows users:
+Optional requirements:
 
-urk was designed for linux, but it happens nearly everything we used is
-cross-platform so..yeah..it runs on windows. You need to install some things:
-
--python version 2.4 or greater from www.python.org
--pygtk 2.6 or greater from http://www.pcpm.ucl.ac.be/~gustin/win32_ports/
--gtk+ runtime 2.6 or greater from http://gladewin32.sourceforge.net/
-
-It's very important that you get the win32 runtime for gtk+ from the site given.
-Installers from other places, including the gaim gtk+ installer, have failed. 
-Also, you'll need to restart after you've installed those things.
-
-Repeat: THE GTK+ RUNTIME PROVIDED WITH GAIM WILL NOT WORK.
+urk can also make use of these packages if you have them:
+-pygtksourceview, part of gnome-python-extras <=2.12 and gnome-python-desktop 
+ >=2.14, for source highlighting and undo in the internal script editor
+-egg, part of gnome-python-extras, for notification via a tray icon
+-python-dbus, for, well, not much (if dbus is available, urk only makes a single
+ instance per session, and commands can be executed remotely by calling urk.py)
 
 
 Getting started:
@@ -66,38 +63,65 @@ on an irc client.
 Configuration:
 
 Most configuration has to be done manually. If urk is running, you can configure
-it using commands. You can also edit urk.conf, which you can locate by typing
-'/pyeval __main__.userpath' in urk.
+it using commands. The settings are stored in urk.conf on your profile
+directory, which you can locate by typing '/pyeval urk.userpath' in urk.
 
 To set a value in urk, type
 
-/pyexec conf['setting'] = value
+/pyexec conf.conf['setting'] = value
 
 To see the current value, type
 
-/pyeval conf['setting']
+/pyeval conf.conf['setting']
+
+To unset a value (meaning urk will use the default), type
+
+/pyexec del conf.conf['setting']
 
 Setting:            Description:
 
-'nick'              The nickname urk should use. Defaults to None (if this is
-    set to None, urk tries to get a username from the os)
+'nick'                 The nickname urk should use. The default is to try to get
+    it from the os. Put this in quotes when you set it.
 
-'start_networks'    The networks/servers urk should connect to at startup. 
-    Defaults to []
+'quitmsg'              The message people see when you quit. The default is to
+    advertise urk with your current version; we have to promote it somehow.
+    This value needs to be in quotes.
 
-'perform/NETWORK'   A list of commands to perform on connecting to NETWORK.
-    Defaults to []
+'autoreconnect'        If True, urk will try to reconnect when you're
+    disconnected from a network. Defaults to True. Set this to True or False.
 
-'ui-gtk/tab-pos'    The side of the window where the tabs will reside
-    2 for top (default)
+'highlight_words'      A list of words, in addition to your nick, that cause a
+    highlight event (normally the tab label turns blue and, if it's available,
+    the tray icon shows up). For example: ['python', 'whale', 'peanut butter']
+
+'log_dir'              The place where logs are written. The default is a
+    directory called "logs" on your profile directory.
+
+'ui-gtk/tab-pos'       The side of the window where the tabs will reside
+    2 for top
     0 for left
     1 for right
-    3 for bottom
+    3 for bottom (default)
 
-'ui-gtk/tab-margin' The number of pixels of empty space around the edges of the
-    window. Defaults to 10
+'ui-gtk/show-menubar'  If True, the menubar is shown. The default is True. Set
+    this to True or False.
 
-'command_prefix'    The prefix used to signal a command. Defaults to '/'
+'command_prefix'       The prefix used to signal a command. Defaults to '/'
+
+'font'                 The font used for output. Defaults to "sans 8".
+
+'timestamp'            A timestamp that will show up before messages. The
+    default is no timestamp. A simple timestamp with hours and minutes is
+    "[%H:%M] ". See http://docs.python.org/lib/module-time.html#l2h-1955 for
+    a key to format this string.
+
+'start-console'        If True, urk will start up with a special console window
+    that shows debugging output (normally sent to a terminal) and accepts
+    python expressions. Defaults to False.
+
+'open-file-command'    The command used to open files and url's with your 
+    preferred application (such as "gnome-open"). This is ignored on Windows, 
+    and you should never need to mess with this, ever.
 
 
 System-wide installation:
@@ -115,26 +139,39 @@ onText is:
 def onText(e):
     code
 
-event is an object used to pass on the various information relating to the
-event that triggered the function.
+e is an object used to pass on the various information relating to the event
+that triggered the function. The name is a convention we use, much like self.
 
-event.source is the nickname of the person who sent the message.
+e.source is the nickname of the person who sent the message.
 
-event.target is the nickname or channel that received the message.
+e.target is the nickname or channel that received the message.
 
-event.text is the text of the message.
+e.text is the text of the message.
 
-event.network is an object representing the network where the message was sent.
+e.network is an object representing the network where the message was sent.
 
-event.window is a window that seems to be related to the event and some 
-unspecified reason. It could be the status window, a channel, window, a query,
-anything.
+e.window is a window that seems to be related to the event for some unspecified
+reason. It could be the status window, a channel window, a query, anything.
 
-Complete documentation doesn't exist yet. You'll have to use the actual source
-files. Sorry. theme.py is good for finding event names.
+Complete documentation doesn't exist yet. Sorry. Ask us or look at the source. theme.py is good for finding event names.
 
-Alternatively, you can bug the authors for help if no documentation exists. This
-will motivate us to create it.
+
+Windows users:
+
+urk was designed for linux, but it happens nearly everything we used is
+cross-platform so..yeah..it runs on windows. Windows users should install the following things:
+
+-python version 2.4 from http://www.python.org/download/
+-pygtk 2.6; there's an installer at http://www.pcpm.ucl.ac.be/~gustin/win32_ports/binaries/pygtk-2.6.3-1.win32-py2.4.exe
+-gtk+ runtime 2.6 from http://gladewin32.sourceforge.net/modules/wfdownloads/viewcat.php?cid=10
+
+Once you've installed the dependencies and rebooted, run urk.py to start the client.
+
+Things might not work properly if you got the installers from other places, such as gaim's gtk+ installer. Gaim's gtk+ doesn't appear to work. If you get things from other places, it's your responsibility to make sure they're set up properly.
+
+There's currently a nasty bug affecting urk in the windows gtk+ runtime version 2.8. This bug affects gaim as well. If you try to use urk with windows gtk+ 2.8, you won't be able to connect to any servers. This is because glib calls our connect handlers before we're really connected. For more information, see http://gaim.sourceforge.net/win32/index.php#bugs
+
+The current state of Windows support is very sad, and it will remain that way for the foreseeable future. There's no stand-alone installer. The dependencies are big (we can get away with it on linux because linux users are likely to have them already), and they can be confusing to get/install on windows. Automating the install of the dependencies is probably not possible. The good installers for pygtk apps on windows (ok, just py2exe really), wouldn't work well with urk because urk expects to see a normal, healthy python install. If you use windows, you should probably go with gaim or mIRC, unless you are a hardcore python fan and irc user, or you dislike gaim and can't afford to pay $20 for mIRC.
 
 
 Bugs/Feedback:
@@ -146,4 +183,7 @@ things that go in the default client (a notify list, for example, is something
 we'd want to see as an external script, not as part of the default setup, and
 something we're not likely to implement soon), there are probably a lot of 
 little things that we may have skipped over because we don't use them or have 
-become used to not having them.
+become used to urk not having them.
+
+The best way to get in touch with us is by irc, at #urk on irc.gamesurge.net.
+Or send a message to the mailing list, urk-discussion@lists.sourceforge.net.
