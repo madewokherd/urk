@@ -1,6 +1,7 @@
 import sys
 import traceback
 
+import events
 import windows
 from conf import conf
 
@@ -14,12 +15,12 @@ class ConsoleWriter:
         except:
             self.window.write(traceback.format_exc())
 
-class ConsoleWindow(windows.StatusWindow):
+class ConsoleWindow(windows.SimpleWindow):
     def get_title(self):
         return windows.Window.get_title(self)
 
     def __init__(self, network, id):
-        windows.StatusWindow.__init__(self, network, id)
+        windows.SimpleWindow.__init__(self, network, id)
     
         writer = ConsoleWriter(self)
         
@@ -28,6 +29,13 @@ class ConsoleWindow(windows.StatusWindow):
         
         self.globals = {'window': self}
         self.locals = {}
+
+#this prevents problems (and updates an open console window) on reload
+if hasattr(windows,'manager'):
+    for window in windows.manager:
+        if type(window).__name__ == "ConsoleWindow":
+            window.mutate(ConsoleWindow, window.network, window.id)
+    del window
 
 def onClose(window):
     if isinstance(window, ConsoleWindow):
@@ -40,7 +48,6 @@ def onCommandConsole(e):
 def onCommandSay(e):
     if isinstance(e.window, ConsoleWindow):
         e.window.globals.update(sys.modules)
-        e.__dict__
         text = ' '.join(e.args)
         try:
             e.window.write(">>> %s" % text) 
@@ -55,6 +62,8 @@ def onCommandSay(e):
                 traceback.print_exc()
         except:
             traceback.print_exc()
+    else:
+        raise events.CommandError("There's no one here to speak to.")
 
 def onStart(e):
     if conf.get('start-console'):
