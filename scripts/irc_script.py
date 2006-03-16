@@ -222,21 +222,31 @@ def onCommandQuery(e):
     windows.new(windows.QueryWindow, e.network, e.args[0]).activate()
 
 # make /nick work offline
-def onCommandNick(e):
-    if not e.network.status:
+def change_nick(network, nick):
+    if not network.status:
         e_data = events.data()
-        e_data.network = e.network
-        e_data.window = windows.get_default(e.network)
-        e_data.source = e.network.me
-        e_data.newnick = e.args[0]
+        e_data.network = network
+        e_data.window = windows.get_default(network)
+        e_data.source = network.me
+        e_data.newnick = nick
         events.trigger('Nick', e_data)
-        e.network.nicks[0] = e.args[0]
-        e.network.me = e.args[0]
+        network.nicks[0] = nick
+        network.me = nick
         
-        for w in windows.get_with(network=e.network):
+        for w in windows.get_with(network=network):
             w.nick_label.update()
     else:
-        e.network.raw('NICK :%s' % e.args[0])
+        network.raw('NICK :%s' % nick)
+
+def onCommandNick(e):
+    if 't' not in e.switches and e.network.me == irc.default_nicks()[0]:
+        conf['nick'] = e.args[0]
+        import conf as _conf
+        _conf.save()
+        for network in set(w.network for w in windows.manager):
+            change_nick(network, e.args[0])
+    else:
+        change_nick(e.network, e.args[0])
 
 def defNick(e):
     if e.source != e.network.me:
