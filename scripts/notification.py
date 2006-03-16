@@ -9,7 +9,8 @@ ui.gtk
 try:
     import egg.trayicon
 except:
-    pass
+    print "The 'egg' module is not available. This just means the tray icon won't work. This is normal if you don't have gnome-python-extras, and you can still use urk normally."
+    raise #still raise an exception so the script isn't loaded
 
 class urktray:
     def __init__(self):
