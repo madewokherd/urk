@@ -139,6 +139,30 @@ class Window(gtk.VBox):
         
         self.__activity = 0
 
+class SimpleWindow(Window):
+    def get_title(self):
+        # Something about self.network.isupport
+        if self.network.status:
+            return "%s" % self.network.server
+        else:
+            return "[%s]" % self.network.server
+
+    def __init__(self, network, id):    
+        Window.__init__(self, network, id)
+
+        self.focus = self.input.grab_focus
+        self.connect("key-press-event", self.transfer_text)
+
+        self.pack_end(self.input, expand=False)
+        
+        topbox = gtk.ScrolledWindow()
+        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox.add(self.output)
+
+        self.pack_end(topbox)
+
+        self.show_all()
+
 class StatusWindow(Window):
     def get_title(self):
         # Something about self.network.isupport
