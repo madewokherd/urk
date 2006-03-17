@@ -16,9 +16,6 @@ class ConsoleWriter:
             self.window.write(traceback.format_exc())
 
 class ConsoleWindow(windows.SimpleWindow):
-    def get_title(self):
-        return windows.Window.get_title(self)
-
     def __init__(self, network, id):
         windows.SimpleWindow.__init__(self, network, id)
     

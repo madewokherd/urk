@@ -138,15 +138,8 @@ class Window(gtk.VBox):
         self.__id = id
         
         self.__activity = 0
-
+        
 class SimpleWindow(Window):
-    def get_title(self):
-        # Something about self.network.isupport
-        if self.network.status:
-            return "%s" % self.network.server
-        else:
-            return "[%s]" % self.network.server
-
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
 
