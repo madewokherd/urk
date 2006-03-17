@@ -663,12 +663,12 @@ class FindBox(gtk.HBox):
         self.parent.remove(self)
         self.win.focus()
 
-    def clicked(self, button):
+    def clicked(self, button, search_down=False):
         text = self.textbox.get_text()
-
+        
         if not text:
             return
-            
+        
         buffer = self.win.output.get_buffer()
         
         if buffer.get_selection_bounds():
@@ -679,18 +679,18 @@ class FindBox(gtk.HBox):
         else:
            cursor_iter = buffer.get_end_iter()
     
-        if button == self.up:
-            cursor = cursor_iter.backward_search(
-                text, gtk.TEXT_SEARCH_VISIBLE_ONLY
-                )
-        elif button == self.down:
+        if search_down:
             cursor = cursor_iter.forward_search(
                 text, gtk.TEXT_SEARCH_VISIBLE_ONLY
                 )
-
+        else:
+            cursor = cursor_iter.backward_search(
+                text, gtk.TEXT_SEARCH_VISIBLE_ONLY
+                )
+        
         if not cursor:
             return
-            
+        
         fr, to = cursor
         
         if button == self.up:
@@ -713,7 +713,7 @@ class FindBox(gtk.HBox):
         self.down = gtk.Button(stock='gtk-go-down')
         
         self.up.connect('clicked', self.clicked)
-        self.down.connect('clicked', self.clicked)
+        self.down.connect('clicked', self.clicked, True)
         
         self.up.props.can_focus = False
         self.down.props.can_focus = False
@@ -721,7 +721,7 @@ class FindBox(gtk.HBox):
         self.textbox = gtk.Entry()
         
         self.textbox.connect('focus-out-event', self.remove)
-        self.textbox.connect('activate', self.clicked, self.up)
+        self.textbox.connect('activate', self.clicked)
                 
         self.pack_start(gtk.Label('Find:'), expand=False)
         self.pack_start(self.textbox)
