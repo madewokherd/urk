@@ -196,8 +196,8 @@ class Nicklist(gtk.TreeView):
 
 # Label used to display/edit your current nick on a network
 class NickEditor(gtk.EventBox):
-    def nick_change(self):
-        oldnick, newnick = self.label.get_text(), self.get_text()
+    def nick_change(self, entry):
+        oldnick, newnick = self.label.get_text(), entry.get_text()
         
         if newnick and newnick != oldnick:
             events.run('nick %s' % newnick, self.win, self.win.network)
@@ -211,7 +211,7 @@ class NickEditor(gtk.EventBox):
         if self.label in self.get_children():
             edit = gtk.Entry()
             edit.set_text(self.label.get_text())
-            edit.connect("activate", NickEditor.nick_change)
+            edit.connect("activate", self.nick_change)
             edit.connect("focus-out-event", self.toggle)
 
             self.remove(self.label)
