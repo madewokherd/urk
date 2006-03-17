@@ -239,12 +239,14 @@ def change_nick(network, nick):
         network.raw('NICK :%s' % nick)
 
 def onCommandNick(e):
+    default_nick = irc.default_nicks()[0]
     if 't' not in e.switches and e.network.me == irc.default_nicks()[0]:
         conf['nick'] = e.args[0]
         import conf as _conf
         _conf.save()
         for network in set(w.network for w in windows.manager):
-            change_nick(network, e.args[0])
+            if network.me == default_nick:
+                change_nick(network, e.args[0])
     else:
         change_nick(e.network, e.args[0])
 
