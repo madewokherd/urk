@@ -240,7 +240,7 @@ def change_nick(network, nick):
 
 def onCommandNick(e):
     default_nick = irc.default_nicks()[0]
-    if 't' not in e.switches and e.network.me == irc.default_nicks()[0]:
+    if 't' not in e.switches and e.network.me == default_nick:
         conf['nick'] = e.args[0]
         import conf as _conf
         _conf.save()
