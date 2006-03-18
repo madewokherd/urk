@@ -715,8 +715,8 @@ class FindBox(gtk.HBox):
         self.up.connect('clicked', self.clicked)
         self.down.connect('clicked', self.clicked, True)
         
-        self.up.props.can_focus = False
-        self.down.props.can_focus = False
+        self.up.set_property('can_focus', False)
+        self.down.set_property('can_focus', False)
         
         self.textbox = gtk.Entry()
         
