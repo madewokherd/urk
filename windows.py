@@ -49,9 +49,11 @@ def get_default(network):
         return window
 
 class Window(gtk.VBox):
+    need_vbox_init = True
+    
     def mutate(self, newclass, network, id):
         self.hide()
-    
+        
         for child in self.get_children():
             self.remove(child)
 
@@ -118,7 +120,10 @@ class Window(gtk.VBox):
         manager.update(self)
 
     def __init__(self, network, id):
-        gtk.VBox.__init__(self, False)
+        if self.need_vbox_init:
+            #make sure we don't call this an extra time when mutating
+            gtk.VBox.__init__(self, False)
+            self.need_vbox_init = False
         
         if hasattr(self, "output"):
             if self.output.parent:
@@ -138,7 +143,7 @@ class Window(gtk.VBox):
         self.__id = id
         
         self.__activity = 0
-        
+    
 class SimpleWindow(Window):
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
@@ -185,7 +190,7 @@ class StatusWindow(Window):
         self.pack_end(topbox)
 
         self.show_all()
-     
+
 class QueryWindow(Window):
     def __init__(self, network, id):    
         Window.__init__(self, network, id)
