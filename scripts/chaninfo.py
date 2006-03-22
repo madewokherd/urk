@@ -177,26 +177,34 @@ def setupMode(e):
                 if mode_on:
                     channel.nicks[nickname] += char
                 else:
-                    channel.nicks[nickname] = channel.nicks[nickname].strip(char)
+                    channel.nicks[nickname] = channel.nicks[nickname].replace(char,'')
                 nicklist_add(e.network, channel, nickname)
             elif char in always_parm_modes:
                 #these always have a parameter
                 if mode_on:
                     channel.special_mode[char] = params.pop()
                 else:
-                    del channel.special_mode[char]
+                    #account for unsetting modes that aren't set
+                    try:
+                        del channel.special_mode[char]
+                    except KeyError:
+                        pass
                     params.pop()
             elif char in set_parm_modes:
-                #these have a parameter if they're being set
+                #these have a parameter only if they're being set
                 if mode_on:
                     channel.special_mode[char] = params.pop()
                 else:
-                    del channel.special_mode[char]
+                    #account for unsetting modes that aren't set
+                    try:
+                        del channel.special_mode[char]
+                    except KeyError:
+                        pass
             if char not in list_modes and char not in '+-':
                 if mode_on:
-                    channel.mode = channel.mode.strip(char)+char
+                    channel.mode = channel.mode.replace(char,'')+char
                 else:
-                    channel.mode = channel.mode.strip(char)
+                    channel.mode = channel.mode.replace(char,'')
 
 def postNick(e):
     for channame in channels(e.network):
