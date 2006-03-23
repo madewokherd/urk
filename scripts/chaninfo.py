@@ -27,7 +27,7 @@ def nicklist_add(network, channel, nick):
         lower_limit , upper_limit = 0, len(window.nicklist)
         while lower_limit < upper_limit:
             midpoint = (lower_limit+upper_limit)/2
-            if sort_key(network, channel, window.nicklist[midpoint]) < k:
+            if _sort_key(network, channel, window.nicklist[midpoint]) < k:
                 lower_limit = midpoint+1
             else:
                 upper_limit = midpoint
@@ -273,9 +273,9 @@ def setupRaw(e):
                 window.nicklist.clear()
                 nicks = list(channel.nicks)
                 def key(nick):
-                    return sort_key(e.network, channel, nick)
+                    return _sort_key(e.network, channel, nick)
                 nicks.sort(key=key)
-                window.nicklist.extend(prefix(e.network, channel, nick) for nick in nicks)
+                window.nicklist.extend(_prefix(e.network, channel, nick) for nick in nicks)
         
     elif e.msg[1] == '324': #channel mode is
         channel = getchan(e.network,e.msg[3])
