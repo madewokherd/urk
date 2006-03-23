@@ -1,7 +1,7 @@
 import events
 import windows
 
-def prefix(network, channel, nick):
+def _prefix(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
     for mode, prefix in zip(fr, to):
@@ -9,7 +9,7 @@ def prefix(network, channel, nick):
             return prefix+nick
     return nick
 
-def sort_key(network, channel, nick):
+def _sort_key(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
     if nick[0] in to:
         nick = nick[1:]
@@ -19,11 +19,11 @@ def sort_key(network, channel, nick):
     return [mode not in modes for mode in fr] + [network.norm_case(nick)]
 
 def nicklist_add(network, channel, nick):
-    p = prefix(network, channel, nick)
-    k = sort_key(network, channel, nick)
-    
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
+        p = _prefix(network, channel, nick)
+        k = _sort_key(network, channel, nick)
+    
         lower_limit , upper_limit = 0, len(window.nicklist)
         while lower_limit < upper_limit:
             midpoint = (lower_limit+upper_limit)/2
@@ -34,11 +34,9 @@ def nicklist_add(network, channel, nick):
         window.nicklist.insert(lower_limit, p)
 
 def nicklist_del(network, channel, nick):
-    p = prefix(network, channel, nick)
-    
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
-        window.nicklist.remove(p)
+        window.nicklist.remove(_prefix(network, channel, nick))
 
 def setupListRightClick(e):
     if isinstance(e.window, windows.ChannelWindow):
@@ -70,15 +68,14 @@ def getchan(network, channel):
 
 #return a list of channels you're on on the given network
 def channels(network):
-    if hasattr(network,'channels'):
-        return list(network.channels)
-    else:
-        network.channels = result = {}
-        return result
+    if not hasattr(network, 'channels'):
+        network.channels = {}
+
+    return list(network.channels)
 
 #return True if you're on the channel
 def ischan(network, channel):
-    return channel in network.channels
+    return bool(getchan(network, channel))
 
 #return True if the nick is on the channel
 def ison(network, channel, nickname):
@@ -88,24 +85,39 @@ def ison(network, channel, nickname):
 #return a list of nicks on the given channel
 def nicks(network, channel):
     channel = getchan(network, channel)
-    return (channel or []) and list(channel.nicks)
+    
+    if channel:
+        return channel.nicks
+    else:
+        return {}
 
 #return the mode on the given channel
 def mode(network, channel, nickname=''):
     channel = getchan(network, channel)
-    if nickname:
-        return channel.nicks[channel.normal_nicks[network.norm_case(nickname)]] \
-                or ''
-    result = channel.mode
-    for m in channel.mode:
-        if m in channel.special_mode:
-            result += ' '+channel.special_mode[m]
-    return result
+    
+    if channel:
+        if nickname:
+            realnick = channel.normal_nicks.get(network.norm_case(nickname))
+            if realnick:
+                return channel.nicks[realnick]
+
+        else:
+            result = channel.mode
+            for m in channel.mode:
+                if m in channel.special_mode:
+                    result += ' '+channel.special_mode[m]
+            return result
+        
+    return ''
 
 #return the topic on the given channel
 def topic(network, channel):
     channel = getchan(network, channel)
-    return (channel or '') and channel.topic
+    
+    if channel:
+        return channel.topic
+    else:
+        return ''
 
 def setupJoin(e):
     if e.source == e.network.me:
@@ -158,53 +170,59 @@ def postQuit(e):
 def setupMode(e):
     channel = getchan(e.network,e.channel)
     if channel:
-        mode_on = True #are we reading a + section or a - section?
-        params = e.text.split(' ')[::-1]
-        modes = params.pop()
         user_modes = e.network.isupport['PREFIX'].split(')')[0][1:]
-        list_modes, always_parm_modes, set_parm_modes, normal_modes = \
-            e.network.isupport['CHANMODES'].split(',')
+        
+        (list_modes,
+         always_parm_modes,
+         set_parm_modes,
+         normal_modes) = e.network.isupport['CHANMODES'].split(',')
+
         list_modes += user_modes
-        for char in modes:
+        
+        mode_on = True #are we reading a + section or a - section?
+        params = e.text.split(' ')
+
+        for char in params.pop(0):
             if char == '+':
                 mode_on = True
+
             elif char == '-':
                 mode_on = False
-            elif char in user_modes:
-                #these are modes like op and voice
-                nickname = params.pop()
-                nicklist_del(e.network, channel, nickname)
-                if mode_on:
-                    channel.nicks[nickname] += char
-                else:
-                    channel.nicks[nickname] = channel.nicks[nickname].replace(char,'')
-                nicklist_add(e.network, channel, nickname)
-            elif char in always_parm_modes:
-                #these always have a parameter
-                if mode_on:
-                    channel.special_mode[char] = params.pop()
-                else:
-                    #account for unsetting modes that aren't set
-                    try:
-                        del channel.special_mode[char]
-                    except KeyError:
-                        pass
-                    params.pop()
-            elif char in set_parm_modes:
-                #these have a parameter only if they're being set
-                if mode_on:
-                    channel.special_mode[char] = params.pop()
-                else:
-                    #account for unsetting modes that aren't set
-                    try:
-                        del channel.special_mode[char]
-                    except KeyError:
-                        pass
-            if char not in list_modes and char not in '+-':
-                if mode_on:
-                    channel.mode = channel.mode.replace(char,'')+char
-                else:
-                    channel.mode = channel.mode.replace(char,'')
+
+            else:
+                if char in user_modes:
+                    #these are modes like op and voice
+                    nickname = params.pop(0)
+                    nicklist_del(e.network, channel, nickname)
+                    if mode_on:
+                        channel.nicks[nickname] += char
+                    else:
+                        channel.nicks[nickname] = channel.nicks[nickname].replace(char, '')
+                    nicklist_add(e.network, channel, nickname)
+
+                elif char in always_parm_modes:
+                    #these always have a parameter
+                    param = params.pop(0)
+                    
+                    if mode_on:
+                        channel.special_mode[char] = param
+                    else:
+                        #account for unsetting modes that aren't set
+                        channel.special_mode.pop(char, None)
+
+                elif char in set_parm_modes:
+                    #these have a parameter only if they're being set
+                    if mode_on:
+                        channel.special_mode[char] = params.pop(0)
+                    else:
+                        #account for unsetting modes that aren't set
+                        channel.special_mode.pop(char, None)
+                    
+                if char not in list_modes:
+                    if mode_on:
+                        channel.mode = channel.mode.replace(char, '')+char
+                    else:
+                        channel.mode = channel.mode.replace(char, '')
 
 def postNick(e):
     for channame in channels(e.network):
