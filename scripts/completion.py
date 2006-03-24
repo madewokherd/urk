@@ -4,50 +4,60 @@ import events
 from conf import conf
 
 def channel_completer(window, left, right, text):
-    return [w.id for w in windows.get_with(wclass=windows.ChannelWindow)]
+    return (w.id for w in windows.get_with(wclass=windows.ChannelWindow))
             
 # normal server commands
-srv_commands = ['PING', 'JOIN', 'PART', 'MODE', 'SERVER', 'KICK',
-                'QUIT', 'NICK', 'PRIVMSG', 'NOTICE', 'TOPIC']
+srv_commands = ('ping', 'join', 'part', 'mode', 'server', 'kick',
+                'quit', 'nick', 'privmsg', 'notice', 'topic')
             
 def command_completer(window, left, right, text):
-    candidates = [c.lower() for c in srv_commands]
-    candidates += [e[7:].lower() for e in events.events if e.startswith('Command')]
-
-    return set('/%s' % c for c in candidates if c)
+    for c in srv_commands:
+        yield '/%s' % c
+        
+    for c in events.events:
+        if c.startswith('Command') and c != 'Command':
+            yield '/%s' % [7:].lower()
 
 def nick_completer(window, left, right, text):  
-    network = window.network
+    recent_speakers = getattr(window, 'recent_speakers', ())
+    
+    for nick in recent_speakers:
+        if chaninfo.ison(window.network, window.id, nick):
+            yield nick
 
-    candidates = list(getattr(window, 'recent_speakers', []))
-    candidates += [n for n in chaninfo.nicks(network, window.id) if n not in candidates]
-
-    return [n for n in candidates if chaninfo.ison(network, window.id, n)]
+    for nick in chaninfo.nicks(window.network, window.id):
+        if nick not in recent_speakers:
+            yield nick
     
 def script_completer(window, left, right, text):
-    return list(events.loaded)
+    return events.loaded.iterkeys()
     
 def network_completer(window, left, right, text):
-    return list(conf.get('networks', ()))
+    return conf.get('networks', {}).iterkeys()
 
-def get_completer_for(window, left, right, text, fulltext):
+def get_completer_for(window):
+    input = window.input
+
+    left, right = input.text[:input.cursor], input.text[input.cursor:]
+            
+    text = left.split(' ')[-1]
+    fulltext = 
+
+    suffix = ''
+
     if text and text[0] in window.network.isupport.get('CHANTYPES', '#&+'):
         candidates = channel_completer(window, left, right, text)
-        suffix = ''
         
-    elif fulltext.startswith('/reload '):
+    elif input.text.startswith('/reload '):
         candidates = script_completer(window, left, right, text)
-        suffix = ''
     
-    elif fulltext.startswith('/edit '):
+    elif input.text.startswith('/edit '):
         candidates = script_completer(window, left, right, text)
-        suffix = ''
         
-    elif fulltext.startswith('/server '):
+    elif input.text.startswith('/server '):
         candidates = network_completer(window, left, right, text)
-        suffix = ''
         
-    elif text.startswith('/'):
+    elif input.text.startswith('/'):
         candidates = command_completer(window, left, right, text)
         suffix = ' '
         
@@ -60,39 +70,32 @@ def get_completer_for(window, left, right, text, fulltext):
             suffix = ' '
             
     if text:
-        insert_text = "%s%s%s%s" % (left[:-len(text)], "%s", suffix, right)
-        cursor_pos = len(left[:-len(text)] + suffix)
+        before = left[:-len(text)]
     else:
-        insert_text = "%s%s%s%s" % (left, "%s", suffix, right)
-        cursor_pos = len(left + suffix)
+        before = left
         
-    result = []       
-    for res in candidates:
-        if res.lower().startswith(text.lower()):
-            result += [(insert_text % res, cursor_pos + len(res))]
-                
-    result += [(window.input.text, window.input.cursor)]
+    insert_text = '%s%s%s%s' % (before, '%s', suffix, right)
+    cursor_pos = len(before + suffix)
+
+    original = window.input.text, window.input.cursor
             
     while True:
-        for text, cursor in result:
-            window.input.text, window.input.cursor = text, cursor
-            yield None
+        for cand in candidates:
+            if cand.lower().startswith(text.lower()):
+                window.input.text, window.input.cursor = insert_text % res, cursor_pos + len(res)
+                yield None
+                
+        window.input.text, window.input.cursor = original
      
 # generator--use recent_completer.next() to continue cycling through whatever
 recent_completer = None
 
 def onKeyPress(e):
-    global recent_completer, recent_text
+    global recent_completer
 
     if e.key == 'Tab':
         if not recent_completer:
-            input = e.window.input
-            
-            left, right = input.text[:input.cursor], input.text[input.cursor:]
-            
-            text = left.split(' ')[-1]
-            
-            recent_completer = get_completer_for(e.window, left, right, text, input.text)
+            recent_completer = get_completer_for(e.window)
 
         recent_completer.next()
     
