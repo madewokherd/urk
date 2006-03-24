@@ -1,11 +1,9 @@
-history = {}
-
 def onKeyPress(e):
-    if e.window not in history:
-        history[e.window] = [], -1
+    if not hasattr(e.window, 'history'):
+        e.window.history = [], -1
 
     if e.key == 'Up':
-        h, i = history[e.window]
+        h, i = e.window.history
         
         if i == -1:
             if e.window.input.text:
@@ -14,13 +12,13 @@ def onKeyPress(e):
         i += 1
         
         if i < len(h):                
-            history[e.window] = h, i
+            e.window.history = h, i
 
             e.window.input.text = h[i]
             e.window.input.cursor = -1
             
     if e.key == 'Down':
-        h, i = history[e.window]
+        h, i = e.window.history
         
         if i == -1:
             if e.window.input.text:
@@ -30,28 +28,24 @@ def onKeyPress(e):
         i -= 1
         
         if i > -1:
-            history[e.window] = h, i
+            e.window.history = h, i
 
             e.window.input.text = h[i]
             e.window.input.cursor = -1
             
         elif i == -1:
-            history[e.window] = h, i
+            e.window.history = h, i
         
             e.window.input.text = ''
             e.window.input.cursor = -1
 
 def onInput(e):
-    if e.window not in history:
-        history[e.window] = [], -1
+    if not hasattr(e.window, 'history'):
+        e.window.history = [], -1
 
     if e.text:
-        h, i = history[e.window]
+        h, i = e.window.history
     
         h.insert(0, e.text)
         
-        history[e.window] = h, -1
-        
-def onClose(window):
-    if window in history:
-        del history[window]
+        e.window.history = h, -1
