@@ -13,11 +13,18 @@ colors = (
   '#0000FF', '#FF00FF', '#7F7F7F', '#D2D2D2'
   )
 
-def get_mirc_color(number, color_cache = {'99': COLOR_99}):
-    if number not in color_cache:
-        color_cache[number] = colors[int(number) & 15]
+def get_mirc_color(number):
+    if number == '99':
+        return COLOR_99
 
-    return color_cache[number]
+    number = int(number) & 15
+    
+    confcolors = conf.get('colors', colors)
+    try:
+        return confcolors[number]
+    except:
+        # someone edited their colors wrongly
+        return colors[number]
     
 DEC_DIGITS, HEX_DIGITS = set('0123456789'), set('0123456789abcdefABCDEF')
     
