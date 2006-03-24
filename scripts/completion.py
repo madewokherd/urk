@@ -19,7 +19,7 @@ def command_completer(window, left, right, text):
 def nick_completer(window, left, right, text):  
     network = window.network
 
-    candidates = list(recent_speakers.get(window, []))
+    candidates = list(getattr(window, 'recent_speakers', []))
     candidates += [n for n in chaninfo.nicks(network, window.id) if n not in candidates]
 
     return [n for n in candidates if chaninfo.ison(network, window.id, n)]
@@ -103,22 +103,16 @@ def onActive(window):
     global recent_completer
     
     recent_completer = None
-    
-#keep track of who recently spoke on each channel
-recent_speakers = {}
 
 def onText(e):
     if chaninfo.ischan(e.network, e.target):
-        if e.window not in recent_speakers:
-            recent_speakers[e.window] = []
+        if not hasattr(e.window, 'recent_speakers'):
+            e.window.recent_speakers = []
 
-        for nick in recent_speakers[e.window]:
+        for nick in e.window.recent_speakers:
             if nick == e.source or not chaninfo.ison(e.network, e.target, nick):
-                recent_speakers[e.window].remove(nick)
+                e.window.recent_speakers.remove(nick)
 
-        recent_speakers[e.window].insert(0, e.source)
+        e.window.recent_speakers.insert(0, e.source)
+
 onAction = onText
-
-def onClose(window):
-    if window in recent_speakers:
-        del recent_speakers[window]
