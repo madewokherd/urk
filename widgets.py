@@ -14,9 +14,9 @@ import servers
 import editor
 
 # Window activity Constants
-HILIT = 4
-TEXT = 2
-EVENT = 1
+HILIT = 'h'
+TEXT ='t'
+EVENT = 'e'
 
 ACTIVITY_MARKUP = {
     HILIT: "<span style='italic' foreground='#00F'>%s</span>",
@@ -623,8 +623,8 @@ class WindowLabel(gtk.EventBox):
         title = self.win.title
         title = title.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
         
-        for a_type in sorted(ACTIVITY_MARKUP, reverse=True):
-            if self.win.activity == a_type:
+        for a_type in (HILIT, TEXT, EVENT):
+            if a_type in self.win.activity:
                 title = ACTIVITY_MARKUP[a_type] % title
                 break
             

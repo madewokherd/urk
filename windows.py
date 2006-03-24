@@ -69,7 +69,7 @@ class Window(gtk.VBox):
         
     def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
         if manager.get_active() != self:
-            self.activity = max(self.activity, activity_type)
+            self.activity.add(activity_type)
 
         self.output.write(text, line_ending)
 
