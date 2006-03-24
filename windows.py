@@ -142,7 +142,7 @@ class Window(gtk.VBox):
         self.network = network
         self.__id = id
         
-        self.__activity = 0
+        self.__activity = set()
     
 class SimpleWindow(Window):
     def __init__(self, network, id):    
