@@ -1,3 +1,5 @@
+from conf import conf
+
 BOLD = '\x02'
 UNDERLINE = '\x1F'
 MIRC_COLOR = '\x03'
