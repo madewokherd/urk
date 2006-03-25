@@ -69,7 +69,7 @@ class Window(gtk.VBox):
         
     def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
         if manager.get_active() != self:
-            self.activity.add(activity_type)
+            self.activity = activity_type
 
         self.output.write(text, line_ending)
 
@@ -100,7 +100,10 @@ class Window(gtk.VBox):
         return self.__activity
     
     def set_activity(self, value):
-        self.__activity = value
+        if value:
+            self.__activity.add(value)
+        else:
+            self.__activity = set()
         self.update()
         
     activity = property(get_activity, set_activity)

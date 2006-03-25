@@ -6,7 +6,7 @@ import chaninfo
 # FIXME: meh still might want rid of these, I'm not sure yet
 
 def onActive(w):
-    w.activity = set()
+    w.activity = None
 
     ui.register_idle(windows.manager.set_title)
 

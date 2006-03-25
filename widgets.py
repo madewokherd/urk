@@ -622,7 +622,7 @@ class WindowLabel(gtk.EventBox):
     def update(self):
         title = self.win.title
         title = title.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
-        
+
         for a_type in (HILIT, TEXT, EVENT):
             if a_type in self.win.activity:
                 title = ACTIVITY_MARKUP[a_type] % title
