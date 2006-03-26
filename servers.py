@@ -33,7 +33,8 @@ def channels_set_data(text, network_info):
     
     for line in text.split('\n'):
         for chan in line.split(','):
-            network_info['join'].append(chan.strip())
+            if chan:
+                network_info['join'].append(chan.strip())
     
 def perform_get_data(network_info):
     return '\n'.join(network_info.get('perform', []))
