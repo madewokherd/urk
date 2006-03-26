@@ -318,21 +318,20 @@ def server(server=None,port=6667,network=None,connect=True):
     return network
 
 def onCommandServer(e):
-    port = None
+    host = port = None
     
-    if len(e.args):
+    if e.args:
         host = e.args[0]
-        port = 6667
+
         if ':' in host:
             host, port = host.rsplit(':', 1)
             port = int(port)
             
         elif len(e.args) > 1:
-            port = e.args[1]
-        
-            port = int(port)
-    else:
-        host = None
+            port = int(e.args[1])
+
+        else:
+            port = 6667
     
     if 'm' in e.switches:    
         network = None

@@ -184,14 +184,14 @@ def reload(name):
 def run(text, window, network):
     split = text.split(' ')
 
-    c_data = data(name=split[0], text=text, window=window, network=network)
-
-    if len(split) > 1 and split[1].startswith('-'):
-        c_data.switches = set(split[1][1:])
-        c_data.args = split[2:]
+    c_data = data(name=split.pop(0), text=text, window=window, network=network)
+    
+    if split and split[0].startswith('-'):
+        c_data.switches = set(split.pop(0)[1:])
     else:
         c_data.switches = set()
-        c_data.args = split[1:]
+    
+    c_data.args = split
 
     event_name = "Command" + c_data.name.capitalize()    
     if event_name in events:
