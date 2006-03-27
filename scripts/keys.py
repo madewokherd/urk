@@ -1,5 +1,6 @@
 import windows
 import widgets
+import irc
 
 shortcuts = {
     '^b': '\x02',
