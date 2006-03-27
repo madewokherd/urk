@@ -56,7 +56,7 @@ def get_completer_for(window):
         elif input.text.startswith('/server '):
             candidates = network_completer(window, left, right, text)
             
-        elif input.text.startswith('/') and ' ' not in input.text:
+        elif text.startswith('/'):
             candidates = command_completer(window, left, right, text)
             suffix = ' '
             
