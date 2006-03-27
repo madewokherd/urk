@@ -20,9 +20,7 @@ def command_completer(window, left, right, text):
 
 def nick_completer(window, left, right, text):  
     recent_speakers = getattr(window, 'recent_speakers', ())
-    
-    
-    
+
     for nick in recent_speakers:
         if chaninfo.ison(window.network, window.id, nick):
             yield nick
@@ -58,7 +56,7 @@ def get_completer_for(window):
         elif input.text.startswith('/server '):
             candidates = network_completer(window, left, right, text)
             
-        elif input.text.startswith('/'):
+        elif input.text.startswith('/') and ' ' not in input.text:
             candidates = command_completer(window, left, right, text)
             suffix = ' '
             
