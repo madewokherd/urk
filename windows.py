@@ -84,16 +84,11 @@ class Window(gtk.VBox):
 
     id = property(get_id, set_id)
     
-    def get_title(self):
-        return self.__id
-
-    def __get_title(self):
-        return self.get_title()
+    def get_toplevel_title(self):
+        return self.id
     
-    def set_title(self, title):
-        self.update()
-        
-    title = property(__get_title, set_title)
+    def get_title(self):
+        return self.id
 
     def get_activity(self):
         return self.__activity
@@ -164,6 +159,9 @@ class SimpleWindow(Window):
         self.show_all()
 
 class StatusWindow(Window):
+    def get_toplevel_title(self):
+        return '%s - %s' % (self.network.me, self.get_title())
+
     def get_title(self):
         # Something about self.network.isupport
         if self.network.status:

@@ -620,8 +620,10 @@ class TextOutput(gtk.TextView):
 
 class WindowLabel(gtk.EventBox):
     def update(self):
-        title = self.win.title
-        title = title.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+        title = self.win.get_title()
+        
+        for escapes in (('&','&amp;'), ('<','&lt;'), ('>','&gt;')):
+            title = title.replace(*escapes)
 
         for a_type in (HILIT, TEXT, EVENT):
             if a_type in self.win.activity:
@@ -734,18 +736,7 @@ class FindBox(gtk.HBox):
 class UrkUITabs(gtk.Window):
     def set_title(self, title=None):
         if title is None:
-            w = self.get_active()
-            
-            if isinstance(w, windows.StatusWindow):
-                title = "%s - %s" % (w.network.me, w.title)
-            
-            else:
-                if w.network.status:
-                    server = w.network.server
-                else:
-                    server = "[%s]" % w.network.server
-                    
-                title = "%s - %s - %s" % (w.network.me, server, w.title)
+            title = self.get_active().get_toplevel_title()
 
         gtk.Window.set_title(self, "%s - urk" % title)
 
