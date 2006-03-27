@@ -232,9 +232,6 @@ def change_nick(network, nick):
         events.trigger('Nick', e_data)
         network.nicks[0] = nick
         network.me = nick
-        
-        for w in windows.get_with(network=network):
-            w.nick_label.update()
     else:
         network.raw('NICK :%s' % nick)
 
@@ -449,14 +446,7 @@ def get_network_info(name, network_info):
 
 def onStart(e):
     for network in conf.get('start_networks', []):
-        network_info = {'name': network, 'server': network}
-        get_network_info(network, network_info)
-
-        nw = irc.Network(**network_info)
-        
-        windows.new(windows.StatusWindow, nw, 'status').activate()
-
-        nw.connect()
+        server(server=network)
 
 def onConnect(e):
     network_info = conf.get('networks', {}).get(e.network.name, {})
