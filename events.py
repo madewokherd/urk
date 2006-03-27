@@ -256,6 +256,7 @@ def onCommandUnload(e):
 
     if is_loaded(name):
         unload(name)
+        e.window.write("* The script '%s' has been unloaded." % name)
     else:
         raise CommandError("No such script is loaded")
 

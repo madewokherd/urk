@@ -147,3 +147,8 @@ def install_to_nsis():
     identify_files(sep=sep)
     nsis_generate_script()
     nsis_generate_exe()
+
+def install_to_linux_system():
+    identify_files()
+    
+    pass

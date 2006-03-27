@@ -15,7 +15,7 @@ def new(wclass, network, id):
     w = get(wclass, network, id)
     
     if not w:
-        w = wclass(network or irc.Network(), id)
+        w = wclass(network, id)
         append(w)
 
     return w
@@ -70,7 +70,6 @@ class Window(gtk.VBox):
     def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
         if manager.get_active() != self:
             self.activity = activity_type
-
         self.output.write(text, line_ending)
 
     def get_id(self):

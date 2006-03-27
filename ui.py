@@ -134,7 +134,7 @@ def start(command=''):
         window = windows.manager.get_active()
         
         if not window:
-           window =  windows.new(windows.StatusWindow, None, "status")
+           window =  windows.new(windows.StatusWindow, irc.Network(), "status")
            window.activate()
 
         events.run(command, window, window.network)

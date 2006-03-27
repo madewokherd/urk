@@ -540,7 +540,7 @@ class TextOutput(gtk.TextView):
             def do_scroll():
                 self.scroller.value = self.scroller.upper - self.scroller.page_size
                 self._scrolling = False
-                
+            
             if not self._scrolling:
                 self._scrolling = gobject.idle_add(do_scroll)
     
