@@ -36,10 +36,10 @@ def onKeyPress(e):
     elif e.key == '!a':
         winlist = list(windows.manager)
         winlist = winlist[winlist.index(e.window):]+winlist
-        w = [w for w in winlist if w.activity >= widgets.HILIT]
+        w = [w for w in winlist if widgets.HILIT in w.activity]
         
         if not w:
-            w = [w for w in winlist if w.activity >= widgets.TEXT]
+            w = [w for w in winlist if widgets.TEXT in w.activity]
         
         if w:
             windows.manager.set_active(w[0])
