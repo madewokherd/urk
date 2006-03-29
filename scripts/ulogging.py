@@ -154,14 +154,14 @@ def onQuit(e):
 
 def onNick(e):
     if e.source == e.network.me:
-        to_write = 'You are now known as %s' % e.newnick
+        to_write = 'You are now known as %s' % e.target
     
         for window in windows.get_with(network=e.network):
             f = log_file(e.network, window.id)
             
             f.write(to_write)
     else:
-        to_write = '%s is now known as %s' % (e.source, e.newnick)
+        to_write = '%s is now known as %s' % (e.source, e.target)
     
         for channame in chaninfo.channels(e.network):
             if chaninfo.ison(e.network,channame,e.source):

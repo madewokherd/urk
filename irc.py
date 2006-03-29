@@ -225,7 +225,7 @@ class Network(object):
                         network=self,
                         window=windows.get_default(self),
                         source=self.me,
-                        newnick=self.nicks[0]
+                        target=self.nicks[0]
                         )
             events.trigger('Nick', e_data)
             self.me = self.nicks[0]

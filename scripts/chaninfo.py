@@ -239,10 +239,10 @@ def postNick(e):
         if e.source in channel.nicks:
             nicklist_del(e.network, channel, e.source)
             del channel.normal_nicks[e.network.norm_case(e.source)]
-            channel.nicks[e.newnick] = channel.nicks[e.source]
+            channel.nicks[e.target] = channel.nicks[e.source]
             del channel.nicks[e.source]
-            channel.normal_nicks[e.network.norm_case(e.newnick)] = e.newnick
-            nicklist_add(e.network, channel, e.newnick)
+            channel.normal_nicks[e.network.norm_case(e.target)] = e.target
+            nicklist_add(e.network, channel, e.target)
 
 def setupTopic(e):
     channel = getchan(e.network, e.target)

@@ -75,7 +75,7 @@ def defRaw(e):
                     e_data.network = e.network
                     e_data.window = e.window
                     e_data.source = e.network.me
-                    e_data.newnick = e.msg[2]
+                    e_data.target = e.msg[2]
                     events.trigger('Nick', e_data)
                     e.network.me = e.msg[2]
                 if hasattr(e.network,'_nick_generator'):
@@ -102,10 +102,9 @@ def defRaw(e):
             e.done = True
             
         elif e.msg[1] == "NICK":
-            e.newnick = e.msg[2]
             events.trigger('Nick', e)
             if e.network.me == e.source:
-                e.network.me = e.newnick
+                e.network.me = e.target
 
             e.done = True
             
@@ -228,7 +227,7 @@ def change_nick(network, nick):
         e_data.network = network
         e_data.window = windows.get_default(network)
         e_data.source = network.me
-        e_data.newnick = nick
+        e_data.target = nick
         events.trigger('Nick', e_data)
         network.nicks[0] = nick
         network.me = nick
@@ -251,7 +250,7 @@ def defNick(e):
     if e.source != e.network.me:
         window = windows.get(windows.QueryWindow, e.network, e.source)
         if window:
-            window.id = e.newnick
+            window.id = e.target
 
 # make /quit always disconnect us
 def onCommandQuit(e):

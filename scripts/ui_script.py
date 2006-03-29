@@ -13,7 +13,7 @@ def onActive(w):
 def onNick(e):
     if e.source == e.network.me:
         for w in windows.get_with(network=e.network):
-            w.nick_label.update(e.newnick)     
+            w.nick_label.update(e.target)    
 
 def onExit(e):
     for n in set(w.network for w in windows.manager):

@@ -192,9 +192,9 @@ def onQuit(e):
 
 def onNick(e):
     if e.source == e.network.me:
-        to_write = "%sYou are now known as \x02%s\x02" % (prefix(e), e.newnick)
+        to_write = "%sYou are now known as \x02%s\x02" % (prefix(e), e.target)
     else:
-        to_write = "%s%s is now known as \x02%s\x02" % (prefix(e), e.source, e.newnick)
+        to_write = "%s%s is now known as \x02%s\x02" % (prefix(e), e.source, e.target)
     
     if e.source == e.network.me:
         for window in windows.get_with(network=e.network):
