@@ -11,7 +11,7 @@ if 'networks' not in conf:
 def server_get_data(network_info):
     if 'port' in network_info:
         return "%s:%s" % (
-            network_info.get('server', '') , network_info['port']
+            network_info.get('server', '') , network_info.get('port')
             )
     else:
         return network_info.get('server', '')
@@ -22,11 +22,10 @@ def server_set_data(text, network_info):
         network_info['port'] = int(port)
     else:
         network_info['server'] = text
-        if 'port' in network_info:
-            del network_info['port']
+        network_info.pop('port', None)
             
 def channels_get_data(network_info):
-    return '\n'.join(network_info.get('join', []))
+    return '\n'.join(network_info.get('join', ()))
             
 def channels_set_data(text, network_info):
     network_info['join'] = []
@@ -37,7 +36,7 @@ def channels_set_data(text, network_info):
                 network_info['join'].append(chan.strip())
     
 def perform_get_data(network_info):
-    return '\n'.join(network_info.get('perform', []))
+    return '\n'.join(network_info.get('perform', ()))
             
 def perform_set_data(text, network_info):
     network_info['perform'] = [line for line in text.split('\n') if line]
@@ -54,11 +53,11 @@ def autoconnect_set_data(do_autoconnect, network):
             conf.get('start_networks').remove(network)
 
 class NetworkInfo(gtk.Frame):
-    def show(self, network):
+    def update(self):
         for child in self.get_children():
             self.remove(child)
     
-        network_info = conf.get('networks', {}).get(network, {})
+        network_info = conf.get('networks', {}).get(self.network, {})
 
         table = gtk.Table(4, 2)
         table.set_row_spacings(3)
@@ -110,10 +109,10 @@ class NetworkInfo(gtk.Frame):
 
         # autoconnect
         data = gtk.CheckButton(label='Connect on startup')
-        data.set_active(network in conf.get('start_networks', []))  
+        data.set_active(self.network in conf.get('start_networks', []))  
         data.connect(
             'toggled',
-            lambda w: autoconnect_set_data(w.get_active(), network)
+            lambda w: autoconnect_set_data(w.get_active(), self.network)
             )  
         
         table.attach(data, 1, 2, 3, 4, xoptions=gtk.FILL)
@@ -122,21 +121,25 @@ class NetworkInfo(gtk.Frame):
         box.pack_start(table, padding=5)
         self.add(box)
         
-        self.set_label(network)
+        self.set_label(self.network)
         self.show_all()
 
 class ServerWidget(gtk.VBox):
     def edit_network(self, cell, path_string, new_text):
         network_list = self.networks.get_model()
-    
+        old_text = network_list[path_string][0]
+        
         networks = conf.get('networks')
-        if network_list[path_string][0] in networks:
-            networks[new_text] = networks.pop(network_list[path_string][0])
-        else:
-            networks[new_text] = {}
+        networks[new_text] = networks.pop(old_text, {})
+
+        start_networks = conf.get('start_networks', [])
+        if old_text in start_networks:
+            start_networks[start_networks.index(old_text)] = new_text
 
         iter = network_list.get_iter_from_string(path_string)
         network_list.set_value(iter, 0, new_text)
+
+        self.infobox.network = new_text
         
     def add_network(self, button):
         name = 'NewNetwork'
@@ -174,7 +177,8 @@ class ServerWidget(gtk.VBox):
         model, iter = selection.get_selected()
 
         if iter:
-            self.infobox.show(model.get_value(iter, 0))
+            self.infobox.network = model.get_value(iter, 0)
+            self.infobox.update()
             
             self.buttons['connect'].set_sensitive(True)
         else:
@@ -186,7 +190,7 @@ class ServerWidget(gtk.VBox):
         if iter:
             network_name = model.get_value(iter, 0)
             window = windows.manager.get_active()
-            network = window.network 
+            network = window.network
             
             if network and network.status:
                 switches = 'm'
