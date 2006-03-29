@@ -142,9 +142,11 @@ class Nicklist(gtk.TreeView):
     def __getitem__(self, pos):
         return self.get_model()[pos][0]
         
-    def __setitem__(self, pos, item):
-        self.get_model()[pos] = [item]
+    def __setitem__(self, pos, name_markup):
+        realname, markedupname = name_markup
     
+        self.get_model()[pos] = realname, markedupname
+
     def __len__(self):
         return len(self.get_model())
     
@@ -155,23 +157,35 @@ class Nicklist(gtk.TreeView):
                 
         return -1
         
-    def append(self, item):
-        self.get_model().append([item])
+    def append(self, realname, markedupname):
+        self.get_model().append((realname, markedupname))
  
-    def insert(self, pos, item):
-        self.get_model().insert(pos, [item])
+    def insert(self, pos, realname, markedupname):
+        self.get_model().insert(pos, (realname, markedupname))
         
-    def extend(self, items):
-        for i in items:
-            self.append(i)
+    def extend(self, names):
+        for name in names:
+            self.append(*name)
 
-    def remove(self, item):
-        self.get_model().remove(
-            self.get_model().iter_nth_child(None, self.index(item))
-            )
+    def remove(self, realname):
+        index = self.index(realname)
+        
+        if index == -1:
+            raise ValueError
+
+        self.get_model().remove(self.get_model().iter_nth_child(None, index))
     
     def clear(self):
         self.get_model().clear()
+        
+    def set_sort_func(self, sort_func):
+        def wrapped_sort_func(model, iter1, iter2):
+            nick1 = model.get_value(iter1, 0)
+            nick2 = model.get_value(iter2, 0)
+            
+            return sort_func(nick1, nick2)
+    
+        self.get_model().set_sort_func(0, wrapped_sort_func)
         
     def __iter__(self):
         return (r[0] for r in self.get_model())
@@ -179,15 +193,15 @@ class Nicklist(gtk.TreeView):
     def __init__(self, window):
         self.win = window
         
-        gtk.TreeView.__init__(self, gtk.ListStore(str))
+        gtk.TreeView.__init__(self, gtk.ListStore(str, str))
+        
+        self.insert_column_with_attributes(
+            0, '', gtk.CellRendererText(), markup=1
+            ).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+        
+        self.get_model().set_sort_column_id(0, gtk.SORT_ASCENDING)
 
         self.set_headers_visible(False)
-
-        self.insert_column_with_attributes(
-            0, "", gtk.CellRendererText(), markup=0
-            )
-            
-        self.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         self.set_property("fixed-height-mode", True)
         self.connect("button-press-event", Nicklist.click)
         self.connect_after("button-release-event", lambda *a: True)
@@ -475,13 +489,14 @@ class TextOutput(gtk.TextView):
             self.hover_coords = event.get_coords()
     
     def mouseup(self, event):
-        if event.button == 1 and not self.get_buffer().get_selection_bounds():
-            hover_iter = get_iter_at_coords(self, event.x, event.y)
-        
-            if not hover_iter.ends_line():
-                c_data = get_event_at_iter(self, hover_iter)
+        if not self.get_buffer().get_selection_bounds():
+            if event.button == 1:
+                hover_iter = get_iter_at_coords(self, event.x, event.y)
+            
+                if not hover_iter.ends_line():
+                    c_data = get_event_at_iter(self, hover_iter)
 
-                events.trigger("Click", c_data)
+                    events.trigger("Click", c_data)
                 
             if self.is_focus():
                 self.win.focus()

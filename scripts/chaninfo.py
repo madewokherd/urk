@@ -1,42 +1,35 @@
 import events
 import windows
 
-def _prefix(network, channel, nick):
+def _justprefix(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
     for mode, prefix in zip(fr, to):
-        if mode in channel.nicks[nick]:
-            return prefix+nick
-    return nick
+        if mode in channel.nicks.get(nick, {}):
+            return prefix
 
-def _sort_key(network, channel, nick):
-    fr, to = network.isupport["PREFIX"][1:].split(")")
-    if nick[0] in to:
-        nick = nick[1:]
+    return ''
+
+def prefix(network, channelname, nick):
+    channel = getchan(network, channelname)
     
-    modes = channel.nicks[nick]
-    
-    return [mode not in modes for mode in fr] + [network.norm_case(nick)]
+    if channel:
+        return '%s%s' % (_justprefix(network, channel, nick), nick)
+    else:
+        return nick
 
 def nicklist_add(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
-        p = _prefix(network, channel, nick)
-        k = _sort_key(network, channel, nick)
-    
-        lower_limit , upper_limit = 0, len(window.nicklist)
-        while lower_limit < upper_limit:
-            midpoint = (lower_limit+upper_limit)/2
-            if _sort_key(network, channel, window.nicklist[midpoint]) < k:
-                lower_limit = midpoint+1
-            else:
-                upper_limit = midpoint
-        window.nicklist.insert(lower_limit, p)
+        window.nicklist.append(nick, prefix(network, channel.name, nick))
 
 def nicklist_del(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
-        window.nicklist.remove(_prefix(network, channel, nick))
+        try:
+            window.nicklist.remove(nick)
+        except ValueError:
+            pass
 
 def setupListRightClick(e):
     if isinstance(e.window, windows.ChannelWindow):
@@ -122,6 +115,7 @@ def topic(network, channel):
 def setupJoin(e):
     if e.source == e.network.me:
         e.network.channels[e.network.norm_case(e.target)] = Channel(e.target)
+
     #if we wanted to be paranoid, we'd account for not being on the channel
     channel = getchan(e.network,e.target)
     channel.nicks[e.source] = ''
@@ -134,10 +128,25 @@ def setupJoin(e):
         window = windows.get(windows.ChannelWindow, e.network, e.target)
         if window:
             window.nicklist.clear()
+
     nicklist_add(e.network, channel, e.source)
 
 def onJoin(e):
     if e.source == e.network.me:
+        fr, to = e.network.isupport["PREFIX"][1:].split(")")
+        channel = getchan(e.network, e.target)
+
+        def sort_func(nick1, nick2):
+            modes1 = channel.nicks[nick1]
+            modes2 = channel.nicks[nick2]
+            
+            return cmp(
+                [mode not in modes1 for mode in fr] + [nick1.lower()],
+                [mode not in modes2 for mode in fr] + [nick2.lower()]
+                )
+            
+        e.window.nicklist.set_sort_func(sort_func)
+    
         e.network.raw('MODE '+e.target)
 
 def postPart(e):
@@ -271,11 +280,9 @@ def setupRaw(e):
             window = windows.get(windows.ChannelWindow, e.network, e.msg[3])
             if window:
                 window.nicklist.clear()
-                nicks = list(channel.nicks)
-                def key(nick):
-                    return _sort_key(e.network, channel, nick)
-                nicks.sort(key=key)
-                window.nicklist.extend(_prefix(e.network, channel, nick) for nick in nicks)
+                window.nicklist.extend(
+                    (nick, prefix(e.network, channel.name, nick)) for nick in channel.nicks
+                    )
         
     elif e.msg[1] == '324': #channel mode is
         channel = getchan(e.network,e.msg[3])
