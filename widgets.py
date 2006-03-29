@@ -184,7 +184,7 @@ class Nicklist(gtk.TreeView):
         self.set_headers_visible(False)
 
         self.insert_column_with_attributes(
-            0, "", gtk.CellRendererText(), text=0
+            0, "", gtk.CellRendererText(), markup=0
             )
             
         self.get_column(0).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
