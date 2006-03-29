@@ -134,12 +134,13 @@ def start(command=''):
         window = windows.manager.get_active()
         
         if not window:
-           window =  windows.new(windows.StatusWindow, irc.Network(), "status")
+           window = windows.new(windows.StatusWindow, irc.Network(), "status")
            window.activate()
 
         events.run(command, window, window.network)
 
         #for i in range(100):
+        #    window.nicklist.append(chr(__import__('random').randint(ord('a'), ord('z'))), '<span color="green">%s</span>')
         #    window.write(file("urk/ui.py").read().splitlines()[i])
         
     register_idle(trigger_start)
