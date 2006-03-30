@@ -64,7 +64,7 @@ class urktray:
 
 tray = urktray()
 
-def postHilight(e):
+def setdownHilight(e):
     if e.hilight:
         tray.window_hilighted(e.window, e.source)
 
