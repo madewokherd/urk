@@ -17,7 +17,8 @@ def setupNick(e):
 
 def onExit(e):
     for n in set(w.network for w in windows.manager):
-        n.quit()
+        if n:
+            n.quit()
 
 def setupJoin(e):
     if e.source == e.network.me:
