@@ -22,7 +22,7 @@ class data(object):
         for attr in kwargs.items():
             setattr(self, *attr)
 
-trigger_sequence = ("setup", "pre", "def", "on", "post")
+trigger_sequence = ("pre", "setup", "on", "setdown", "post")
 
 events = {}
 loaded = {}
