@@ -39,25 +39,19 @@ def onCommandPing(e):
 def onCommandCtcpreply(e):
     ctcp_reply(e.network, e.args[0], ' '.join(e.args[1:]))
 
-def preText(e):
-    if e.text.startswith('\x01') and e.text.endswith('\x01'):
+def setupRaw(e):
+    if not e.done and e.msg[1] in ('PRIVMSG', 'NOTICE') and \
+          e.text.startswith('\x01') and e.text.endswith('\x01'):
         e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
         e_data.name = tokens[0]
         e_data.args = tokens[1:]
-        events.trigger('Ctcp', e_data)
-        events.halt()
-
-def preNotice(e):
-    if e.text.startswith('\x01') and e.text.endswith('\x01'):
-        e_data = events.data(**e.__dict__)
-        e_data.text = e.text[1:-1]
-        tokens = e_data.text.split(' ')
-        e_data.name = tokens[0]
-        e_data.args = tokens[1:]
-        events.trigger('CtcpReply', e_data)
-        events.halt()
+        if e.msg[1] == 'PRIVMSG':
+            events.trigger('Ctcp', e_data)
+        else:
+            events.trigger('CtcpReply', e_data)
+        e.done = True
 
 def setupCtcpReply(e):
     if e.name == 'PING':

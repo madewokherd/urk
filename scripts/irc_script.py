@@ -42,7 +42,7 @@ def _nick_generator(network):
             else:
                 yield nick+suffix
 
-def setupRaw(e):
+def setdownRaw(e):
     if not e.done:
         if not e.network.got_nick:
             if e.msg[1] in ('432','433','436','437'): #nickname unavailable
