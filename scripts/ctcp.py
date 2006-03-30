@@ -39,7 +39,7 @@ def onCommandPing(e):
 def onCommandCtcpreply(e):
     ctcp_reply(e.network, e.args[0], ' '.join(e.args[1:]))
 
-def setupText(e):
+def preText(e):
     if e.text.startswith('\x01') and e.text.endswith('\x01'):
         e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
@@ -49,8 +49,8 @@ def setupText(e):
         events.trigger('Ctcp', e_data)
         events.halt()
 
-def setupNotice(e):
-    if e.text[0] == '\x01' and e.text[-1] == '\x01':
+def preNotice(e):
+    if e.text.startswith('\x01') and e.text.endswith('\x01'):
         e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
@@ -59,7 +59,7 @@ def setupNotice(e):
         events.trigger('CtcpReply', e_data)
         events.halt()
 
-def preCtcpReply(e):
+def setupCtcpReply(e):
     if e.name == 'PING':
         try:
             elapsed_time = "%0.2f seconds" % (time.time() - float(e.args[0]))
@@ -68,7 +68,7 @@ def preCtcpReply(e):
         except:
             pass
 
-def defCtcp(e):
+def setupCtcp(e):
     if not e.done:
         if e.name == 'ACTION':
             e_data = events.data(**e.__dict__)

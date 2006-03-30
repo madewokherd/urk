@@ -42,7 +42,7 @@ def _nick_generator(network):
             else:
                 yield nick+suffix
 
-def defRaw(e):
+def setupRaw(e):
     if not e.done:
         if not e.network.got_nick:
             if e.msg[1] in ('432','433','436','437'): #nickname unavailable
@@ -160,8 +160,6 @@ def setupSocketConnect(e):
     e.network.connect_timestamp = time.time()
     if hasattr(e.network,'_nick_generator'):
         del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
-
-def defSocketConnect(e):
     if not e.done:
         #this needs to be tested--anyone have a server that uses PASS?
         if e.network.password:
@@ -190,11 +188,11 @@ def onDisconnect(e):
                     e.network._reconnect_source = ui.register_timer(delay*1000,do_reconnect)
             e.network._reconnect_source = ui.register_idle(do_announce_reconnect)
 
-def postDisconnect(e):
+def setdownDisconnect(e):
     if hasattr(e.network,'connect_timestamp'):
         del e.network.connect_timestamp
 
-def defInput(e):
+def setupInput(e):
     if not e.done:
         if e.text.startswith(COMMAND_PREFIX) and not e.ctrl:
             command = e.text[len(COMMAND_PREFIX):]
@@ -246,7 +244,7 @@ def onCommandNick(e):
     else:
         change_nick(e.network, e.args[0])
 
-def defNick(e):
+def setdownNick(e):
     if e.source != e.network.me:
         window = windows.get(windows.QueryWindow, e.network, e.source)
         if window:
@@ -411,7 +409,7 @@ needschan = {
 #    'names':0, #with no parameters, this is supposed to give a list of all users; we may be able to safely ignore that.
     }
     
-def defCommand(e):
+def setupCommand(e):
     if not e.done: 
         if e.name in needschan and isinstance(e.window, windows.ChannelWindow):
             valid_chan_prefixes = e.network.isupport.get('CHANTYPES', '#&+')
@@ -431,7 +429,7 @@ def defCommand(e):
         
         e.text = '%s %s' % (e.name, ' '.join(e.args))
 
-def postCommand(e):
+def setdownCommand(e):
     if not e.done and e.network.status >= irc.INITIALIZING:
         e.network.raw(e.text)
         e.done = True

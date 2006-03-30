@@ -10,7 +10,7 @@ def onActive(w):
 
     ui.register_idle(windows.manager.set_title)
 
-def onNick(e):
+def setupNick(e):
     if e.source == e.network.me:
         for w in windows.get_with(network=e.network):
             w.nick_label.update(e.target)    
@@ -19,7 +19,7 @@ def onExit(e):
     for n in set(w.network for w in windows.manager):
         n.quit()
 
-def preJoin(e):
+def setupJoin(e):
     if e.source == e.network.me:
         window = windows.get(windows.StatusWindow, e.network, 'status')
         
@@ -32,7 +32,7 @@ def preJoin(e):
 
     e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
-def preText(e):
+def setupText(e):
     if e.target == e.network.me:
         e.window = windows.new(windows.QueryWindow, e.network, e.source)
     else:
@@ -41,22 +41,22 @@ def preText(e):
             windows.get(windows.QueryWindow, e.network, e.source) or \
             e.window
 
-preAction = preText
+setupAction = setupText
 
-def preNotice(e):
+def setupNotice(e):
     if e.target != e.network.me:
         e.window = \
             windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
-def preOwnText(e):
+def setupOwnText(e):
     e.window = \
         windows.get(windows.ChannelWindow, e.network, e.target) or \
         windows.get(windows.QueryWindow, e.network, e.target) or \
         e.window
 
-preOwnAction = preOwnText
+setupOwnAction = setupOwnText
 
-def postPart(e):
+def setdownPart(e):
     if e.source == e.network.me:
         window = windows.get(windows.ChannelWindow, e.network, e.target)        
         

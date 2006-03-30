@@ -2,13 +2,13 @@ import events
 from conf import conf
 import irc
 
-def setupText(e):
+def preText(e):
     address = e.network.norm_case('%s!%s' % (e.source, e.address))
     for mask in conf.get('ignore_masks',()):
         if irc.match_glob(address, e.network.norm_case(mask)):
             events.halt()
 
-setupAction = setupNotice = setupCtcp = setupCtcpReply = setupText
+preAction = preNotice = preCtcp = preCtcpReply = preText
 
 def onCommandIgnore(e):
     if 'ignore_masks' not in conf:

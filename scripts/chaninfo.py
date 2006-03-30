@@ -41,7 +41,7 @@ def setupListRightClick(e):
 def setupSocketConnect(e):
     e.network.channels = {}
 
-def postDisconnect(e):
+def setdownDisconnect(e):
     e.network.channels = {}
 
 class Channel(object):
@@ -115,6 +115,7 @@ def topic(network, channel):
 def setupJoin(e):
     if e.source == e.network.me:
         e.network.channels[e.network.norm_case(e.target)] = Channel(e.target)
+        e.network.raw('MODE '+e.target)
 
     #if we wanted to be paranoid, we'd account for not being on the channel
     channel = getchan(e.network,e.target)
@@ -146,10 +147,8 @@ def onJoin(e):
                 )
             
         e.window.nicklist.set_sort_func(sort_func)
-    
-        e.network.raw('MODE '+e.target)
 
-def postPart(e):
+def setdownPart(e):
     if e.source == e.network.me:
         del e.network.channels[e.network.norm_case(e.target)]
     else:
@@ -158,7 +157,7 @@ def postPart(e):
         del channel.nicks[e.source]
         del channel.normal_nicks[e.network.norm_case(e.source)]
 
-def postKick(e):
+def setdownKick(e):
     if e.target == e.network.me:
         del e.network.channels[e.network.norm_case(e.channel)]
     else:
@@ -167,7 +166,7 @@ def postKick(e):
         del channel.nicks[e.target]
         del channel.normal_nicks[e.network.norm_case(e.target)]
 
-def postQuit(e):
+def setdownQuit(e):
     #if paranoid: check if e.source is me
     for channame in channels(e.network):
         channel = getchan(e.network,channame)
@@ -233,7 +232,7 @@ def setupMode(e):
                     else:
                         channel.mode = channel.mode.replace(char, '')
 
-def postNick(e):
+def setdownNick(e):
     for channame in channels(e.network):
         channel = getchan(e.network,channame)
         if e.source in channel.nicks:
