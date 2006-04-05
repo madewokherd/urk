@@ -207,7 +207,14 @@ def setupMode(e):
                     else:
                         channel.nicks[nickname] = channel.nicks[nickname].replace(char, '')
                     nicklist_add(e.network, channel, nickname)
-
+                
+                elif char in list_modes:
+                    #things like ban/unban
+                    #FIXME: We don't keep track of those lists here, but we know
+                    # when they're changed and how. Scriptors should be able to
+                    # take advantage of this
+                    params.pop(0)
+                
                 elif char in always_parm_modes:
                     #these always have a parameter
                     param = params.pop(0)
@@ -225,7 +232,7 @@ def setupMode(e):
                     else:
                         #account for unsetting modes that aren't set
                         channel.special_mode.pop(char, None)
-                    
+                
                 if char not in list_modes:
                     if mode_on:
                         channel.mode = channel.mode.replace(char, '')+char
