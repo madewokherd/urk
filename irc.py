@@ -159,7 +159,7 @@ class Network(object):
                 self.source = ui.fork(self.on_read, self.socket.recv, 8192)    
     
     def raw(self, msg):
-        events.trigger("OwnRaw", text=msg)
+        events.trigger("OwnRaw", network=self, text=msg)
         
         if self.status >= INITIALIZING:
             self.socket.send(msg + "\r\n")
