@@ -14,9 +14,11 @@ def prefix(network, channelname, nick):
     channel = getchan(network, channelname)
     
     if channel:
-        return '%s%s' % (_justprefix(network, channel, nick), nick)
-    else:
-        return nick
+        nick = '%s%s' % (_justprefix(network, channel, nick), nick)
+    
+    for escapes in (('&','&amp;'), ('<','&lt;'), ('>','&gt;')):
+        nick = nick.replace(*escapes)
+    return nick
 
 def nicklist_add(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
