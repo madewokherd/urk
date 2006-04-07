@@ -28,9 +28,12 @@ events = {}
 loaded = {}
 
 # An event has occurred, the e_name event!
-def trigger(e_name, e_data=None):
+def trigger(e_name, e_data=None, **kwargs):
+    if e_data is None:
+        e_data = data(**kwargs)
+    
     #print 'Event:', e_name, e_data
-
+    
     failure = True
     error = None
     if e_name in events:

@@ -52,7 +52,6 @@ def default_nicks():
 
 class Network(object):
     socket = None
-    DEBUG = False
     
     def __init__(self, server="irc.default.org", port=6667, nicks=[], 
                     fullname="", name=None, **kwargs):
@@ -149,9 +148,6 @@ class Network(object):
             self.buffer = (self.buffer + result).split("\r\n")
             
             for line in self.buffer[:-1]:
-                if self.DEBUG:
-                    print "<< %s" % line
-
                 self.got_msg(line)
             
             if self.buffer:
@@ -163,8 +159,7 @@ class Network(object):
                 self.source = ui.fork(self.on_read, self.socket.recv, 8192)    
     
     def raw(self, msg):
-        if self.DEBUG:
-            print ">> %s" % (msg + "\r\n").replace("\r\n", "\\r\\n")
+        events.trigger("OwnRaw", text=msg)
         
         if self.status >= INITIALIZING:
             self.socket.send(msg + "\r\n")
