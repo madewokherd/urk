@@ -101,7 +101,7 @@ def onKeyPress(e):
     else:
         recent_completer = None
 
-def onActive(window):
+def onActive(e):
     global recent_completer
     
     recent_completer = None

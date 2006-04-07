@@ -110,7 +110,7 @@ class Window(gtk.VBox):
         self.focus()
     
     def close(self):
-        events.trigger("Close", self)
+        events.trigger("Close", window=self)
         remove(self)
         
     def update(self):

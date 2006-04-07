@@ -13,6 +13,17 @@ import windows
 import servers
 import editor
 
+def about(*args):
+    about = gtk.AboutDialog()
+    
+    about.set_name(urk.name+" (GTK+ Frontend)")
+    about.set_version(".".join(str(x) for x in urk.version))
+    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
+    about.set_website(urk.website)
+    about.set_authors(urk.authors)
+    
+    about.show_all()
+
 # Window activity Constants
 HILIT = 'h'
 TEXT ='t'
@@ -25,36 +36,24 @@ ACTIVITY_MARKUP = {
     }
 
 # This holds all tags for all windows ever
-if 'tag_table' not in globals():
-    tag_table = gtk.TextTagTable()
-    
-    link_tag = gtk.TextTag('link')
-    link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
-    
-    indent_tag = gtk.TextTag('indent')
-    indent_tag.set_property('indent', -20)
-    
-    tag_table.add(link_tag)
-    tag_table.add(indent_tag)
+tag_table = gtk.TextTagTable()
 
-    #FIXME: MEH hates dictionaries, they remind him of the bad words
-    styles = {}
-    
-def about(*args):
-    about = gtk.AboutDialog()
-    
-    about.set_name(urk.name+" (GTK+ Frontend)")
-    about.set_version(".".join(str(x) for x in urk.version))
-    about.set_copyright("Copyright \xc2\xa9 %s" % urk.copyright)
-    about.set_website(urk.website)
-    about.set_authors(urk.authors)
-    
-    about.show_all()
+link_tag = gtk.TextTag('link')
+link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
+
+indent_tag = gtk.TextTag('indent')
+indent_tag.set_property('indent', -20)
+
+tag_table.add(link_tag)
+tag_table.add(indent_tag)
+
+#FIXME: MEH hates dictionaries, they remind him of the bad words
+styles = {}
 
 def style_me(widget, style):
     widget.set_style(styles.get(style))
 
-def set_style(widget, style):
+def set_style(widget_name, style):
     if style:
         # FIXME: find a better way...
         dummy = gtk.Label()
@@ -81,7 +80,7 @@ def set_style(widget, style):
 
         style = dummy.rc_get_style()
     
-    styles[widget] = style
+    styles[widget_name] = style
     
 def menu_from_list(alist):
     while alist and not alist[-1]:
@@ -232,7 +231,6 @@ class NickEditor(gtk.EventBox):
             self.add(edit)
             
             edit.show()
-            
             edit.grab_focus()
         else:
             self.remove(widget)
@@ -299,20 +297,23 @@ class TextInput(gtk.Entry):
         self.text, self.selection = temp
 
     def keypress(self, event):
+        keychar = (
+            (gtk.gdk.CONTROL_MASK, '^'),
+            (gtk.gdk.SHIFT_MASK, '+'),
+            (gtk.gdk.MOD1_MASK, '!')
+            )
+
         key = ''
-        for k, c in ((gtk.gdk.CONTROL_MASK, '^'),
-                        (gtk.gdk.SHIFT_MASK, '+'),
-                        (gtk.gdk.MOD1_MASK, '!')):
-            if event.state & k:
-                key += c
-        
+        for keymod, char in keychar:
+            if event.state & keymod:
+                key += char
         key += gtk.gdk.keyval_name(event.keyval)
 
         events.trigger(
             'KeyPress',
             events.data(key=key, string=event.string, window=self.win)
             )
-    
+
         if key == "^Return":
             self.entered_text(True)
         
@@ -326,7 +327,7 @@ class TextInput(gtk.Entry):
         gtk.Entry.__init__(self)
         
         self.win = window
-        
+
         # we don't want key events to propogate so we stop them in connect_after
         self.connect('key-press-event', TextInput.keypress)
         self.connect_after('key-press-event', lambda *a: True)
@@ -794,7 +795,7 @@ class UrkUITabs(gtk.Window):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
             e.menu += [('Editor', editor.main)]
 
-        events.register('MainMenu', 'on', add_defaults_to_menu, 'ui')
+        events.register('MainMenu', 'on', add_defaults_to_menu, 'widgets')
 
         def build_urk_menu(*args):
             data = events.data(menu=[])
@@ -873,12 +874,12 @@ class UrkUITabs(gtk.Window):
                 window = windows.manager.get_active()
             
                 if window:
-                    events.trigger('SuperActive', window)
+                    events.trigger('SuperActive', window=window)
                 
         self.connect('event', super_window_change)
 
         def window_change(notebook, _wptr, page_num):
-            events.trigger("Active", notebook.get_nth_page(page_num))
+            events.trigger("Active", window=notebook.get_nth_page(page_num))
             
         self.tabs.connect("switch-page", window_change)
         

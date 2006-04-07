@@ -34,8 +34,8 @@ if hasattr(windows,'manager'):
             window.mutate(ConsoleWindow, window.network, window.id)
     del window
 
-def onClose(window):
-    if isinstance(window, ConsoleWindow):
+def onClose(e):
+    if isinstance(e.window, ConsoleWindow):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 

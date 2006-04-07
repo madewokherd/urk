@@ -72,10 +72,10 @@ def onText(e):
     if isinstance(e.window, windows.QueryWindow):
         tray.window_hilighted(e.window, e.source)
 
-def onActive(window):
-    tray.window_activated(window)
+def onActive(e):
+    tray.window_activated(e.window)
     
 onSuperActive = onActive
 
-def onClose(window):
+def onClose(e):
     tray.remove()

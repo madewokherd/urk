@@ -5,8 +5,8 @@ import chaninfo
 
 # FIXME: meh still might want rid of these, I'm not sure yet
 
-def onActive(w):
-    w.activity = None
+def onActive(e):
+    e.window.activity = None
 
     ui.register_idle(windows.manager.set_title)
 
@@ -73,21 +73,21 @@ def setdownPart(e):
             else:
                 window.close()
 
-def onClose(window):
-    if isinstance(window, windows.ChannelWindow): 
+def onClose(e):
+    if isinstance(e.window, windows.ChannelWindow): 
         cwindows = list(windows.get_with(
-                            network=window.network,
+                            network=e.window.network,
                             wclass=windows.ChannelWindow
                             ))
         
         if len(cwindows) == 1:
-            window.network.quit()
+            e.window.network.quit()
             
-        elif chaninfo.ischan(window.network, window.id):
-            window.network.part(window.id) 
+        elif chaninfo.ischan(e.window.network, window.id):
+            e.window.network.part(window.id) 
         
-    elif isinstance(window, windows.StatusWindow):
-        window.network.quit()
+    elif isinstance(e.window, windows.StatusWindow):
+        e.window.network.quit()
         
     if len(windows.manager) == 1:
         windows.new(windows.StatusWindow, irc.Network(), "status")

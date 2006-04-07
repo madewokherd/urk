@@ -44,9 +44,8 @@ class LogFile(file):
     def write(self, text):
         file.write(self, '%s %s%s' % (time.strftime(DATE_FORMAT), text, os.linesep))
 
-def onClose(window):
-    if (window.network, window.id) in open_logs:
-        del open_logs[(window.network, window.id)]
+def onClose(e):
+    open_logs.pop((e.window.network, e.window.id), None)
 
 def onText(e):
     f = log_file(e.network, e.window.id)
