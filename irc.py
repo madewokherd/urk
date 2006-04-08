@@ -159,7 +159,7 @@ class Network(object):
                 self.source = ui.fork(self.on_read, self.socket.recv, 8192)    
     
     def raw(self, msg):
-        events.trigger("OwnRaw", network=self, text=msg)
+        events.trigger("OwnRaw", network=self, raw=msg)
         
         if self.status >= INITIALIZING:
             self.socket.send(msg + "\r\n")
@@ -168,6 +168,7 @@ class Network(object):
         pmsg = parse_irc(msg, self.server)
     
         e_data = events.data(
+                    raw=msg,
                     msg=pmsg,
                     text=pmsg[-1],
                     network=self,
