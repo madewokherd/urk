@@ -131,7 +131,7 @@ class Network(object):
             self.status = INITIALIZING
             self.failedhosts[:] = ()
             
-            events.trigger('SocketConnect', events.data(network=self))
+            events.trigger('SocketConnect', network=self)
             
             if source.enabled:
                 self.source = ui.fork(self.on_read, self.socket.recv, 8192)
@@ -193,7 +193,7 @@ class Network(object):
             
             self.source = ui.fork(self.on_dns, socket.getaddrinfo, self.server, self.port, 0, socket.SOCK_STREAM)
             
-            events.trigger('Connecting', events.data(network=self))
+            events.trigger('Connecting', network=self)
     
     def disconnect(self, error=None):
         if self.socket:
@@ -208,21 +208,15 @@ class Network(object):
         self.status = DISCONNECTED
         
         #note: connecting from onDisconnect is probably a Bad Thing
-        events.trigger(
-            'Disconnect', 
-            events.data(network=self, error=error)
-            )
+        events.trigger('Disconnect', network=self, error=error)
         
         #trigger a nick change if the nick we want is different from the one we
         # had.
         if self.me != self.nicks[0]:
-            e_data = events.data(
-                        network=self,
-                        window=windows.get_default(self),
-                        source=self.me,
-                        target=self.nicks[0]
-                        )
-            events.trigger('Nick', e_data)
+            events.trigger(
+                'Nick', network=self, window=windows.get_default(self),
+                source=self.me, target=self.nicks[0]
+                )
             self.me = self.nicks[0]
         
     def norm_case(self, string):
@@ -252,27 +246,18 @@ class Network(object):
     def msg(self, target, msg):
         self.raw("PRIVMSG %s :%s" % (target, msg))
         
-        e_data = events.data(
-                    source=self.me,
-                    target=str(target),
-                    text=msg,
-                    network=self,
-                    window=windows.get_default(self)
-                    )
-        events.trigger('OwnText', e_data)
+        events.trigger(
+            'OwnText', source=self.me, target=str(target), text=msg,
+            network=self, window=windows.get_default(self)
+            )
 
     def notice(self, target, msg):
         self.raw("NOTICE %s :%s" % (target, msg))
         
-        e_data = events.data(
-                    source=self.me,
-                    target=str(target),
-                    text=msg,
-                    network=self,
-                    window=windows.get_default(self)
-                    )
-        events.trigger('OwnNotice', e_data)
-
+        events.trigger(
+            'OwnNotice', source=self.me, target=str(target), text=msg,
+            network=self, window=windows.get_default(self)
+            )
 
 #this was ported from srvx's tools.c
 def match_glob(text, glob, t=0, g=0):

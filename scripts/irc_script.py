@@ -71,12 +71,10 @@ def setdownRaw(e):
             elif e.msg[1] == '001':
                 e.network.got_nick = True
                 if e.network.me != e.msg[2]:
-                    e_data = events.data()
-                    e_data.network = e.network
-                    e_data.window = e.window
-                    e_data.source = e.network.me
-                    e_data.target = e.msg[2]
-                    events.trigger('Nick', e_data)
+                    events.trigger(
+                        'Nick', network=e.network, window=e.window,
+                        source=e.network.me, target=e.msg[2]
+                        )
                     e.network.me = e.msg[2]
                 if hasattr(e.network,'_nick_generator'):
                     del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
@@ -221,12 +219,11 @@ def onCommandQuery(e):
 # make /nick work offline
 def change_nick(network, nick):
     if not network.status:
-        e_data = events.data()
-        e_data.network = network
-        e_data.window = windows.get_default(network)
-        e_data.source = network.me
-        e_data.target = nick
-        events.trigger('Nick', e_data)
+        events.trigger(
+            'Nick',
+            network=network, window=windows.get_default(network),
+            source=network.me, target=nick
+            )
         network.nicks[0] = nick
         network.me = nick
     else:

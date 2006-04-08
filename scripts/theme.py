@@ -17,9 +17,9 @@ widgets.set_style("nicklist", textareas)
 
 #take an event e and trigger the highlight event if necessary
 def hilight_text(e):
-    if not hasattr(e,"hilight"):
+    if not hasattr(e, 'hilight'):
         e.hilight = []
-        events.trigger("Hilight",e)
+        events.trigger('Hilight', e)
 
 #hilight own nick
 def onHilight(e):

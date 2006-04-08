@@ -16,13 +16,10 @@ def ctcp_reply(network, user, msg):
 
 def emote(network, user, msg):
     network.raw("PRIVMSG %s :\x01ACTION %s\x01" % (user, msg))
-    e_data = events.data()
-    e_data.source = network.me
-    e_data.target = str(user)
-    e_data.text = msg
-    e_data.network = network
-    e_data.window = windows.get_default(network)
-    events.trigger('OwnAction', e_data)
+    events.trigger(
+        'OwnAction', network=network, window=windows.get_default(network),
+        source=network.me, target=str(user), text=msg
+        )
 
 def onCommandMe(e):
     if isinstance(e.window, windows.ChannelWindow) or isinstance(e.window, windows.QueryWindow):

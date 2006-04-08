@@ -123,11 +123,7 @@ class Nicklist(gtk.TreeView):
     
             (data,), path, x, y = self.get_path_at_pos(int(x), int(y))
         
-            c_data = events.data(
-                        window=self.win,
-                        data=self[data],
-                        menu=[]
-                        )
+            c_data = events.data(window=self.win, data=self[data], menu=[])
         
             events.trigger("ListRightClick", c_data)
             
@@ -263,10 +259,8 @@ class TextInput(gtk.Entry):
         for line in self.text.splitlines():
             if line:
                 e_data = events.data(
-                            window=self.win,
-                            text=line,
-                            network=self.win.network,
-                            ctrl=ctrl
+                            window=self.win, network=self.win.network,
+                            text=line, ctrl=ctrl
                             )
                 events.trigger('Input', e_data)
                 
@@ -309,10 +303,7 @@ class TextInput(gtk.Entry):
                 key += char
         key += gtk.gdk.keyval_name(event.keyval)
 
-        events.trigger(
-            'KeyPress',
-            events.data(key=key, string=event.string, window=self.win)
-            )
+        events.trigger('KeyPress', key=key, string=event.string, window=self.win)
 
         if key == "^Return":
             self.entered_text(True)
@@ -472,10 +463,10 @@ class TextOutput(gtk.TextView):
             menuitems = c_data.menu
             
         if not menuitems:
-            data = events.data(menu=[])
-            events.trigger("MainMenu", data)
+            c_data = events.data(menu=[])
+            events.trigger("MainMenu", c_data)
             
-            menuitems = data.menu
+            menuitems = c_data.menu
 
         for child in menu.get_children():
             menu.remove(child)

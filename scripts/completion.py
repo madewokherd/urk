@@ -4,8 +4,17 @@ import events
 from conf import conf
 
 def channel_completer(window, left, right, text):
-    return (w.id for w in windows.get_with(wclass=windows.ChannelWindow))
-            
+    if isinstance(window, windows.ChannelWindow);
+        yield window.id
+
+    for w in windows.get_with(wclass=windows.ChannelWindow, network=window.network):
+        if w is not window:
+            yield w
+
+    for w in windows.get_with(wclass=windows.ChannelWindow):
+        if w.network is not window.network:
+            yield w
+
 # normal server commands
 srv_commands = ('ping', 'join', 'part', 'mode', 'server', 'kick',
                 'quit', 'nick', 'privmsg', 'notice', 'topic')
