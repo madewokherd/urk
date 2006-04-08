@@ -28,8 +28,11 @@ def command_completer(window, left, right, text):
             yield '/%s' % c[7:].lower()
 
 def nick_completer(window, left, right, text):  
+    if type(window) == windows.QueryWindow:
+        yield window.id
+    
     recent_speakers = getattr(window, 'recent_speakers', ())
-
+    
     for nick in recent_speakers:
         if chaninfo.ison(window.network, window.id, nick):
             yield nick
