@@ -4,7 +4,7 @@ import events
 from conf import conf
 
 def channel_completer(window, left, right, text):
-    if isinstance(window, windows.ChannelWindow);
+    if isinstance(window, windows.ChannelWindow):
         yield window.id
 
     for w in windows.get_with(wclass=windows.ChannelWindow, network=window.network):
