@@ -23,7 +23,10 @@ def emote(network, user, msg):
 
 def onCommandMe(e):
     if isinstance(e.window, windows.ChannelWindow) or isinstance(e.window, windows.QueryWindow):
-        emote(e.network, e.window.id, ' '.join(e.args))
+        #kludge around switches so we don't lose the -> in /me -> something
+        #emote(e.network, e.window.id, ' '.join(e.args))
+        command, text = e.text.split(" ",1)
+        emote(e.network, e.window.id, text)
     else:
         raise events.CommandError("There's no one here to speak to.")
 
