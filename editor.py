@@ -253,7 +253,7 @@ class EditorWindow(gtk.Window):
             def on_response(dialog, response_id):
                 if response_id == gtk.RESPONSE_OK:
                     filename = chooser.get_filename()
-                    if os.path.isfile(filename):
+                    if os.path.exists(filename):
                         dialog = ConfirmOverwriteDialog(chooser, filename)
                         dialog.connect("response", on_overwrite_response)
                         dialog.show()
