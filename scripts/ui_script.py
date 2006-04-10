@@ -83,8 +83,8 @@ def onClose(e):
         if len(cwindows) == 1:
             e.window.network.quit()
             
-        elif chaninfo.ischan(e.window.network, window.id):
-            e.window.network.part(window.id) 
+        elif chaninfo.ischan(e.window.network, e.window.id):
+            e.window.network.part(e.window.id) 
         
     elif isinstance(e.window, windows.StatusWindow):
         e.window.network.quit()
