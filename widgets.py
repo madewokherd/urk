@@ -327,28 +327,24 @@ class TextInput(gtk.Entry):
 
 gobject.type_register(TextInput)
 
-def prop_to_gtk(textview, prop, val):
+def prop_to_gtk(textview, (prop, val)):
     if val == parse_mirc.BOLD:
         val = pango.WEIGHT_BOLD
 
     elif val == parse_mirc.UNDERLINE:
         val = pango.UNDERLINE_SINGLE
+
+    elif val == parse_mirc.COLOR_99:
+        if prop == 'foreground':
+            color = textview.get_style().text[0]
+        elif prop == 'background':
+            color = textview.get_style().base[0]
         
-    elif prop == 'foreground' and val == parse_mirc.COLOR_99:
-        r = hex(textview.get_style().text[0].red)[-2:]
-        g = hex(textview.get_style().text[0].green)[-2:]
-        b = hex(textview.get_style().text[0].blue)[-2:]
+        rgb = hex(color.red)[-2:], hex(color.green)[-2:], hex(color.blue)[-2:]
+
+        val = '#%s%s%s' % rgb
         
-        val = '#%s%s%s' % (r, g, b)
-        
-    elif prop == 'background' and val == parse_mirc.COLOR_99:
-        r = hex(textview.get_style().base[0].red)[-2:]
-        g = hex(textview.get_style().base[0].green)[-2:]
-        b = hex(textview.get_style().base[0].blue)[-2:]
-        
-        val = '#%s%s%s' % (r, g, b)
-        
-    return prop, val
+    return {prop: val}
         
 def word_from_pos(text, pos):
     if text[pos] == ' ':
@@ -439,11 +435,8 @@ class TextOutput(gtk.TextView):
             tag_name = str(tag['data'])
    
             if not tag_table.lookup(tag_name):
-                buffer.create_tag(
-                    tag_name,
-                    **dict(prop_to_gtk(self, *tag) for tag in tag['data'])
-                    )
-                
+                buffer.create_tag(tag_name, **prop_to_gtk(self, tag['data']))
+
             buffer.apply_tag_by_name(
                 tag_name, 
                 buffer.get_iter_at_offset(tag['from'] + cc),
