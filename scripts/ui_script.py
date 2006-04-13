@@ -26,7 +26,7 @@ def setupJoin(e):
         
         if window:
             window.mutate(windows.ChannelWindow, e.network, e.target)
-            window.focus()
+            window.activate()
             
         else:
             windows.new(windows.ChannelWindow, e.network, e.target).activate()
@@ -69,7 +69,7 @@ def setdownPart(e):
                             
             if len(cwindows) == 1:
                 window.mutate(windows.StatusWindow, e.network, 'status')
-                window.focus()
+                window.activate()
             else:
                 window.close()
 
