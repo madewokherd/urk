@@ -275,9 +275,7 @@ class ServerWidget(gtk.VBox):
         hb.add(self.buttons['connect'])
         
         self.pack_end(hb, expand=False)
-        
-widget = ServerWidget()
-        
+
 def main():
     win = gtk.Window()
     win.set_title('Connect-o-rama') # XXX replace this
