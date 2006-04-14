@@ -385,10 +385,11 @@ def get_event_at_iter(view, iter):
 class TextOutput(gtk.TextView):
     def copy(self):
         startend = self.get_buffer().get_selection_bounds()
-        
+
+        tagsandtext = []
         if startend:
             start, end = startend
-            text = []
+            
             while not start.equal(end):
                 tags_at_iter = {}
                 for tag in start.get_tags():        
@@ -398,10 +399,15 @@ class TextOutput(gtk.TextView):
                     except NameError:
                         continue
 
-                text.append((dict(tags_at_iter), start.get_char()))
+                tagsandtext.append((dict(tags_at_iter), start.get_char()))
                 start.forward_char()
 
-        # clipboard = parse_mirc.unparse_mirc(text)
+        text = parse_mirc.unparse_mirc(tagsandtext)
+        
+        gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
+        gtk.clipboard_get(gtk.gdk.SELECTION_PRIMARY).set_text(text)
+
+        return text
 
     def clear(self):
         self.get_buffer().set_text('')
@@ -592,6 +598,11 @@ class TextOutput(gtk.TextView):
         self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
 
         self.connect('copy-clipboard', TextOutput.copy)
+        self.connect_after('copy-clipboard', lambda *a: True)
+        
+        self.connect('cut-clipboard', TextOutput.copy)
+        self.connect_after('cut-clipboard', lambda *a: True)
+
         self.connect('populate-popup', TextOutput.popup)
         self.connect('motion-notify-event', TextOutput.hover)
         self.connect('button-press-event', TextOutput.mousedown)

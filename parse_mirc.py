@@ -151,7 +151,7 @@ def parse_reset(string, pos, open_tags, tags):
     
     return 1
 
-tag_fs = {
+tag_parser = {
     MIRC_COLOR: parse_mirc_color,
     BERS_COLOR: parse_bersirc_color,
     BOLD: parse_bold,
@@ -168,12 +168,12 @@ def parse_mirc(string):
     text_i = outtext_i = 0
 
     for tag_i, char in enumerate(string):
-        if char in tag_fs:
+        if char in tag_parser:
             out += string[text_i:tag_i]
 
             outtext_i += tag_i - text_i
 
-            text_i = tag_i + tag_fs[char](
+            text_i = tag_i + tag_parser[char](
                                 string[tag_i+1:], 
                                 outtext_i, 
                                 open_tags,
@@ -181,6 +181,54 @@ def parse_mirc(string):
                                 )
 
     return tags, out
+
+tag_unparse = {
+    'weight': BOLD,
+    'underline': UNDERLINE,
+    }
+
+def add_color_tag(string, fg, bg):
+    string.append(BERS_COLOR)
+    string.append(fg.replace('#', ''))
+                        
+    if bg:
+        string.append(',')
+        string.append(bg.replace('#', ''))
+
+def unparse_mirc(tagsandtext):
+    lasttags, lastchar = {}, ''
+    
+    string = []
+    for tags, char in tagsandtext:
+        if lasttags and not tags:
+            string.append(RESET)
+
+        else:
+            for tagname, tagval in tags.iteritems():
+                if tagname not in lasttags or tagval != lasttags[tagname]:
+                    if tagname == 'foreground':
+                        add_color_tag(string, tagval, tags.get('background'))
+
+                    elif tagname == 'background':
+                        if tags['foreground'] == lasttags.get('foreground'):
+                            add_color_tag(string, tags['foreground'], tags['background'])
+
+                    else:
+                        string.append(tag_unparse[tagname])
+
+            for tagname, tagval in lasttags.iteritems():
+                if tagname not in tags:
+                    if tagname == 'foreground':
+                        string.append(BERS_COLOR)
+                    elif tagname == 'background':
+                        pass
+                    else:
+                        string.append(tag_unparse[tagname])
+
+        string.append(char)
+        lasttags, lastchar = tags, char
+
+    return ''.join(string)
 
 if __name__ == "__main__":
     tests = [
