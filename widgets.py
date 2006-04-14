@@ -384,7 +384,7 @@ class TextOutput(gtk.TextView):
                 tags_at_iter = {}
                 for tag in start.get_tags():        
                     try:
-                        tagname, tagval = eval(tag.props.name)
+                        tagname, tagval = eval(tag.get_property('name'))
                         tags_at_iter[tagname] = tagval
                     except NameError:
                         continue
