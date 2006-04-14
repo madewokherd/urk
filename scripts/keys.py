@@ -15,6 +15,9 @@ def onKeyPress(e):
     if e.key in shortcuts:
         e.window.input.insert(shortcuts[e.key])
 
+    elif e.key == '!c':
+        e.window.output.copy()
+
     elif e.key == 'Page_Up':
         e.window.output.y = e.window.output.y - e.window.output.height / 2
     

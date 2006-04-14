@@ -333,16 +333,6 @@ def prop_to_gtk(textview, (prop, val)):
 
     elif val == parse_mirc.UNDERLINE:
         val = pango.UNDERLINE_SINGLE
-
-    elif val == parse_mirc.COLOR_99:
-        if prop == 'foreground':
-            color = textview.get_style().text[0]
-        elif prop == 'background':
-            color = textview.get_style().base[0]
-        
-        rgb = hex(color.red)[-2:], hex(color.green)[-2:], hex(color.blue)[-2:]
-
-        val = '#%s%s%s' % rgb
         
     return {prop: val}
         
@@ -596,12 +586,6 @@ class TextOutput(gtk.TextView):
 
         self.add_events(gtk.gdk.POINTER_MOTION_HINT_MASK)
         self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
-
-        self.connect('copy-clipboard', TextOutput.copy)
-        self.connect_after('copy-clipboard', lambda *a: True)
-        
-        self.connect('cut-clipboard', TextOutput.copy)
-        self.connect_after('cut-clipboard', lambda *a: True)
 
         self.connect('populate-popup', TextOutput.popup)
         self.connect('motion-notify-event', TextOutput.hover)
