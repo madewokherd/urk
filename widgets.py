@@ -383,6 +383,26 @@ def get_event_at_iter(view, iter):
                 )
 
 class TextOutput(gtk.TextView):
+    def copy(self):
+        startend = self.get_buffer().get_selection_bounds()
+        
+        if startend:
+            start, end = startend
+            text = []
+            while not start.equal(end):
+                tags_at_iter = {}
+                for tag in start.get_tags():        
+                    try:
+                        tagname, tagval = eval(tag.props.name)
+                        tags_at_iter[tagname] = tagval
+                    except NameError:
+                        continue
+
+                text.append((dict(tags_at_iter), start.get_char()))
+                start.forward_char()
+
+        # clipboard = parse_mirc.unparse_mirc(text)
+
     def clear(self):
         self.get_buffer().set_text('')
     
@@ -571,12 +591,13 @@ class TextOutput(gtk.TextView):
         self.add_events(gtk.gdk.POINTER_MOTION_HINT_MASK)
         self.add_events(gtk.gdk.LEAVE_NOTIFY_MASK)
 
-        self.connect("populate-popup", TextOutput.popup)
-        self.connect("motion-notify-event", TextOutput.hover)
-        self.connect("button-press-event", TextOutput.mousedown)
-        self.connect("button-release-event", TextOutput.mouseup)
-        self.connect_after("button-release-event", lambda *a: True)
-        self.connect("leave-notify-event", TextOutput.clear_hover)
+        self.connect('copy-clipboard', TextOutput.copy)
+        self.connect('populate-popup', TextOutput.popup)
+        self.connect('motion-notify-event', TextOutput.hover)
+        self.connect('button-press-event', TextOutput.mousedown)
+        self.connect('button-release-event', TextOutput.mouseup)
+        self.connect_after('button-release-event', lambda *a: True)
+        self.connect('leave-notify-event', TextOutput.clear_hover)
           
         self.hover_coords = 0, 0
 
@@ -586,27 +607,12 @@ class TextOutput(gtk.TextView):
 
         def setup_scroll(self, _adj, vadj):
             self.scroller = vadj
-            
-            #if gtk.pygtk_version < (2,8):
+
             if vadj:
                 def set_scroll(adj):
                     self.autoscroll = adj.value + adj.page_size >= adj.upper
     
                 vadj.connect("value-changed", set_scroll)
-            #else:
-            #    drag_mask = gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON2_MASK|gtk.gdk.BUTTON3_MASK
-            #    def check_autoscroll_if_dragging(w, event, drag_mask=drag_mask):
-            #        if event.get_state() & drag_mask:
-            #            self.check_autoscroll()
-            #
-            #    self.parent.get_vscrollbar().connect(
-            #        "motion-notify-event", check_autoscroll_if_dragging
-            #        )
-            #
-            #    self.parent.get_vscrollbar().connect(
-            #        "button-release-event", self.check_autoscroll
-            #        )
-            #    self.connect_after("scroll-event", TextOutput.check_autoscroll)
 
         self.connect("set-scroll-adjustments", setup_scroll)
         self.connect("size-allocate", TextOutput.scroll)
