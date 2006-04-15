@@ -576,9 +576,7 @@ class TextOutput(gtk.TextView):
         self.set_wrap_mode(gtk.WRAP_WORD_CHAR)
         self.set_editable(False)
         self.set_cursor_visible(False)
-        
-        self.set_pixels_above_lines(1)
-        
+
         self.set_property("left-margin", 3)
         self.set_property("right-margin", 3)
 
