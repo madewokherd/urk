@@ -5,6 +5,8 @@ from conf import conf
 import widgets
 import events
 
+manager = widgets.UrkUITabs()
+
 def append(window):
     manager.add(window)
 

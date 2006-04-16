@@ -122,9 +122,7 @@ def we_get_signal(*what):
 
 def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
-    
-    windows.manager = widgets.UrkUITabs()
-    
+
     #catch all the weird signals like SIGTERM and SIGSLORG
     signal.signal(signal.SIGTERM, we_get_signal)
     

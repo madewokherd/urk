@@ -28,11 +28,11 @@ class ConsoleWindow(windows.SimpleWindow):
         self.locals = {}
 
 #this prevents problems (and updates an open console window) on reload
-if hasattr(windows,'manager'):
-    for window in windows.manager:
-        if type(window).__name__ == "ConsoleWindow":
-            window.mutate(ConsoleWindow, window.network, window.id)
-    del window
+window = None
+for window in windows.manager:
+    if type(window).__name__ == "ConsoleWindow":
+        window.mutate(ConsoleWindow, window.network, window.id)
+del window
 
 def onClose(e):
     if isinstance(e.window, ConsoleWindow):
