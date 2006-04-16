@@ -216,23 +216,39 @@ class NickEditor(gtk.EventBox):
     def update(self, nick=None):
         self.label.set_text(nick or self.win.network.me)
     
-    def toggle(self, widget, event):
-        if self.label in self.get_children():
-            edit = gtk.Entry()
-            edit.set_text(self.label.get_text())
-            edit.connect("activate", self.nick_change)
-            edit.connect("focus-out-event", self.toggle)
+    def to_edit_mode(self, widget, event):
+        if self.label not in self.get_children():
+            return
+
+        if getattr(event, 'button', None) == 3:
+            c_data = events.data(window=self.win, menu=[])
+            events.trigger("NickEditMenu", c_data)
+
+            if c_data.menu:
+                menu = gtk.Menu()
+                for item in menu_from_list(c_data.menu):
+                    menu.append(item)
+                menu.show_all()
+                menu.popup(None, None, None, event.button, event.time)
+        
+        else:
+            entry = gtk.Entry()
+            entry.set_text(self.label.get_text())
+            entry.connect('activate', self.nick_change)
+            entry.connect('focus-out-event', self.to_show_mode)
 
             self.remove(self.label)
-            self.add(edit)
-            
-            edit.show()
-            edit.grab_focus()
-        else:
-            self.remove(widget)
-            self.add(self.label)
-            
-            self.win.input.grab_focus()
+            self.add(entry)
+            self.window.set_cursor(None)
+                
+            entry.show()
+            entry.grab_focus()
+    
+    def to_show_mode(self, widget, event):
+        self.remove(widget)
+        self.add(self.label)
+        self.win.input.grab_focus()
+        self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.XTERM))
 
     def __init__(self, window):
         gtk.EventBox.__init__(self)
@@ -243,7 +259,7 @@ class NickEditor(gtk.EventBox):
         self.label.set_padding(5, 0)
         self.add(self.label)
 
-        self.connect("button-press-event", self.toggle)
+        self.connect("button-press-event", self.to_edit_mode)
         
         self.update()
 
@@ -439,12 +455,10 @@ class TextOutput(gtk.TextView):
         
         cc = buffer.get_char_count()
 
-        buffer.insert(buffer.get_end_iter(), text + line_ending)
-        
-        buffer.apply_tag_by_name(
-            'indent', 
-            buffer.get_iter_at_offset(cc),
-            buffer.get_end_iter()
+        buffer.insert_with_tags_by_name(
+            buffer.get_end_iter(),
+            text + line_ending,
+            'indent'
             )
 
         for tag in tags:
