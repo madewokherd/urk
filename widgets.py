@@ -315,7 +315,8 @@ class TextInput(gtk.Entry):
 
         key = ''
         for keymod, char in keychar:
-            if event.state & keymod:
+            # we make this an int, because otherwise it leaks
+            if int(event.state) & keymod:
                 key += char
         key += gtk.gdk.keyval_name(event.keyval)
 
