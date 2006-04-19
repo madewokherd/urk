@@ -9,11 +9,11 @@ def channel_completer(window, left, right, text):
 
     for w in windows.get_with(wclass=windows.ChannelWindow, network=window.network):
         if w is not window:
-            yield w
+            yield w.id
 
     for w in windows.get_with(wclass=windows.ChannelWindow):
         if w.network is not window.network:
-            yield w
+            yield w.id
 
 # normal server commands
 srv_commands = ('ping', 'join', 'part', 'mode', 'server', 'kick',
