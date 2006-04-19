@@ -12,7 +12,10 @@ def append(window):
 
 def remove(window):
     manager.remove(window)
-
+    
+    # i don't want to have to call this
+    window.destroy()
+    
 def new(wclass, network, id):
     w = get(wclass, network, id)
     
