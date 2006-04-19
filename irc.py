@@ -176,7 +176,7 @@ class Network(object):
                     )
         
         if "!" in pmsg[0]:
-            e_data.source, e_data.address = pmsg[0].split('!')
+            e_data.source, e_data.address = pmsg[0].split('!',1)
             
         else:
             e_data.source, e_data.address = pmsg[0], ''
