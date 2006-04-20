@@ -18,7 +18,7 @@ def parse_irc(msg, server):
     # if our very first character is :
     # then this is the source, 
     # otherwise insert the server as the source
-    if msg[0][0] == ':':
+    if msg and msg[0].startswith(':'):
         msg[0] = msg[0][1:]
     else:
         msg.insert(0, server)
