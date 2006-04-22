@@ -13,7 +13,10 @@ def onActive(e):
 def setupNick(e):
     if e.source == e.network.me:
         for w in windows.get_with(network=e.network):
-            w.nick_label.update(e.target)    
+            try:
+                w.nick_label.update(e.target)
+            except AttributeError:
+                pass    
 
 def onExit(e):
     for n in set(w.network for w in windows.manager):

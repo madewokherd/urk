@@ -260,6 +260,24 @@ class Network(object):
             network=self, window=windows.get_default(self)
             )
 
+#a Network that is never connected
+class DummyNetwork(Network):
+    def __nonzero__(self):
+        return False    
+    
+    def __init__(self):
+        Network.__init__(self)
+        
+        self.name = self.server = self.isupport['NETWORK'] = "None"
+    
+    def connect(self):
+        raise NotImplementedError, "Cannot connect dummy network."
+    
+    def raw(self, msg):
+        raise NotImplementedError, "Cannot send %s over the dummy network." % repr(msg)
+
+dummy_network = DummyNetwork()
+
 #this was ported from srvx's tools.c
 def match_glob(text, glob, t=0, g=0):
     while g < len(glob):

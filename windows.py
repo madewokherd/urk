@@ -17,6 +17,9 @@ def remove(window):
     window.destroy()
     
 def new(wclass, network, id):
+    if network is None:
+        network = irc.dummy_network    
+    
     w = get(wclass, network, id)
     
     if not w:
@@ -39,7 +42,8 @@ def get_with(wclass=None, network=None, id=None):
 
     for w in list(manager):
         for to_find, found in zip((wclass, network, id), (type(w), w.network, w.id)):
-            if to_find and to_find != found:
+            #to_find might be False but not None (if it's a DummyNetwork)
+            if to_find is not None and to_find != found:
                 break
         else:
             yield w
