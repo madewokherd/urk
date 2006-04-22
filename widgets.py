@@ -133,7 +133,14 @@ class Nicklist(gtk.TreeView):
                     menu.append(item)
                 menu.show_all()
                 menu.popup(None, None, None, event.button, event.time)
+        
+        elif event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+            x, y = event.get_coords()
     
+            (data,), path, x, y = self.get_path_at_pos(int(x), int(y))
+        
+            events.trigger("ListDoubleClick", window=self.win, target=self[data])
+        
     def __getitem__(self, pos):
         return self.get_model()[pos][0]
         

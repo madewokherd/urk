@@ -169,4 +169,9 @@ def onRightClick(e):
         #e.menu.append(('Join channel automatically', add_to_perform))
 
 def onListRightClick(e):
-    make_nick_menu(e, e.nick)
+    if isinstance(e.window, windows.ChannelWindow):
+        make_nick_menu(e, e.nick)
+
+def onListDoubleClick(e):
+    if isinstance(e.window, windows.ChannelWindow):
+        events.run("query %s" % e.target, e.window, e.window.network)
