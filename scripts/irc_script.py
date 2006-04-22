@@ -73,7 +73,7 @@ def setdownRaw(e):
                 if e.network.me != e.msg[2]:
                     events.trigger(
                         'Nick', network=e.network, window=e.window,
-                        source=e.network.me, target=e.msg[2]
+                        source=e.network.me, target=e.msg[2], address=''
                         )
                     e.network.me = e.msg[2]
                 if hasattr(e.network,'_nick_generator'):
@@ -222,7 +222,7 @@ def change_nick(network, nick):
         events.trigger(
             'Nick',
             network=network, window=windows.get_default(network),
-            source=network.me, target=nick
+            source=network.me, target=nick, address=''
             )
         network.nicks[0] = nick
         network.me = nick
