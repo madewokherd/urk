@@ -42,7 +42,7 @@ def parse_irc(msg, server):
 
 def default_nicks():
     try:
-        nicks = [conf.get('nick')]
+        nicks = [conf.get('nick')] + conf.get('altnicks',[])
         if not nicks[0]:
             import getpass
             nicks = [getpass.getuser()]

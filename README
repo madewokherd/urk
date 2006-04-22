@@ -83,6 +83,9 @@ Setting:            Description:
 'nick'                 The nickname urk should use. The default is to try to get
     it from the os. Put this in quotes when you set it.
 
+'altnicks'             A list of alternative nicknames to use. The default is
+    an empty list.
+
 'quitmsg'              The message people see when you quit. The default is to
     advertise urk with your current version; we have to promote it somehow.
     This value needs to be in quotes.
@@ -118,6 +121,11 @@ Setting:            Description:
 'start-console'        If True, urk will start up with a special console window
     that shows debugging output (normally sent to a terminal) and accepts
     python expressions. Defaults to False.
+
+'status'               If True, urk will be in status window mode. Each network
+    will ALWAYS have a status window. When not in status window mode, networks 
+    only have a status window when there are no channel windows. Defaults to 
+    False.
 
 'open-file-command'    The command used to open files and url's with your 
     preferred application (such as "gnome-open"). This is ignored on Windows, 

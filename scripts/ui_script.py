@@ -2,6 +2,7 @@ import irc
 import ui
 import windows
 import chaninfo
+from conf import conf
 
 # FIXME: meh still might want rid of these, I'm not sure yet
 
@@ -27,7 +28,7 @@ def setupJoin(e):
     if e.source == e.network.me:
         window = windows.get(windows.StatusWindow, e.network, 'status')
         
-        if window:
+        if window and not conf.get('status'):
             window.mutate(windows.ChannelWindow, e.network, e.target)
             window.activate()
             
@@ -70,27 +71,34 @@ def setdownPart(e):
                                 wclass=windows.ChannelWindow
                                 ))
                             
-            if len(cwindows) == 1:
+            if len(cwindows) == 1 and not list(windows.get_with(network=window.network, wclass=windows.StatusWindow)):
                 window.mutate(windows.StatusWindow, e.network, 'status')
                 window.activate()
             else:
                 window.close()
 
 def onClose(e):
+    nwindows = list(windows.get_with(network=e.window.network))
+    
     if isinstance(e.window, windows.ChannelWindow): 
         cwindows = list(windows.get_with(
                             network=e.window.network,
                             wclass=windows.ChannelWindow
                             ))
         
-        if len(cwindows) == 1:
-            e.window.network.quit()
-            
-        elif chaninfo.ischan(e.window.network, e.window.id):
+        #if we only have one window for the network, don't bother to part as
+        # we'll soon be quitting anyway
+        if len(nwindows) != 1 and chaninfo.ischan(e.window.network, e.window.id):
             e.window.network.part(e.window.id) 
-        
-    elif isinstance(e.window, windows.StatusWindow):
+    
+    if len(nwindows) == 1:
         e.window.network.quit()
+    
+    elif isinstance(e.window, windows.StatusWindow) and conf.get('status'):
+        e.window.network.quit()
+        for window in nwindows:
+            if window != e.window:
+                window.close()
         
     if len(windows.manager) == 1:
         windows.new(windows.StatusWindow, irc.Network(), "status")
