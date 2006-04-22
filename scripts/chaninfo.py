@@ -16,14 +16,17 @@ def prefix(network, channelname, nick):
     if channel:
         nick = '%s%s' % (_justprefix(network, channel, nick), nick)
     
-    for escapes in (('&','&amp;'), ('<','&lt;'), ('>','&gt;')):
-        nick = nick.replace(*escapes)
     return nick
+
+def escape(string):
+    for escapes in (('&','&amp;'), ('<','&lt;'), ('>','&gt;')):
+        string = string.replace(*escapes)
+    return string
 
 def nicklist_add(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
-        window.nicklist.append(nick, prefix(network, channel.name, nick))
+        window.nicklist.append(nick, escape(prefix(network, channel.name, nick)))
 
 def nicklist_del(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
@@ -289,7 +292,7 @@ def setupRaw(e):
             if window:
                 window.nicklist.clear()
                 window.nicklist.extend(
-                    (nick, prefix(e.network, channel.name, nick)) for nick in channel.nicks
+                    (nick, escape(prefix(e.network, channel.name, nick))) for nick in channel.nicks
                     )
         
     elif e.msg[1] == '324': #channel mode is
