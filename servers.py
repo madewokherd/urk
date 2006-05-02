@@ -1,3 +1,5 @@
+import gc
+
 import gtk
 
 import events
@@ -277,6 +279,8 @@ class ServerWidget(gtk.VBox):
         self.pack_end(hb, expand=False)
 
 def main():
+    gc.collect()
+
     win = gtk.Window()
     win.set_title('Connect-o-rama') # XXX replace this
     
