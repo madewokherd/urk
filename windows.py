@@ -17,9 +17,6 @@ def remove(window):
     window.destroy()
     
 def new(wclass, network, id):
-    if network is None:
-        network = irc.dummy_network    
-    
     w = get(wclass, network, id)
     
     if not w:
@@ -41,8 +38,8 @@ def get_with(wclass=None, network=None, id=None):
         id = network.norm_case(id)
 
     for w in list(manager):
-        for to_find, found in zip((wclass, network, id), (type(w), w.network, w.id)):
-            #to_find might be False but not None (if it's a DummyNetwork)
+        for to_find, found in ((wclass, type(w)), (network, w.network), (id, w.id)):
+            # to_find might be False but not None (if it's a DummyNetwork)
             if to_find is not None and to_find != found:
                 break
         else:
@@ -83,21 +80,21 @@ class Window(gtk.VBox):
 
     def get_id(self):
         if self.network:
-            return self.network.norm_case(self.__id)
+            return self.network.norm_case(self.rawid)
         else:
-            return self.__id
+            return self.rawid
             
     def set_id(self, id):
-        self.__id = id
+        self.rawid = id
         self.update()
 
     id = property(get_id, set_id)
     
     def get_toplevel_title(self):
-        return self.id
+        return self.rawid
     
     def get_title(self):
-        return self.id
+        return self.rawid
 
     def get_activity(self):
         return self.__activity
@@ -146,7 +143,7 @@ class Window(gtk.VBox):
             self.input = widgets.TextInput(self)
         
         self.network = network
-        self.__id = id
+        self.rawid = id
         
         self.__activity = set()
     
