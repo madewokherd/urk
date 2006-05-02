@@ -1,3 +1,4 @@
+import gc
 import os
 import sys
 
@@ -26,11 +27,9 @@ class EditorWidget(gtk.VBox):
 
     def get_text(self):
         buffer = self.output.get_buffer()
-        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
-
-        self.output.get_buffer().set_modified(False)
+        buffer.set_modified(False)
         
-        return text
+        return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
     
     def set_text(self, text):
         buffer = self.output.get_buffer()
@@ -46,10 +45,13 @@ class EditorWidget(gtk.VBox):
 
     text = property(get_text, set_text)
 
-    if GTK_SOURCE_VIEW:
-        def edit_widget(self):
-            self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
+    def edit_widget(self):
+        self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
             
+        self.output.modify_font(pango.FontDescription('monospace 9'))
+        self.output.set_wrap_mode(gtk.WRAP_WORD)
+            
+        if GTK_SOURCE_VIEW:
             self.output.set_show_line_numbers(True)
             self.output.set_show_line_markers(True)
             
@@ -60,9 +62,6 @@ class EditorWidget(gtk.VBox):
             self.output.set_show_margin(True)
             self.output.set_margin(80)
 
-            self.output.modify_font(pango.FontDescription('monospace 9'))
-            self.output.set_wrap_mode(gtk.WRAP_WORD)
-
             buffer = self.output.get_buffer()
             buffer.set_language(
                 gtksourceview.SourceLanguagesManager()
@@ -71,23 +70,10 @@ class EditorWidget(gtk.VBox):
             
             buffer.set_check_brackets(True)
             buffer.set_highlight(True)
-            
-            buffer.connect('modified-changed', self.win.title)
-    else:
-        def edit_widget(self):
-            self.output = gtk.TextView()
-            
-            self.output.modify_font(pango.FontDescription('monospace 9'))
-            self.output.set_wrap_mode(gtk.WRAP_WORD)
-            
-            buffer = self.output.get_buffer()
-            buffer.connect('modified-changed', self.win.title)
-    
-    def __init__(self, window):
+
+    def __init__(self):
         gtk.VBox.__init__(self)
-        
-        self.win = window
-        
+
         self.edit_widget()
 
         topbox = gtk.ScrolledWindow()
@@ -97,13 +83,6 @@ class EditorWidget(gtk.VBox):
         self.pack_end(topbox)
 
         self.show_all()
-        
-def get_menu_for(w):
-    return (
-        ('ScriptMenu', None, '_Script'),
-            ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, w.save),
-            ('Open', gtk.STOCK_OPEN, '_Open', '<Control>O', None, w.open),
-        )
 
 menu_ui = """
 <ui>
@@ -127,13 +106,10 @@ class ConfirmCloseDialog(gtk.Dialog):
                             gtk.STOCK_SAVE, gtk.RESPONSE_OK,))
         self.set_property("resizable", False)
         self.set_property("border_width", 6)
-        
-        hbox = gtk.HBox(spacing=12)
-        hbox.set_property('border-width', 6)
+
         image = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING,gtk.ICON_SIZE_DIALOG)
         image.set_property("yalign",0.0)
-        hbox.pack_start(image)
-        
+
         label = gtk.Label()
         label.set_property("selectable", True)
         label.set_markup(
@@ -141,14 +117,16 @@ class ConfirmCloseDialog(gtk.Dialog):
 
 If you don't save, changes will be permanently lost.
 """ % name)
+
+        hbox = gtk.HBox(spacing=12)
+        hbox.set_property('border-width', 6)
+        hbox.pack_start(image)
         hbox.pack_end(label)
         
         self.vbox.set_property("spacing", 12)
         self.vbox.pack_start(hbox)
 
-        image.show()
-        label.show()
-        hbox.show()
+        self.show_all()
 
 #This really is needed for pygtk 2.6
 class ConfirmOverwriteDialog(gtk.Dialog):
@@ -159,16 +137,13 @@ class ConfirmOverwriteDialog(gtk.Dialog):
                             "Replace", gtk.RESPONSE_OK,))
         self.set_property("resizable", False)
         self.set_property("border_width", 6)
+
+        image = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING,gtk.ICON_SIZE_DIALOG)
+        image.set_property("yalign",0.0)
         
         path, shortfile = os.path.split(filename)
         path = os.path.split(path)[1] or path
-        
-        hbox = gtk.HBox(spacing=12)
-        hbox.set_property('border-width', 6)
-        image = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING,gtk.ICON_SIZE_DIALOG)
-        image.set_property("yalign",0.0)
-        hbox.pack_start(image)
-        
+
         label = gtk.Label()
         label.set_property("selectable", True)
         label.set_markup(
@@ -176,15 +151,16 @@ class ConfirmOverwriteDialog(gtk.Dialog):
       
 The file already exists in "%s".  Replacing it will overwrite its contents.
 """ % (shortfile, path))
+
+        hbox = gtk.HBox(spacing=12)
+        hbox.set_property('border-width', 6)
+        hbox.pack_start(image)
         hbox.pack_end(label)
         
         self.vbox.set_property("spacing", 12)
         self.vbox.pack_start(hbox)
 
-        image.show()
-        label.show()
-        hbox.show()
-
+        self.show_all()
 
 class EditorWindow(gtk.Window):
     def title(self, *args):
@@ -192,8 +168,8 @@ class EditorWindow(gtk.Window):
             modified = '*'
         else:
             modified = ''
+
         if self.filename:
-        
             self.set_title(
                 '%s%s (%s)' % (
                     modified,
@@ -202,7 +178,7 @@ class EditorWindow(gtk.Window):
                     ))
         else:
             self.set_title('%sNew Script' % modified)
-    
+
     def open(self, _action):
         chooser = gtk.FileChooserDialog(
             "Open Script", self, gtk.FILE_CHOOSER_ACTION_OPEN,
@@ -213,14 +189,14 @@ class EditorWindow(gtk.Window):
             )
 
         chooser.set_current_folder(os.path.realpath(os.path.join(urk.userpath, 'scripts')))
-        
+
         def on_response(dialog, response_id):
             if response_id == gtk.RESPONSE_OK:
                 self.filename = chooser.get_filename()
                 self.load()
 
             dialog.destroy()
-        
+
         chooser.set_modal(True)
         chooser.show()
         chooser.connect("response", on_response)
@@ -229,47 +205,8 @@ class EditorWindow(gtk.Window):
         if self.filename:
             self.editor.text = file(self.filename).read()
                 
-    def save(self, _action, parent=None, on_save=None):
-        if not self.filename:
-            chooser = gtk.FileChooserDialog(
-                "Save Script", parent or self, gtk.FILE_CHOOSER_ACTION_SAVE,
-                (
-                    gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_SAVE, gtk.RESPONSE_OK
-                )
-                )
-                
-            chooser.set_current_folder(os.path.realpath(os.path.join(urk.userpath, 'scripts')))
-            chooser.set_default_response(gtk.RESPONSE_OK)
-            
-            def on_overwrite_response(dialog, response_id):
-                dialog.destroy()
-                if response_id == gtk.RESPONSE_OK:
-                    self.filename = chooser.get_filename()
-                    self.title()
-                    chooser.destroy()
-                    self.save(_action, parent, on_save)
-            
-            def on_response(dialog, response_id):
-                if response_id == gtk.RESPONSE_OK:
-                    filename = chooser.get_filename()
-                    if os.path.exists(filename):
-                        dialog = ConfirmOverwriteDialog(chooser, filename)
-                        dialog.connect("response", on_overwrite_response)
-                        dialog.show()
-                    else:
-                        self.filename = filename
-                        self.title()
-                        self.save(_action)
-                        
-                        chooser.destroy()
-                else:
-                    chooser.destroy()
-
-            chooser.set_modal(True)
-            chooser.show()
-            chooser.connect("response", on_response)
-        else:
+    def save(self, action=None, parent=None, on_save=lambda:None):
+        if self.filename:
             file(self.filename, "wb").write(self.editor.text)          
             
             if events.is_loaded(self.filename):            
@@ -287,23 +224,66 @@ class EditorWindow(gtk.Window):
             else:
                 self.status.push(0, "Saved %s" % self.filename)
 
-            if on_save: on_save()
+            on_save()
+
+        else:
+            chooser = gtk.FileChooserDialog(
+                "Save Script", parent or self, gtk.FILE_CHOOSER_ACTION_SAVE,
+                (
+                    gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_SAVE, gtk.RESPONSE_OK
+                )
+                )
+
+            chooser.set_current_folder(os.path.realpath(os.path.join(urk.userpath, 'scripts')))
+            chooser.set_default_response(gtk.RESPONSE_OK)
+
+            def on_overwrite_response(confirm, response_id):
+                confirm.destroy()
+                if response_id == gtk.RESPONSE_OK:
+                    self.filename = chooser.get_filename()
+                    self.title()
+                    self.save(action, parent, on_save)
+
+                    chooser.destroy()
+
+            def on_response(chooser, response_id):
+                if response_id == gtk.RESPONSE_OK:
+                    filename = chooser.get_filename()
+                    if os.path.exists(filename):
+                        confirm = ConfirmOverwriteDialog(chooser, filename)
+                        confirm.connect("response", on_overwrite_response)
+
+                    else:
+                        self.filename = filename
+                        self.title()
+                        self.save(action)
+
+                        chooser.destroy()
+
+                else:
+                    chooser.destroy()
+
+            chooser.set_modal(True)
+            chooser.connect("response", on_response)
+            chooser.show()
 
     def menu(self):
+        actions = (
+            ('ScriptMenu', None, '_Script'),
+                ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, self.save),
+                ('Open', gtk.STOCK_OPEN, '_Open', '<Control>O', None, self.open),
+            )
+    
         actiongroup = gtk.ActionGroup('Edit')
-        actiongroup.add_actions(get_menu_for(self))
+        actiongroup.add_actions(actions)
 
         uimanager = gtk.UIManager()
         uimanager.add_ui_from_string(menu_ui)
         uimanager.insert_action_group(actiongroup, 0)
-    
-        accelgroup = uimanager.get_accel_group()
-        self.add_accel_group(accelgroup)
-        for action in actiongroup.list_actions():
-            action.set_accel_group(accelgroup)
-        
-        actiongroup.get_action('Save').create_menu_item()
-        
+ 
+        self.add_accel_group(uimanager.get_accel_group())
+
         return uimanager.get_widget("/MenuBar")
     
     def on_delete(self, event):
@@ -316,7 +296,7 @@ class EditorWindow(gtk.Window):
                     def on_save():
                         widget.destroy()
                         self.destroy()
-                    self.save(None, parent=widget, on_save=on_save)
+                    self.save(parent=widget, on_save=on_save)
                 elif response_id == gtk.RESPONSE_CANCEL:
                     widget.destroy()
                 elif response_id == gtk.RESPONSE_CLOSE:
@@ -324,7 +304,6 @@ class EditorWindow(gtk.Window):
                     self.destroy()
             
             dialog.connect("response", on_response)
-            dialog.show()
 
             return True
     
@@ -342,7 +321,9 @@ class EditorWindow(gtk.Window):
             
         self.set_default_size(640, 480)
 
-        self.editor = EditorWidget(self)
+        self.editor = EditorWidget()
+        
+        self.editor.output.get_buffer().connect('modified-changed', self.title)
 
         self.load()
         self.title()
@@ -359,8 +340,17 @@ class EditorWindow(gtk.Window):
         
         self.connect("delete-event", EditorWindow.on_delete)
         
+        try:
+            self.set_icon(
+                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                )
+        except:
+            pass
+        
         self.add(box)    
         self.show_all()
 
 def main(filename=None):
+    gc.collect()
+
     EditorWindow(filename)
