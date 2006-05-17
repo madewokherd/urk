@@ -46,7 +46,10 @@ class EditorWidget(gtk.VBox):
     text = property(get_text, set_text)
 
     def edit_widget(self):
-        self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
+        if GTK_SOURCE_VIEW:
+            self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
+        else:
+            self.output = gtk.TextView()
             
         self.output.modify_font(pango.FontDescription('monospace 9'))
         self.output.set_wrap_mode(gtk.WRAP_WORD)
