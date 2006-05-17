@@ -47,7 +47,7 @@ if remote.run(' '.join(sys.argv[1:])):
 
 name = "urk"
 long_name = "urk IRC"
-version = 0, -1, 4
+version = 0, -1, "cvs"
 long_version = "%s v%s" % (long_name, ".".join(str(x) for x in version))
 website = "http://urk.sf.net/"
 authors = ["Vincent Povirk", "Marc Liddell"]
