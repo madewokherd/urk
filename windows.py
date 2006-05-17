@@ -17,6 +17,9 @@ def remove(window):
     window.destroy()
     
 def new(wclass, network, id):
+    if network is None:
+        network = irc.dummy_network
+    
     w = get(wclass, network, id)
     
     if not w:
