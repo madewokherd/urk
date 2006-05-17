@@ -1,6 +1,7 @@
 import gc
 import os
 import sys
+import traceback
 
 import gtk
 import pango
@@ -19,7 +20,7 @@ class EditorWidget(gtk.VBox):
         buffer = self.output.get_buffer()
                     
         cursor = buffer.get_iter_at_line_offset(
-            line-1, offset
+            line-1, offset-1
             )
         
         buffer.place_cursor(cursor)
@@ -217,12 +218,14 @@ class EditorWindow(gtk.Window):
                     events.reload(self.filename)
                     self.status.push(0, "Saved and reloaded %s" % self.filename)
 
-                except ImportError, e:
-                    self.status.push(0, "ImportError: %s" % e.msg)
-
-                except SyntaxError, e:
-                    self.status.push(0, "SyntaxError: %s" % e.msg)
-                    self.editor.goto(e.lineno, e.offset)
+                except Exception, e:
+                    if isinstance(e, SyntaxError) and self.filename == e.filename:
+                        self.status.push(0, "SyntaxError: %s" % e.msg)
+                        self.editor.goto(e.lineno, e.offset)
+                    elif isinstance(e, SyntaxError):
+                        self.status.push(0, "SyntaxError: %s (%s, line %s)" % (e.msg, e.filename, e.lineno))
+                    else:
+                        self.status.push(0, traceback.format_exception_only(sys.exc_type, sys.exc_value)[0].strip())
             
             else:
                 self.status.push(0, "Saved %s" % self.filename)
