@@ -22,7 +22,11 @@ srv_commands = ('ping', 'join', 'part', 'mode', 'server', 'kick',
 def command_completer(window, left, right, text):
     for c in srv_commands:
         yield '/%s' % c
-        
+    
+    if 'CMDS' in window.network.isupport:
+        for c in window.network.isupport['CMDS'].split(','):
+            yield '/%s' % c.lower()
+    
     for c in events.events:
         if c.startswith('Command') and c != 'Command':
             yield '/%s' % c[7:].lower()
