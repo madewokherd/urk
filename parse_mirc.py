@@ -425,10 +425,8 @@ if __name__ == "__main__":
             
     #""" 
     
-    from sets import ImmutableSet
-    
     def setify_tags(tags):
-        return set(ImmutableSet(tag.iteritems()) for tag in tags if tag['from'] != tag['to'])
+        return set(frozenset(tag.iteritems()) for tag in tags if tag['from'] != tag['to'])
     
     def parsed_eq((tags1, text1), (tags2, text2)):
         return setify_tags(tags1) == setify_tags(tags2) and text1 == text2
