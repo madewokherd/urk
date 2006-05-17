@@ -216,7 +216,8 @@ class Network(object):
         if self.me != self.nicks[0]:
             events.trigger(
                 'Nick', network=self, window=windows.get_default(self),
-                source=self.me, target=self.nicks[0], address=''
+                source=self.me, target=self.nicks[0], address='',
+                text=self.nicks[0]
                 )
             self.me = self.nicks[0]
         

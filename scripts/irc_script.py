@@ -73,7 +73,8 @@ def setdownRaw(e):
                 if e.network.me != e.msg[2]:
                     events.trigger(
                         'Nick', network=e.network, window=e.window,
-                        source=e.network.me, target=e.msg[2], address=''
+                        source=e.network.me, target=e.msg[2], address='',
+                        text=e.msg[2]
                         )
                     e.network.me = e.msg[2]
                 if hasattr(e.network,'_nick_generator'):
@@ -222,7 +223,7 @@ def change_nick(network, nick):
         events.trigger(
             'Nick',
             network=network, window=windows.get_default(network),
-            source=network.me, target=nick, address=''
+            source=network.me, target=nick, address='', text=nick
             )
         network.nicks[0] = nick
         network.me = nick
@@ -353,12 +354,12 @@ def onCommandIrcurl(e):
             if e.network and e.network.server == host:
                 network = e.network
             else:
-                for w in list(windows):
+                for w in list(windows.manager):
                     if w.network and w.network.server == host:
                         network = w.network
                         break
                 else:
-                    for w in list(windows):
+                    for w in list(windows.manager):
                         if w.network and w.network.server == 'irc.default.org':
                             network = server(host,port,w.network)
                             break
