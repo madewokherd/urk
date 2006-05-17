@@ -64,8 +64,8 @@ class urktray:
 
 tray = urktray()
 
-def setdownHilight(e):
-    if e.hilight:
+def setdownHighlight(e):
+    if e.Highlight:
         tray.window_hilighted(e.window, e.source)
 
 def onText(e):

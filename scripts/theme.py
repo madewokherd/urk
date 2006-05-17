@@ -17,23 +17,23 @@ widgets.set_style("nicklist", textareas)
 
 #take an event e and trigger the highlight event if necessary
 def hilight_text(e):
-    if not hasattr(e, 'hilight'):
-        e.hilight = []
-        events.trigger('Hilight', e)
+    if not hasattr(e, 'Highlight'):
+        e.Highlight = []
+        events.trigger('Highlight', e)
 
 #hilight own nick
-def onHilight(e):
+def onHighlight(e):
     for word in conf.get('highlight_words', []) + [e.network.me]:
         pos = e.text.find(word,0)
         while pos != -1:
-            e.hilight.append((pos, pos+len(word)))
+            e.Highlight.append((pos, pos+len(word)))
             pos = e.text.find(word, pos+1)
 
 def prefix(e):
     return time.strftime(conf.get('timestamp', ''))
 
 def format_source(e):
-    if e.hilight:
+    if e.Highlight:
         return "\x02\x04EEDD22%s\x0F" % e.source
     else:
         return e.source
@@ -95,7 +95,7 @@ def onText(e):
             to_write += "%s<\x0F%s:%s%s>\x0F " % (color, format_source(e), e.target, color)
     to_write += e.text
     
-    if e.hilight:
+    if e.Highlight:
         e.window.write(to_write, widgets.HILIT)
     else:
         e.window.write(to_write, widgets.TEXT)
@@ -115,7 +115,7 @@ def onAction(e):
     color = "\x02\x040000CC"
     to_write = "%s%s*\x0F %s %s" % (prefix(e), color, format_source(e), e.text)
     
-    if e.hilight:
+    if e.Highlight:
         e.window.write(to_write, widgets.HILIT)
     else:
         e.window.write(to_write, widgets.TEXT)
@@ -136,7 +136,7 @@ def onNotice(e):
         to_write += "%s-\x0F%s:%s%s-\x0F " % (color, format_source(e), e.target, color)
     to_write += e.text
     
-    e.window.write(to_write, (e.hilight and widgets.HILIT) or widgets.TEXT)
+    e.window.write(to_write, (e.Highlight and widgets.HILIT) or widgets.TEXT)
 
 def onOwnNotice(e):
     to_write = "%s\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (prefix(e), e.target, e.text)
