@@ -451,13 +451,16 @@ class TextOutput(gtk.TextView):
     height = property(get_height)
     
     # the unknowing print weird things to our text widget function
-    def write(self, text, line_ending='\n'):
+    def write(self, text, line_ending='\n', fg=None):
         if not isinstance(text, unicode):
             try:
                 text = codecs.utf_8_decode(text)[0]
             except:
                 text = codecs.latin_1_decode(text)[0]
         tags, text = parse_mirc.parse_mirc(text)
+
+        if fg:
+            tags.append({'data': ("foreground", isinstance(fg, basestring) and ('#%s'%fg) or parse_mirc.get_mirc_color(fg)), 'from': 0, 'to': len(text)})
 
         buffer = self.get_buffer()
         

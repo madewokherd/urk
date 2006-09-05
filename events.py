@@ -213,6 +213,8 @@ def run(text, window, network):
 def onCommandPyeval(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
+    import pydoc #fix nonresponsive help() command
+    old_pager, pydoc.pager = pydoc.pager, pydoc.plainpager 
     try:
         result = repr(eval(' '.join(e.args), loc))
         if 's' in e.switches:
@@ -226,15 +228,19 @@ def onCommandPyeval(e):
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
+    pydoc.pager = old_pager
 
 def onCommandPyexec(e):
     loc = sys.modules.copy()
     loc.update(e.__dict__)
+    import pydoc #fix nonresponsive help() command
+    old_pager, pydoc.pager = pydoc.pager, pydoc.plainpager 
     try:
         exec ' '.join(e.args) in loc
     except:
         for line in traceback.format_exc().split('\n'):
             e.window.write(line)
+    pydoc.pager = old_pager
 
 def onCommandLoad(e):
     if e.args:

@@ -76,10 +76,10 @@ class Window(gtk.VBox):
             self.input.set_position(-1)
             self.input.event(event)
         
-    def write(self, text, activity_type=widgets.EVENT, line_ending='\n'):
+    def write(self, text, activity_type=widgets.EVENT, line_ending='\n', fg=None):
         if manager.get_active() != self:
             self.activity = activity_type
-        self.output.write(text, line_ending)
+        self.output.write(text, line_ending, fg)
 
     def get_id(self):
         if self.network:

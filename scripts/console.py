@@ -44,6 +44,8 @@ def onCommandConsole(e):
 
 def onCommandSay(e):
     if isinstance(e.window, ConsoleWindow):
+        import pydoc #fix nonresponsive help() command
+        old_pager, pydoc.pager = pydoc.pager, pydoc.plainpager 
         e.window.globals.update(sys.modules)
         text = ' '.join(e.args)
         try:
@@ -59,6 +61,7 @@ def onCommandSay(e):
                 traceback.print_exc()
         except:
             traceback.print_exc()
+        pydoc.pager = old_pager
     else:
         raise events.CommandError("There's no one here to speak to.")
 

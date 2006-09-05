@@ -86,7 +86,8 @@ class Network(object):
         else:
             #import os
             #import random
-            #random.shuffle(result, os.urandom)
+            #random.seed()
+            #random.shuffle(result)
             if socket.has_ipv6: #prefer ipv6
                 result = [(f, t, p, c, a) for (f, t, p, c, a) in result if f == socket.AF_INET6]+result
             elif hasattr(socket,"AF_INET6"): #ignore ipv6
