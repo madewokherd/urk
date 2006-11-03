@@ -8,8 +8,15 @@ def set_target(e):
     target_l = e.target.lstrip('@+%.(<')
     e._target_fr = e.target_fr + len(e.target) - len(target_l)
     
-    target_r = e.target.rstrip(')>:,')
+    target_r = e.target.rstrip('>:,')
     e._target_to = e.target_to - len(e.target) + len(target_r)
+    
+    if target_r.endswith(')'):
+        e._target = e.text[e._target_fr:e._target_to]
+        open_parens = e._target.count('(') - e._target.count(')')
+        while open_parens < 0 and e.text[e._target_to-1] == ')':
+            e._target_to -= 1
+            open_parens += 1
     
     e._target = e.text[e._target_fr:e._target_to]
 
