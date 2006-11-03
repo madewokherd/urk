@@ -2,6 +2,7 @@ import irc
 import ui
 import windows
 import chaninfo
+import events
 from conf import conf
 
 # FIXME: meh still might want rid of these, I'm not sure yet
@@ -92,10 +93,10 @@ def onClose(e):
             e.window.network.part(e.window.id) 
     
     if len(nwindows) == 1:
-        e.window.network.quit()
+        events.trigger("CloseNetwork", window=e.window, network=e.window.network)
     
     elif isinstance(e.window, windows.StatusWindow) and conf.get('status'):
-        e.window.network.quit()
+        events.trigger("CloseNetwork", window=e.window, network=e.window.network)
         for window in nwindows:
             if window != e.window:
                 window.close()

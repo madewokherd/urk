@@ -187,6 +187,12 @@ def onDisconnect(e):
                     e.network._reconnect_source = ui.register_timer(delay*1000,do_reconnect)
             e.network._reconnect_source = ui.register_idle(do_announce_reconnect)
 
+def onCloseNetwork(e):
+    e.network.quit()
+    if hasattr(e.network,'_reconnect_source'):
+        e.network._reconnect_source.unregister()
+        del e.network._reconnect_source
+
 def setdownDisconnect(e):
     if hasattr(e.network,'connect_timestamp'):
         del e.network.connect_timestamp
