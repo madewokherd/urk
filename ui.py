@@ -144,9 +144,9 @@ def start(command=''):
     register_idle(trigger_start)
 
     try:
-        gtk.threads_enter()
+        gtk.gdk.threads_enter()
         #while gtk.events_pending(): gtk.main_iteration()
         gtk.main()
-        gtk.threads_leave()
+        gtk.gdk.threads_leave()
     except KeyboardInterrupt:
         windows.manager.exit()
