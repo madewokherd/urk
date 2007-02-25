@@ -135,6 +135,10 @@ def setdownRaw(e):
                     else:
                         name, value = arg, ''
 
+                    #Workaround for broken servers (bahamut on EnterTheGame)
+                    if name == 'PREFIX' and value[0] != '(':
+                        continue
+
                     #in theory, we're supposed to replace \xHH with the
                     # corresponding ascii character, but I don't think anyone
                     # really does this
@@ -165,7 +169,7 @@ def setupSocketConnect(e):
             e.network.raw("PASS :%s" % e.network.password)
         e.network.raw("NICK %s" % e.network.nicks[0])
         e.network.raw("USER %s %s %s :%s" %
-              ("urk", "8", "*", e.network.fullname))
+              (e.network.username, "8", "*", e.network.fullname))
               #per rfc2812 these are username, user mode flags, unused, realname
         
         #e.network.me = None

@@ -54,7 +54,7 @@ class Network(object):
     socket = None
     
     def __init__(self, server="irc.default.org", port=6667, nicks=[], 
-                    fullname="", name=None, **kwargs):
+                    username="", fullname="", name=None, **kwargs):
         self.server = server
         self.port = port
         
@@ -63,7 +63,8 @@ class Network(object):
         self.nicks = nicks or default_nicks()
         self.me = self.nicks[0]
         
-        self.fullname = fullname or "urk user"
+        self.username = username or "urk"
+        self.fullname = fullname or conf.get("fullname", self.me)
         self.password = ''
         
         self.isupport = {
