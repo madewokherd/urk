@@ -2,6 +2,7 @@ import codecs
 
 import gobject
 import gtk
+import gtk.gdk
 import pango
 
 from conf import conf
@@ -850,9 +851,12 @@ class UrkUITabs(gtk.Window):
         # layout
         xy = conf.get("xy", (-1, -1))
         wh = conf.get("wh", (500, 500))
+        maximized = conf.get("maximized", False)
 
         self.move(*xy)
         self.set_default_size(*wh)
+        if maximized:
+            self.maximize()
 
         self._saving = None
         def save_xywh(*args):
@@ -866,6 +870,14 @@ class UrkUITabs(gtk.Window):
                 self._saving = gobject.timeout_add(200, save)
 
         self.connect("configure-event", save_xywh)
+        
+        def save_maximized(widget, event):
+            if event.new_window_state & gtk.gdk.WINDOW_STATE_MAXIMIZED:
+                conf["maximized"] = True
+            else:
+                conf["maximized"] = False
+        
+        self.connect("window-state-event", save_maximized)
         
         self.tabs = gtk.Notebook()
         
