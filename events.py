@@ -114,6 +114,11 @@ def load_pyfile(filename):
 
     module = imp.new_module(s_name)
     module.__file__ = filename
+
+    # When a module gets collected, everything in its __dict__ gets set to None
+    # We can't let that happen until all the objects that need it are gone
+    # This should protect the module from being collected without __dict__
+    module.__module__ = module
     
     f = file(filename,"U")
     source = f.read()
