@@ -7,24 +7,20 @@ import ui
 ui.gtk
 
 try:
-    import egg.trayicon
+    from gtk import StatusIcon as TrayIcon
 except:
-    print "The 'egg' module is not available. This just means the tray icon won't work. This is normal if you don't have gnome-python-extras, and you can still use urk normally."
+    print "You need PyGtk 2.10 or above for the tray icon support."
+    print "Tray icon support will be disabled, but you can still use urk normally."
     raise #still raise an exception so the script isn't loaded
 
 class urktray:
     def __init__(self):
         self.tray = None
-        self.tip = None
         self.urgent_window = None
 
-    def clicked(self, widget, event):
+    def clicked(self, widget):
         windows.manager.set_active(self.urgent_window)
-        try:
-            # since gtk 2.8...
-            windows.manager.present_with_time(event.time)
-        except:
-            windows.manager.present()
+        windows.manager.present()
 
     def window_hilighted(self, window, source):
         # if we are looking at the window already do not show the tray...
@@ -32,34 +28,24 @@ class urktray:
             return
 
         if not self.tray:
-            image = gtk.Image()
-            (w, h) = gtk.icon_size_lookup(gtk.ICON_SIZE_SMALL_TOOLBAR)
-            pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(urk.path("urk_icon.svg"), w, h)
-            image.set_from_pixbuf(pixbuf)
-            evbox = gtk.EventBox()
-            evbox.set_visible_window(False)
-            evbox.connect('button-press-event', self.clicked)
-            evbox.add(image)
-            self.tray = egg.trayicon.TrayIcon("Urk")
-            self.tray.add(evbox)
-            self.tip = gtk.Tooltips()
+            self.tray = TrayIcon()
+            self.tray.set_from_file(urk.path("urk_icon.svg"))
+            self.tray.connect('activate', self.clicked)
 
-        self.tip.set_tip (self.tray, "%s (%s)" % (source, window.get_title()))
+        self.tray.set_tooltip ("%s (%s)" % (source, window.get_title()))
         self.urgent_window = window
-        self.tray.show_all()
+        self.tray.props.visible = True
 
     def window_activated(self, window):
         if window == self.urgent_window:
             self.urgent_window = None
-            self.tray.hide()
+            self.tray.props.visible = False
 
     def remove(self):
         if self.tray:
-            self.tray.destroy()
+            self.tray.props.visible = False
             self.tray = None
-            self.tip = None
         self.urgent_window = None
-
 
 
 tray = urktray()
