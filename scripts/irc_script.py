@@ -226,6 +226,10 @@ def onCommandNotice(e):
 
 def onCommandQuery(e):
     windows.new(windows.QueryWindow, e.network, e.args[0]).activate()
+    if len(e.args) > 1:
+        message = ' '.join(e.args[1:])
+        if message: #this is false if you do "/query nickname " 
+            e.network.msg(e.args[0], ' '.join(e.args[1:]))
 
 # make /nick work offline
 def change_nick(network, nick):
