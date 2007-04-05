@@ -23,11 +23,13 @@ def hilight_text(e):
 
 #hilight own nick
 def onHighlight(e):
+    lowertext = e.text.lower()
     for word in conf.get('highlight_words', []) + [e.network.me]:
-        pos = e.text.find(word,0)
+        lowerword = word.lower()
+        pos = lowertext.find(lowerword, 0)
         while pos != -1:
             e.Highlight.append((pos, pos+len(word)))
-            pos = e.text.find(word, pos+1)
+            pos = lowertext.find(lowerword, pos+1)
 
 def prefix(e):
     return time.strftime(conf.get('timestamp', ''))
