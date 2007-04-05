@@ -23,6 +23,11 @@ def about(*args):
     about.set_website(urk.website)
     about.set_authors(urk.authors)
     
+    def on_response(*args):
+        about.destroy()
+    
+    about.connect("response", on_response)
+    
     about.show_all()
 
 # Window activity Constants
