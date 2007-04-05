@@ -26,7 +26,7 @@ def check_timeout(network):
 
 def check_death_timeout(network):
     if network._message_timeout:
-        network.raw("QUIT :Server missing, presumed dead (if you're reading this, maybe the client is broke)")
+        network.raw("QUIT :Server missing, presumed dead")
         network.disconnect(error="The server seems to have stopped talking to us")
     else:
         network._message_timeout = False
