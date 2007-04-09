@@ -16,10 +16,14 @@ them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
 
-If you use Windows, there are special instructions below just for you, because installing on windows would normally be too confusing for a normal human to figure it out without special knowledge.
+Most Linux (or at least GNOME) users should have these things already or be able to easily install them.
 
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
+
+Windows has a complete package, dependencies and all, at http://urk.sf.net/urk-win32.zip. This is rather large, and the dependencies do not change, so I would appreciate it if you only replace the urk source code when updating.
+
+Installing python and pygtk globally on a Windows system (rather than using the above package) tends to lead to DLL Hell. Also, there seem to be serious stability problems with pygtk 2.10 on Windows for reasons I don't understand. Use them if you want, but you've been warned.
 
 
 Optional requirements:
@@ -27,7 +31,6 @@ Optional requirements:
 urk can also make use of these packages if you have them:
 -pygtksourceview, part of gnome-python-extras <=2.12 and gnome-python-desktop 
  >=2.14, for source highlighting and undo in the internal script editor
--egg, part of gnome-python-extras, for notification via a tray icon
 -python-dbus, for, well, not much (if dbus is available, urk only makes a single
  instance per session, and commands can be executed remotely by calling urk.py)
 
@@ -162,24 +165,6 @@ e.window is a window that seems to be related to the event for some unspecified
 reason. It could be the status window, a channel window, a query, anything.
 
 Complete documentation doesn't exist yet. Sorry. Ask us or look at the source. theme.py is good for finding event names.
-
-
-Windows users:
-
-urk was designed for linux, but it happens nearly everything we used is
-cross-platform so..yeah..it runs on windows. Windows users should install the following things:
-
--python version 2.4 from http://www.python.org/download/
--pygtk 2.6; there's an installer at http://www.pcpm.ucl.ac.be/~gustin/win32_ports/binaries/pygtk-2.6.3-1.win32-py2.4.exe
--gtk+ runtime 2.6 from http://gladewin32.sourceforge.net/modules/wfdownloads/viewcat.php?cid=10
-
-Once you've installed the dependencies and rebooted, run urk.py to start the client.
-
-Things might not work properly if you got the installers from other places, such as gaim's gtk+ installer. Gaim's gtk+ doesn't appear to work. If you get things from other places, it's your responsibility to make sure they're set up properly.
-
-There's currently a nasty bug affecting urk in the windows gtk+ runtime version 2.8. This bug affects gaim as well. If you try to use urk with windows gtk+ 2.8, you won't be able to connect to any servers. This is because glib calls our connect handlers before we're really connected. For more information, see http://gaim.sourceforge.net/win32/index.php#bugs
-
-The current state of Windows support is very sad, and it will remain that way for the foreseeable future. There's no stand-alone installer. The dependencies are big (we can get away with it on linux because linux users are likely to have them already), and they can be confusing to get/install on windows. Automating the install of the dependencies is probably not possible. The good installers for pygtk apps on windows (ok, just py2exe really), wouldn't work well with urk because urk expects to see a normal, healthy python install. If you use windows, you should probably go with gaim or mIRC, unless you are a hardcore python fan and irc user, or you dislike gaim and can't afford to pay $20 for mIRC.
 
 
 Bugs/Feedback:
