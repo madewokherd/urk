@@ -37,7 +37,7 @@ EVENT = 'e'
 
 ACTIVITY_MARKUP = {
     HILIT: "<span style='italic' foreground='#00F'>%s</span>",
-    TEXT: "<span foreground='red'>%s</span>",
+    TEXT: "<span foreground='#ca0000'>%s</span>",
     EVENT: "<span foreground='#363'>%s</span>",
     }
 

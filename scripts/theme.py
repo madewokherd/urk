@@ -6,14 +6,77 @@ import chaninfo
 import events
 from conf import conf
 
-textareas = {
-    'bg': '#2E3D49',
-    'fg': '#DEDEDE',
-    'font': conf.get('font', 'sans 8'),
-    }
+textareas = {}
+
+if 'font' in conf:
+    textareas['font'] = conf['font']
 
 widgets.set_style("view", textareas)
 widgets.set_style("nicklist", textareas)
+
+#copied pretty directly from something that was probably copied from wine sources
+def RGBtoHSL(r, g, b):
+    maxval = max(r, g, b)
+    minval = min(r, g, b)
+    
+    luminosity = ((maxval + minval) * 240 + 255) // 510
+    
+    if maxval == minval:
+        saturation = 0
+        hue = 160
+    else:
+        delta = maxval - minval
+        
+        if luminosity <= 120:
+            saturation = ((maxval+minval)//2 + delta*240) // (maxval + minval)
+        else:
+            saturation = ((150-maxval-minval)//2 + delta*240) // (150-maxval-minval)
+        
+        #sigh..
+        rnorm = (delta//2 + maxval*40 - r*40)//delta
+        gnorm = (delta//2 + maxval*40 - g*40)//delta
+        bnorm = (delta//2 + maxval*40 - b*40)//delta
+        
+        if r == maxval:
+            hue = bnorm-gnorm
+        elif g == maxval:
+            hue = 80+rnorm-bnorm
+        else:
+            hue = 160+gnorm-rnorm
+        hue = hue % 240
+    return hue, saturation, luminosity
+
+#copied from the same place
+def huetoRGB(hue, mid1, mid2):
+    hue = hue % 240
+    
+    if hue > 160:
+        return mid1
+    elif hue > 120:
+        hue = 160 - hue
+    elif hue > 40:
+        return mid2
+    return ((hue * (mid2 - mid1) + 20) // 40) + mid1
+
+#this too
+def HSLtoRGB(hue, saturation, luminosity):
+    if saturation != 0:
+        if luminosity > 120:
+            mid2 = saturation + luminosity - (saturation * luminosity + 120)//240
+        else:
+            mid2 = ((saturation + 240) * luminosity + 120)//240
+        
+        mid1 = luminosity * 2 - mid2
+        
+        return tuple((huetoRGB(hue+x, mid1, mid2) * 255 + 120) // 240 for x in (80,0,-80))
+    else:
+        value = luminosity * 255 // 240
+        return value, value, value
+
+def gethashcolor(string):
+    h = hash(string)
+    rgb = HSLtoRGB(h%241, 100-h//241%61, 90)
+    return "%02x%02x%02x" % rgb
 
 #take an event e and trigger the highlight event if necessary
 def hilight_text(e):
@@ -34,32 +97,45 @@ def onHighlight(e):
 def prefix(e):
     return time.strftime(conf.get('timestamp', ''))
 
+def getsourcecolor(e):
+    address = getattr(e, "address", "")
+    if address:
+        if e.network.me == e.source:
+            e.network._my_address = address
+    elif e.network.me == e.source:
+        address = getattr(e.network, "_my_address", "")
+    if '@' in address:
+        address = address.split('@')[1]
+    if not address:
+        address = e.source
+    return "\x04%s" % gethashcolor(address)
+
 def format_source(e):
-    if e.Highlight:
-        return "\x02\x04EEDD22%s\x0F" % e.source
-    else:
-        return e.source
+    highlight = getattr(e, "Highlight", "") and '\x02' or ''
+    return "%s\x04%s%s" % (highlight, getsourcecolor(e), e.source)
 
 def format_info_source(e):
     if e.source == e.network.me:
-        return "\x02You\x02"
+        return "\x04%sYou" % (getsourcecolor(e))
     else:
-        return "\x02%s\x02" % e.source
+        return "\x04%s%s" % (getsourcecolor(e), e.source)
 
 def address(e):
-    if e.source != e.network.me:
-        return "%s " % info_in_brackets(e.address)
-    else:
-        return ""
+    #if e.source != e.network.me:
+    #    return "%s " % info_in_brackets(e.address)
+    #else:
+    #    return ""
+    return ""
 
 def text(e):
     if e.text:
-        return " %s" % info_in_brackets(e.text)
+        #return " %s" % info_in_brackets(e.text)
+        return ": \x0F%s" % e.text
     else:
         return ""
         
 def info_in_brackets(text):
-    return "\x04777777(\x0400CCCC%s\x04777777)\x0F" % text
+    return "(\x044881b6%s\x0F)" % text
 
 def pretty_time(secs):
     times = (
@@ -83,18 +159,18 @@ def pretty_time(secs):
 
 def onText(e):
     hilight_text(e)
-    color = "\x02\x040000CC"
+    color = getsourcecolor(e)
     to_write = prefix(e)
     if e.network.me == e.target:    # this is a pm
         if e.window.id == e.network.norm_case(e.source):
-            to_write += "%s<\x0F%s%s>\x0F " % (color, format_source(e), color)
+            to_write += "\x02<\x0F%s\x0F\x02>\x0F " % (format_source(e))
         else:
-            to_write += "%s*\x0F%s%s*\x0F " % (color, format_source(e), color)
+            to_write += "\x02*\x0F%s\x0F\x02*\x0F " % (format_source(e))
     else:
         if e.window.id == e.network.norm_case(e.target):
-            to_write += "%s<\x0F%s%s>\x0F " % (color, format_source(e), color)
+            to_write += "\x02<\x0F%s\x0F\x02>\x0F " % (format_source(e))
         else:
-            to_write += "%s<\x0F%s:%s%s>\x0F " % (color, format_source(e), e.target, color)
+            to_write += "\x02<\x0F%s:%s\x0F\x02>\x0F " % (format_source(e), e.target)
     to_write += e.text
     
     if e.Highlight:
@@ -103,19 +179,19 @@ def onText(e):
         e.window.write(to_write, widgets.TEXT)
     
 def onOwnText(e):
-    color = "\x02\x04FF00FF"
+    color = getsourcecolor(e)
     to_write = prefix(e)
     if e.window.id == e.network.norm_case(e.target):
-        to_write += "%s<\x0F%s%s>\x0F %s" % (color, e.source, color, e.text)
+        to_write += "\x02<\x0F%s\x0F\x02>\x0F %s" % (format_source(e), e.text)
     else:
-        to_write += "%s-> *\x0F%s%s*\x0F %s" % (color, e.target, color, e.text)
+        to_write += "%s->\x0F \x02*\x0F%s\x0F\x02*\x0F %s" % (color, e.target, e.text)
     
     e.window.write(to_write)
     
 def onAction(e):
     hilight_text(e)
-    color = "\x02\x040000CC"
-    to_write = "%s%s*\x0F %s %s" % (prefix(e), color, format_source(e), e.text)
+    color = color = getsourcecolor(e)
+    to_write = "%s\x02*\x0F %s\x0F %s" % (prefix(e), format_source(e), e.text)
     
     if e.Highlight:
         e.window.write(to_write, widgets.HILIT)
@@ -123,36 +199,39 @@ def onAction(e):
         e.window.write(to_write, widgets.TEXT)
     
 def onOwnAction(e):
-    color = '\x02\x04FF00FF'
-    to_write = "%s%s*\x0F %s %s" % (prefix(e), color, e.source, e.text)
+    color = getsourcecolor(e)
+    to_write = "%s\x02*\x0F %s\x0F %s" % (prefix(e), format_source(e), e.text)
     
     e.window.write(to_write)
 
 def onNotice(e):
     hilight_text(e)
-    color = "\x02\x040000CC"
+    color = getsourcecolor(e)
     to_write = prefix(e)
     if e.network.me == e.target:    # this is a pm
-        to_write += "%s-\x0F%s%s-\x0F " % (color, format_source(e), color)
+        to_write += "\x02-\x0F%s\x0F\x02-\x0F " % (format_source(e))
     else:
-        to_write += "%s-\x0F%s:%s%s-\x0F " % (color, format_source(e), e.target, color)
+        to_write += "\x02-\x0F%s:%s\x0F\x02-\x0F " % (format_source(e), e.target)
     to_write += e.text
     
     e.window.write(to_write, (e.Highlight and widgets.HILIT) or widgets.TEXT)
 
 def onOwnNotice(e):
-    to_write = "%s\x02\x04FF00FF-> -\x0F%s\x02\x04FF00FF-\x0F %s" % (prefix(e), e.target, e.text)
+    color = getsourcecolor(e)
+    to_write = "%s-> \x02-\x02%s\x0F\x02-\x0F %s" % (prefix(e), e.target, e.text)
     
     e.window.write(to_write)
 
 def onCtcp(e):
-    to_write = "%s\x02\x040000CC[\x0F%s\x02\x040000CC]\x0F %s" % (prefix(e), e.source, e.text)
+    color = getsourcecolor(e)
+    to_write = "%s\x02[\x02%s\x0F\x02]\x0F %s" % (prefix(e), format_source(e), e.text)
     
     if not e.quiet:
         e.window.write(to_write)
 
 def onCtcpReply(e):
-    to_write = "%s--- %s reply from %s: %s" % (prefix(e), e.name.capitalize(), e.source, ' '.join(e.args))
+    color = getsourcecolor(e)
+    to_write = "%s%s--- %s reply from %s:\x0F %s" % (prefix(e), color, e.name.capitalize(), format_source(e), ' '.join(e.args))
     
     window = windows.manager.get_active()
     if window.network != e.network:
@@ -160,31 +239,39 @@ def onCtcpReply(e):
     window.write(to_write, widgets.TEXT)
 
 def onJoin(e):
-    to_write = "%s%s %sjoined %s" % (prefix(e), format_info_source(e), address(e), e.target)
+    if e.source == e.network.me:
+        to_write = "%s%s %sjoin %s" % (prefix(e), format_info_source(e), address(e), e.target)
+    else:
+        to_write = "%s%s %sjoins %s" % (prefix(e), format_info_source(e), address(e), e.target)
     
     e.window.write(to_write)
         
 def onPart(e):
-    #to_write = "%s%s %sleft %s%s" % (prefix(e), format_info_source(e), address(e), e.target, text(e))
-    to_write = "%s%s left %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
+    if e.source == e.network.me:
+        to_write = "%s%s leave %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
+    else:
+        to_write = "%s%s leaves %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
     e.window.write(to_write)
 
 def onKick(e):
-    to_write = "%s%s kicked %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
+    if e.source == e.network.me:
+        to_write = "%s%s kick %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
+    else:
+        to_write = "%s%s kicks %s%s" % (prefix(e), format_info_source(e), e.target, text(e))
     
     e.window.write(to_write, (e.target == e.network.me and widgets.HILIT) or widgets.EVENT)
         
 def onMode(e):
     if e.source == e.network.me:
-        to_write = "%s\x02You\x02 set mode: %s" % (prefix(e), e.text)
+        to_write = "%s%s set mode:\x0F %s" % (prefix(e), format_info_source(e), e.text)
     else:
-        to_write = "%s%s sets mode: %s" % (prefix(e), format_info_source(e), e.text)
+        to_write = "%s%s sets mode:\x0F %s" % (prefix(e), format_info_source(e), e.text)
     
     e.window.write(to_write)
         
 def onQuit(e):
-    to_write = "%s%s quit%s" % (prefix(e), format_info_source(e), text(e))
+    to_write = "%s%s leaves%s" % (prefix(e), format_info_source(e), text(e))
     
     for channame in chaninfo.channels(e.network):
         if chaninfo.ison(e.network, channame, e.source):
@@ -193,10 +280,11 @@ def onQuit(e):
                 window.write(to_write)
 
 def onNick(e):
+    color = getsourcecolor(e)
     if e.source == e.network.me:
-        to_write = "%sYou are now known as \x02%s\x02" % (prefix(e), e.target)
+        to_write = "%s%sYou are now known as %s" % (prefix(e), color, e.target)
     else:
-        to_write = "%s%s is now known as \x02%s\x02" % (prefix(e), e.source, e.target)
+        to_write = "%s%s%s is now known as %s" % (prefix(e), color, e.source, e.target)
     
     if e.source == e.network.me:
         for window in windows.get_with(network=e.network):
@@ -209,7 +297,10 @@ def onNick(e):
                     window.write(to_write)
 
 def onTopic(e):
-    to_write = "%s%s set topic on %s: %s" % (prefix(e), format_info_source(e), e.target, e.text)
+    if e.source == e.network.me:
+        to_write = "%s%s set topic:\x0F %s" % (prefix(e), format_info_source(e), e.text)
+    else:
+        to_write = "%s%s sets topic:\x0F %s" % (prefix(e), format_info_source(e), e.text)
     
     e.window.write(to_write)
 
