@@ -84,7 +84,7 @@ def hilight_text(e):
 #hilight own nick
 def onHighlight(e):
     lowertext = e.text.lower()
-    for word in conf.get('highlight_words', []) + [e.network.me]:
+    for word in conf.get('highlight_words', []) + [e.network.me] + e.network.nicks:
         lowerword = word.lower()
         pos = lowertext.find(lowerword, 0)
         while pos != -1:
