@@ -134,46 +134,9 @@ def onRightClick(e):
         e.menu += [('Copy', copy_to)]
         
     elif is_chan(e):
-        def add_to_perform():
-            if 'networks' not in conf:
-                conf['networks'] = {}
-            networks = conf['networks']
-            if e.window.network.name not in networks:
-                networks[e.window.network.name] = {}
-            
-            network = networks[e.window.network.name]
-
-            for i, command in enumerate(network.get('perform',())):
-                # this might be worth updating to account for channel keys
-                if command.lower().startswith('join ') and command.count(' ') == 1:
-                    network['perform'][i] += ',%s' % e._target
-                    break
-            else:
-                network['perform'] = network.get('perform',[])+('join %s' % e._target)
-            
-        def remove_from_perform():
-            for network in conf.get('networks',{}):
-                if network == e.window.network.name or \
-                        conf['networks'][network][server] == e.window.network.server:
-                    perform = conf['networks'][network]['perform']
-                    for n, line in enumerate(perform):
-                        if line.startswith('join ') and ' ' not in line[6:]:
-                            channels = line[6:].split(',')
-                            if e._target in channels:
-                                channels.remove(e._target)
-                                if channels:
-                                    perform[n] = 'join %s' % ','.join(channels)
-                                else:
-                                    perform.pop(n)
-                                    if not perform:
-                                        conf['networks'].pop(network)
-                                        if network in conf['start_networks']:
-                                            conf['start_networks'].remove(network)
-                                break
-            # remove if it's already there maybe
-            pass
-            
-        #e.menu.append(('Join channel automatically', add_to_perform))
+        e.channel = e._target
+        e.network = e.window.network
+        events.trigger('ChannelMenu', e) 
 
 def onListRightClick(e):
     if isinstance(e.window, windows.ChannelWindow):

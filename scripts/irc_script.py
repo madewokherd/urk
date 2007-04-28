@@ -461,6 +461,8 @@ def onConnect(e):
     network_info = conf.get('networks', {}).get(e.network.name, {})
 
     for command in network_info.get('perform', []):
+        while command.startswith(COMMAND_PREFIX):
+            command = command[len(COMMAND_PREFIX):]
         events.run(command, e.window, e.network)
     
     tojoin = ','.join(network_info.get('join', []))
@@ -471,3 +473,51 @@ def onConnect(e):
         for command in e.network.temp_perform:
             events.run(command, e.window, e.network)
         del e.network.temp_perform
+
+def isautojoin(network, channel):
+    try:
+        joinlist = conf['networks'][network.name]['join']
+    except KeyError:
+        return False
+    normchannel = network.norm_case(channel)
+    for chan in joinlist:
+        if normchannel == network.norm_case(chan):
+            return True
+    return False
+
+def setautojoin(network, channel):
+    if 'networks' not in conf:
+        conf['networks'] = networks = {}
+    else:
+        networks = conf['networks']
+    if network.name not in networks:
+        networks[network.name] = network_settings = {}
+        if 'start_networks' not in conf:
+            conf['start_networks'] = [network.name]
+        conf['start_networks'].append(network.name)
+    else:
+        network_settings = networks[network.name]
+    
+    if 'join' not in network_settings:
+        network_settings['join'] = [channel]
+    else:
+        network_settings['join'].append(channel)
+
+def unsetautojoin(network, channel):
+    try:
+        joinlist = conf['networks'][network.name]['join']
+    except KeyError:
+        return False
+    normchannel = network.norm_case(channel)
+    for i, chan in enumerate(joinlist[:]):
+        if normchannel == network.norm_case(chan):
+            joinlist.pop(i)
+
+def onChannelMenu(e):
+    def toggle_join():
+        if isautojoin(e.network, e.channel):
+            unsetautojoin(e.network, e.channel)
+        else:
+            setautojoin(e.network, e.channel)
+    
+    e.menu.append(('Autojoin', isautojoin(e.network, e.channel), toggle_join))

@@ -104,7 +104,11 @@ def menu_from_list(alist):
                 elif len(item) == 3:
                     name, stock_id, function = item
                     
-                    menuitem = gtk.ImageMenuItem(stock_id)
+                    if isinstance(stock_id, bool):
+                        menuitem = gtk.CheckMenuItem(name)
+                        menuitem.set_active(stock_id)
+                    else:
+                        menuitem = gtk.ImageMenuItem(stock_id)
                     
                 if isinstance(function, list):
                     submenu = gtk.Menu()

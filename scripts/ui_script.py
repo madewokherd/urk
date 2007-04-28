@@ -122,3 +122,9 @@ def setupKick(e):
 def setupMode(e):
     if e.target != e.network.me:
         e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
+
+def onWindowMenu(e):
+    if isinstance(e.window, windows.ChannelWindow):
+        e.channel = e.window.id
+        e.network = e.window.network
+        events.trigger('ChannelMenu', e)
