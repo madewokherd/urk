@@ -273,7 +273,7 @@ class ChannelWindow(Window):
         nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
         nlbox.add(self.nicklist)
 
-        nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 0), -1)
+        nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 112), -1)
 
         botbox = gtk.HBox()
         botbox.pack_start(self.input)
