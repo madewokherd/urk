@@ -16,14 +16,14 @@ them):
 -python version 2.4 or greater (www.python.org)
 -pygtk 2.6 or greater (www.pygtk.org)
 
-Most Linux (or at least GNOME) users should have these things already or be able to easily install them.
+Most Linux (or at least GNOME) users should have these things already or be able
+to easily install them.
 
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
 
-Windows has a complete package, dependencies and all, at http://urk.sf.net/urk-win32.zip. This is rather large, and the dependencies do not change, so I would appreciate it if you only replace the urk source code when updating.
-
-Installing python and pygtk globally on a Windows system (rather than using the above package) tends to lead to DLL Hell. Also, there seem to be serious stability problems with pygtk 2.10 on Windows for reasons I don't understand. Use them if you want, but you've been warned.
+Windows versions of the above should theoretically work but may not in practice.
+I am hoping someone will come along and actually support urk on windows.
 
 
 Optional requirements:
