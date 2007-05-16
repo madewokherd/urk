@@ -12,7 +12,6 @@ import urk
 import windows
 
 import servers
-import editor
 
 def about(*args):
     about = gtk.AboutDialog()
@@ -813,7 +812,6 @@ class UrkUITabs(gtk.Window):
     def menu(self):
         def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-            e.menu += [('Editor', editor.main)]
 
         events.register('MainMenu', 'on', add_defaults_to_menu, 'widgets')
 

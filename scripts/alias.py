@@ -4,7 +4,6 @@ import os
 from conf import conf
 import events
 import urk
-import widgets
 
 aliases = conf.get("aliases",{
     'op':'"mode "+window.id+" +"+"o"*len(args)+" "+" ".join(args)',
@@ -61,20 +60,3 @@ def onCommandAlias(e):
  /alias \x02name\x02 to look at an alias
  /alias -r \x02name\x02 to remove an alias
  /alias -l to see a list of aliases""")
- 
-def onCommandEdit(e):
-    if e.args:
-        filename = events.get_filename(e.args[0])
-        
-        if not filename:
-            filename = os.path.join(urk.userpath,'scripts',e.args[0])
-            if not filename.endswith('.py'):
-                filename += ".py"
-
-        if os.access(filename, os.R_OK):
-            widgets.editor.main(filename)
-            
-    else:
-        widgets.editor.main() 
-    
-    

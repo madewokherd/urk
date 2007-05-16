@@ -129,7 +129,7 @@ If you don't save, changes will be permanently lost.
         
         self.vbox.set_property("spacing", 12)
         self.vbox.pack_start(hbox)
-
+        
         self.show_all()
 
 #This really is needed for pygtk 2.6
@@ -207,7 +207,10 @@ class EditorWindow(gtk.Window):
     
     def load(self):
         if self.filename:
-            self.editor.text = file(self.filename).read()
+            try:
+                self.editor.text = file(self.filename).read()
+            except IOError:
+                self.editor.output.get_buffer().set_modified(True)
                 
     def save(self, action=None, parent=None, on_save=lambda:None):
         if self.filename:
@@ -233,8 +236,9 @@ class EditorWindow(gtk.Window):
             on_save()
 
         else:
+            parent = parent or self
             chooser = gtk.FileChooserDialog(
-                "Save Script", parent or self, gtk.FILE_CHOOSER_ACTION_SAVE,
+                "Save Script", parent, gtk.FILE_CHOOSER_ACTION_SAVE,
                 (
                     gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                     gtk.STOCK_SAVE, gtk.RESPONSE_OK
@@ -270,7 +274,10 @@ class EditorWindow(gtk.Window):
                 else:
                     chooser.destroy()
 
-            chooser.set_modal(True)
+            if parent != self:
+                #if we were spawned by a dialog, that dialog is modal, and so
+                # must we be to get input
+                chooser.set_modal(True)
             chooser.connect("response", on_response)
             chooser.show()
 
@@ -356,7 +363,25 @@ class EditorWindow(gtk.Window):
         self.add(box)    
         self.show_all()
 
-def main(filename=None):
+def edit(filename=None):
     gc.collect()
 
     EditorWindow(filename)
+
+ 
+def onCommandEdit(e):
+    if e.args:
+        try:
+            filename = events.get_filename(e.args[0])
+        except ImportError:
+            filename = os.path.join(urk.userpath,'scripts',e.args[0])
+            if not filename.endswith('.py'):
+                filename += ".py"
+
+        edit(filename)
+            
+    else:
+        edit() 
+
+def onMainMenu(e):
+    e.menu += [('Editor', edit)]
