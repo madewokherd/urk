@@ -116,6 +116,10 @@ Setting:            Description:
 
 'font'                 The font used for output. Defaults to "sans 8".
 
+'bg_color'             The background color ("black" or "#000000").
+
+'fg_color'             The foreground color ("white" or "#ffffff").
+
 'timestamp'            A timestamp that will show up before messages. The
     default is no timestamp. A simple timestamp with hours and minutes is
     "[%H:%M] ". See http://docs.python.org/lib/module-time.html#l2h-1955 for

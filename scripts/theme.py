@@ -6,10 +6,16 @@ import chaninfo
 import events
 from conf import conf
 
+textareas = {}
 if 'font' in conf:
-    textareas = {'font': conf['font']}
-    widgets.set_style("view", textareas)
-    widgets.set_style("nicklist", textareas)
+    textareas['font'] = conf['font']
+if 'bg_color' in conf:
+    textareas['bg'] = conf['bg_color']
+if 'fg_color' in conf:
+    textareas['fg'] = conf['fg_color']
+
+widgets.set_style("view", textareas)
+widgets.set_style("nicklist", textareas)
 
 #copied pretty directly from something that was probably copied from wine sources
 def RGBtoHSL(r, g, b):

@@ -85,6 +85,8 @@ def set_style(widget_name, style):
                 f(style[name])
 
         style = dummy.rc_get_style()
+    else:
+        style = None
     
     styles[widget_name] = style
     
