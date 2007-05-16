@@ -61,6 +61,7 @@ class Window(gtk.VBox):
     need_vbox_init = True
     
     def mutate(self, newclass, network, id):
+        isactive = self == manager.get_active()
         self.hide()
         
         for child in self.get_children():
@@ -69,6 +70,8 @@ class Window(gtk.VBox):
         self.__class__ = newclass
         self.__init__(network, id)
         self.update()
+        if isactive:
+            self.activate()
         
     def transfer_text(self, _widget, event):
         if event.string and not self.input.is_focus():

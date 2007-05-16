@@ -84,10 +84,23 @@ def setdownRaw(e):
             e.network.raw("PONG :%s" % e.msg[-1])
             e.done = True
         
-        elif e.msg[1] in ("JOIN", "PART", "MODE"):
+        elif e.msg[1] == "JOIN":
+            e.channel = e.target
+            e.requested = e.network.norm_case(e.channel) in e.network.requested_joins
+            events.trigger("Join", e)
+            e.done = True
+        
+        elif e.msg[1] == "PART":
+            e.channel = e.target
+            e.requested = e.network.norm_case(e.channel) in e.network.requested_parts
+            e.text = ' '.join(e.msg[3:])
+            events.trigger("Part", e)
+            e.done = True
+        
+        elif e.msg[1] in "MODE":
             e.channel = e.target
             e.text = ' '.join(e.msg[3:])
-            events.trigger(e.msg[1].capitalize(), e)
+            events.trigger("Mode", e)
             e.done = True
             
         elif e.msg[1] == "QUIT":
@@ -124,7 +137,12 @@ def setdownRaw(e):
                 e.network.status = irc.CONNECTED
                 events.trigger('Connect', e)
             e.done = True
-    
+        
+        elif e.msg[1] == "470": #forwarded from channel X to channel Y
+            if e.network.norm_case(e.msg[3]) in e.network.requested_joins:
+                e.network.requested_joins.discard(e.network.norm_case(e.msg[3]))
+                e.network.requested_joins.add(e.network.norm_case(e.msg[4]))
+        
         elif e.msg[1] == "005": #RPL_ISUPPORT
             for arg in e.msg[3:]:
                 if ' ' not in arg: #ignore "are supported by this server"
@@ -161,6 +179,9 @@ def setupSocketConnect(e):
     }
     e.network.prefixes = {'o':'@', 'h':'%', 'v':'+', '@':'o', '%':'h', '+':'v'}
     e.network.connect_timestamp = time.time()
+    e.network.requested_joins.clear()
+    e.network.requested_parts.clear()
+    e.network.on_channels.clear()
     if hasattr(e.network,'_nick_generator'):
         del e.network._nick_generator, e.network._nick_max_length, e.network._next_nick
     if not e.done:
@@ -231,6 +252,26 @@ def onCommandQuery(e):
         if message: #this is false if you do "/query nickname " 
             e.network.msg(e.args[0], ' '.join(e.args[1:]))
 
+def setupJoin(e):
+    if e.source == e.network.me:
+        chan = e.network.norm_case(e.channel)
+        e.network.on_channels.add(chan)
+        e.network.requested_joins.discard(chan)
+
+def setdownPart(e):
+    if e.source == e.network.me:
+        chan = e.network.norm_case(e.channel)
+        e.network.on_channels.discard(chan)
+        e.network.requested_parts.discard(chan)
+
+def setdownKick(e):
+    if e.target == e.network.me:
+        chan = e.network.norm_case(e.channel)
+        e.network.on_channels.discard(chan)
+
+def ischan(network, channel):
+    return network.norm_case(channel) in network.on_channels
+
 # make /nick work offline
 def change_nick(network, nick):
     if not network.status:
@@ -280,11 +321,22 @@ onCommandQuote = onCommandRaw
 def onCommandJoin(e):
     if e.args:
         if e.network.status >= irc.INITIALIZING:
-            e.network.join(' '.join(e.args))
+            e.network.join(' '.join(e.args), requested = 'n' not in e.switches)
         else:
             raise events.CommandError("We're not connected.")
     elif isinstance(e.window, windows.ChannelWindow):
         e.window.network.join(e.window.id)
+    else:
+        raise events.CommandError("You must supply a channel.")
+
+def onCommandPart(e):
+    if e.args:
+        if e.network.status >= irc.INITIALIZING:
+            e.network.part(' '.join(e.args), requested = 'n' not in e.switches)
+        else:
+            raise events.CommandError("We're not connected.")
+    elif isinstance(e.window, windows.ChannelWindow):
+        e.window.network.part(e.window.id, requested = 'n' not in e.switches)
     else:
         raise events.CommandError("You must supply a channel.")
 
@@ -413,7 +465,6 @@ trailing = {
     }
 
 needschan = {
-    'part':0,
     'topic':0,
     'invite':1,
     'kick':0,
@@ -467,7 +518,7 @@ def onConnect(e):
     
     tojoin = ','.join(network_info.get('join', []))
     if tojoin:
-        events.run('join %s' % tojoin, e.window, e.network)
+        events.run('join -n %s' % tojoin, e.window, e.network)
     
     if hasattr(e.network,'temp_perform'):
         for command in e.network.temp_perform:

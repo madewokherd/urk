@@ -1,7 +1,7 @@
 import irc
 import ui
 import windows
-import chaninfo
+import irc_script
 import events
 from conf import conf
 
@@ -31,10 +31,11 @@ def setupJoin(e):
         
         if window and not conf.get('status'):
             window.mutate(windows.ChannelWindow, e.network, e.target)
-            window.activate()
-            
         else:
-            windows.new(windows.ChannelWindow, e.network, e.target).activate()
+            window = windows.new(windows.ChannelWindow, e.network, e.target)
+        
+        if e.requested:
+            window.activate()
 
     e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
 
@@ -74,8 +75,9 @@ def setdownPart(e):
                             
             if len(cwindows) == 1 and not list(windows.get_with(network=window.network, wclass=windows.StatusWindow)):
                 window.mutate(windows.StatusWindow, e.network, 'status')
-                window.activate()
-            else:
+                if e.requested:
+                    window.activate()
+            elif e.requested:
                 window.close()
 
 def onClose(e):
@@ -89,7 +91,7 @@ def onClose(e):
         
         #if we only have one window for the network, don't bother to part as
         # we'll soon be quitting anyway
-        if len(nwindows) != 1 and chaninfo.ischan(e.window.network, e.window.id):
+        if len(nwindows) != 1 and irc_script.ischan(e.window.network, e.window.id):
             e.window.network.part(e.window.id) 
     
     if len(nwindows) == 1:

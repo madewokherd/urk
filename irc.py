@@ -78,6 +78,10 @@ class Network(object):
         self.failedhosts = [] #hosts we've tried and failed to connect to
         self.channel_prefixes = '&#+$'   # from rfc2812
         
+        self.on_channels = set()
+        self.requested_joins = set()
+        self.requested_parts = set()
+        
         self.buffer = ''
     
     #called when we get a result from the dns lookup
@@ -236,16 +240,25 @@ class Network(object):
                 pass
             self.disconnect()
         
-    def join(self, name, key=''):
+    def join(self, target, key='', requested=True):
         if key:
             key = ' '+key
-        self.raw("JOIN %s%s" % (name,key))
+        self.raw("JOIN %s%s" % (target,key))
+        if requested:
+            for chan in target.split(' ',1)[0].split(','):
+                if chan == '0':
+                    self.requested_parts.update(self.on_channels)
+                else:
+                    self.requested_joins.add(self.norm_case(chan))
         
-    def part(self, target, msg=""):
+    def part(self, target, msg="", requested=True):
         if msg:
             msg = " :" + msg
         
         self.raw("PART %s%s" % (target, msg))
+        if requested:
+            for chan in target.split(' ',1)[0].split(','):
+                self.requested_parts.add(self.norm_case(target))
         
     def msg(self, target, msg):
         self.raw("PRIVMSG %s :%s" % (target, msg))
