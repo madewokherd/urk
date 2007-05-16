@@ -45,7 +45,7 @@ def setupRaw(e):
         e_data = events.data(**e.__dict__)
         e_data.text = e.text[1:-1]
         tokens = e_data.text.split(' ')
-        e_data.name = tokens[0]
+        e_data.name = tokens[0].upper()
         e_data.args = tokens[1:]
         if e.msg[1] == 'PRIVMSG':
             events.trigger('Ctcp', e_data)
