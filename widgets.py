@@ -602,8 +602,11 @@ class TextOutput(gtk.TextView):
             
         gobject.idle_add(set_to_scroll)
 
-    def __init__(self, window):
-        gtk.TextView.__init__(self, gtk.TextBuffer(tag_table))
+    def __init__(self, window, buffer=None):
+        if not buffer:
+            buffer = gtk.TextBuffer(tag_table)
+        
+        gtk.TextView.__init__(self, buffer)
         
         self.win = window
         
@@ -815,7 +818,7 @@ class UrkUITabs(gtk.Window):
 
         events.register('MainMenu', 'on', add_defaults_to_menu, 'widgets')
 
-        def build_urk_menu(*args):
+        def build_urk_menu(urk_menu, *args):
             data = events.data(menu=[])
             events.trigger("MainMenu", data)
 
@@ -825,7 +828,7 @@ class UrkUITabs(gtk.Window):
             menu.show_all()
             
             urk_menu.set_submenu(menu)
-        
+
         urk_menu = gtk.MenuItem("urk")
         urk_menu.connect("button-press-event", build_urk_menu)    
         help_menu = gtk.MenuItem("Help")

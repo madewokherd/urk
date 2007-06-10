@@ -134,17 +134,15 @@ class Window(gtk.VBox):
             gtk.VBox.__init__(self, False)
             self.need_vbox_init = False
         
-        if hasattr(self, "output"):
-            if self.output.parent:
-                self.output.parent.remove(self.output)
-            
+        if hasattr(self, "buffer"):
+            self.output = widgets.TextOutput(self, self.buffer)
         else:
             self.output = widgets.TextOutput(self)
+            self.buffer = self.output.get_buffer()
             
         if hasattr(self, "input"):
             if self.input.parent:
                 self.input.parent.remove(self.input)
-
         else:
             self.input = widgets.TextInput(self)
         
