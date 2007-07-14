@@ -811,39 +811,45 @@ class UrkUITabs(gtk.Window):
         
         if self.get_active() == window:
             self.set_title()
+    
+    def build_urk_menu(self, *args):
+        data = events.data(menu=[])
+        events.trigger("MainMenu", data)
 
-    def menu(self):
+        menu = self.urk_submenu
+        for item in menu.get_children():
+            menu.remove(item)
+        for item in menu_from_list(data.menu):
+            menu.append(item)
+        menu.show_all()
+        
+        self.urk_menu.set_submenu(menu)
+    
+    def build_menubar(self):
         def add_defaults_to_menu(e):
             e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
 
         events.register('MainMenu', 'on', add_defaults_to_menu, 'widgets')
 
-        def build_urk_menu(urk_menu, *args):
-            data = events.data(menu=[])
-            events.trigger("MainMenu", data)
+        self.urk_menu = gtk.MenuItem("urk")
+        self.urk_submenu = gtk.Menu()
+        self.urk_menu.set_submenu(self.urk_submenu)
 
-            menu = gtk.Menu()
-            for item in menu_from_list(data.menu):
-                menu.append(item)
-            menu.show_all()
-            
-            urk_menu.set_submenu(menu)
-
-        urk_menu = gtk.MenuItem("urk")
-        urk_menu.connect("button-press-event", build_urk_menu)    
-        help_menu = gtk.MenuItem("Help")
+        self.help_menu = gtk.MenuItem("Help")
+        self.help_submenu = gtk.Menu()
+        self.help_menu.set_submenu(self.help_submenu)
         
-        help_menu.set_submenu(gtk.Menu())
         about_item = gtk.ImageMenuItem("gtk-about")
         about_item.connect("activate", about)
-
-        help_menu.get_submenu().append(about_item)
+        self.help_submenu.append(about_item)
         
-        menu = gtk.MenuBar()
-        menu.append(urk_menu)
-        menu.append(help_menu)
+        self.menubar = gtk.MenuBar()
+        self.menubar.append(self.urk_menu)
+        self.menubar.append(self.help_menu)
         
-        return menu
+        self.urk_menu.connect('select', self.build_urk_menu)
+        
+        return self.menubar
     
     def __init__(self):
         # threading stuff
@@ -915,11 +921,11 @@ class UrkUITabs(gtk.Window):
             
         self.tabs.connect("switch-page", window_change)
         
-        menu = self.menu()
+        menubar = self.build_menubar()
 
         box = gtk.VBox(False)
         if conf.get('ui-gtk/show_menubar', True):
-            box.pack_start(menu, expand=False)
+            box.pack_start(menubar, expand=False)
         box.pack_end(self.tabs)
 
         gtk.Window.add(self, box)
