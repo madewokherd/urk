@@ -64,7 +64,7 @@ class Network(object):
         self.me = self.nicks[0]
         
         self.username = username or "urk"
-        self.fullname = fullname or conf.get("fullname", self.me)
+        self.fullname = fullname or conf.get("fullname", self.username)
         self.password = ''
         
         self.isupport = {
