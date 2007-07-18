@@ -156,9 +156,9 @@ class Nicklist(gtk.TreeView):
         return self.get_model()[pos][0]
         
     def __setitem__(self, pos, name_markup):
-        realname, markedupname = name_markup
+        realname, markedupname, sortkey = name_markup
     
-        self.get_model()[pos] = realname, markedupname
+        self.get_model()[pos] = realname, markedupname, sortkey
 
     def __len__(self):
         return len(self.get_model())
@@ -170,15 +170,23 @@ class Nicklist(gtk.TreeView):
                 
         return -1
         
-    def append(self, realname, markedupname):
-        self.get_model().append((realname, markedupname))
+    def append(self, realname, markedupname, sortkey):
+        self.get_model().append((realname, markedupname, sortkey))
  
-    def insert(self, pos, realname, markedupname):
-        self.get_model().insert(pos, (realname, markedupname))
+    def insert(self, pos, realname, markedupname, sortkey):
+        self.get_model().insert(pos, (realname, markedupname, sortkey))
         
-    def extend(self, names):
+    def replace(self, names):
+        self.set_model(gtk.ListStore(str, str, str))
+        
+        self.insert_column_with_attributes(
+            0, '', gtk.CellRendererText(), markup=1
+            ).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
+
         for name in names:
             self.append(*name)
+        
+        self.get_model().set_sort_column_id(2, gtk.SORT_ASCENDING)
 
     def remove(self, realname):
         index = self.index(realname)
@@ -191,28 +199,15 @@ class Nicklist(gtk.TreeView):
     def clear(self):
         self.get_model().clear()
         
-    def set_sort_func(self, sort_func):
-        def wrapped_sort_func(model, iter1, iter2):
-            nick1 = model.get_value(iter1, 0)
-            nick2 = model.get_value(iter2, 0)
-            
-            return sort_func(nick1, nick2)
-    
-        self.get_model().set_sort_func(0, wrapped_sort_func)
-        
     def __iter__(self):
         return (r[0] for r in self.get_model())
 
     def __init__(self, window):
         self.win = window
         
-        gtk.TreeView.__init__(self, gtk.ListStore(str, str))
+        gtk.TreeView.__init__(self)
         
-        self.insert_column_with_attributes(
-            0, '', gtk.CellRendererText(), markup=1
-            ).set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
-        
-        self.get_model().set_sort_column_id(0, gtk.SORT_ASCENDING)
+        self.replace(())
 
         self.set_headers_visible(False)
         self.set_property("fixed-height-mode", True)
@@ -817,13 +812,11 @@ class UrkUITabs(gtk.Window):
         events.trigger("MainMenu", data)
 
         menu = self.urk_submenu
-        for item in menu.get_children():
-            menu.remove(item)
+        for child in menu.get_children():
+            menu.remove(child)
         for item in menu_from_list(data.menu):
             menu.append(item)
         menu.show_all()
-        
-        self.urk_menu.set_submenu(menu)
     
     def build_menubar(self):
         def add_defaults_to_menu(e):

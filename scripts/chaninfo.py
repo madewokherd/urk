@@ -5,7 +5,7 @@ def _justprefix(network, channel, nick):
     fr, to = network.isupport["PREFIX"][1:].split(")")
 
     for mode, prefix in zip(fr, to):
-        if mode in channel.nicks.get(nick, {}):
+        if mode in channel.nicks.get(nick, ''):
             return prefix
 
     return ''
@@ -23,10 +23,16 @@ def escape(string):
         string = string.replace(*escapes)
     return string
 
+def sortkey(network, channelname, nick):
+    chanmodes, dummy = network.isupport["PREFIX"][1:].split(")")
+    nickmodes = mode(network, channelname, nick)
+    
+    return '%s%s' % (''.join(str(int(mode not in nickmodes)) for mode in chanmodes), network.norm_case(nick))
+
 def nicklist_add(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
     if window:
-        window.nicklist.append(nick, escape(prefix(network, channel.name, nick)))
+        window.nicklist.append(nick, escape(prefix(network, channel.name, nick)), sortkey(network, channel.name, nick))
 
 def nicklist_del(network, channel, nick):
     window = windows.get(windows.ChannelWindow, network, channel.name)
@@ -136,22 +142,6 @@ def setupJoin(e):
             window.nicklist.clear()
 
     nicklist_add(e.network, channel, e.source)
-
-def onJoin(e):
-    if e.source == e.network.me:
-        fr, to = e.network.isupport["PREFIX"][1:].split(")")
-        channel = getchan(e.network, e.target)
-
-        def sort_func(nick1, nick2):
-            modes1 = channel.nicks[nick1]
-            modes2 = channel.nicks[nick2]
-            
-            return cmp(
-                [mode not in modes1 for mode in fr] + [nick1.lower()],
-                [mode not in modes2 for mode in fr] + [nick2.lower()]
-                )
-            
-        e.window.nicklist.set_sort_func(sort_func)
 
 def setdownPart(e):
     if e.source == e.network.me:
@@ -290,9 +280,8 @@ def setupRaw(e):
             
             window = windows.get(windows.ChannelWindow, e.network, e.msg[3])
             if window:
-                window.nicklist.clear()
-                window.nicklist.extend(
-                    (nick, escape(prefix(e.network, channel.name, nick))) for nick in channel.nicks
+                window.nicklist.replace(
+                    (nick, escape(prefix(e.network, channel.name, nick)), sortkey(e.network, channel.name, nick)) for nick in channel.nicks
                     )
         
     elif e.msg[1] == '324': #channel mode is
