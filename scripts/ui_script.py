@@ -106,12 +106,12 @@ def onClose(e):
     if len(windows.manager) == 1:
         windows.new(windows.StatusWindow, irc.Network(), "status")
 
-def onConnect(e):
+def onConnecting(e):
     window = windows.get_default(e.network)
     if window:
         window.update()
 
-onDisconnect = onConnect
+onDisconnect = onConnecting
 
 def setupPart(e):
     e.window = windows.get(windows.ChannelWindow, e.network, e.target) or e.window
