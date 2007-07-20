@@ -325,7 +325,7 @@ def onCommandJoin(e):
         else:
             raise events.CommandError("We're not connected.")
     elif isinstance(e.window, windows.ChannelWindow):
-        e.window.network.join(e.window.id)
+        e.window.network.join(e.window.id, requested = 'n' not in e.switches)
     else:
         raise events.CommandError("You must supply a channel.")
 
@@ -337,6 +337,19 @@ def onCommandPart(e):
             raise events.CommandError("We're not connected.")
     elif isinstance(e.window, windows.ChannelWindow):
         e.window.network.part(e.window.id, requested = 'n' not in e.switches)
+    else:
+        raise events.CommandError("You must supply a channel.")
+
+def onCommandHop(e):
+    if e.args:
+        if e.network.status >= irc.INITIALIZING:
+            e.network.part(e.args[0], requested = False)
+            e.network.join(' '.join(e.args), requested = False)
+        else:
+            raise events.CommandError("We're not connected.")
+    elif isinstance(e.window, windows.ChannelWindow):
+        e.window.network.part(e.window.id, requested = False)
+        e.window.network.join(e.window.id, requested = False)
     else:
         raise events.CommandError("You must supply a channel.")
 
@@ -544,7 +557,7 @@ def setautojoin(network, channel):
     if network.name not in networks:
         networks[network.name] = network_settings = {}
         if 'start_networks' not in conf:
-            conf['start_networks'] = [network.name]
+            conf['start_networks'] = []
         conf['start_networks'].append(network.name)
     else:
         network_settings = networks[network.name]
