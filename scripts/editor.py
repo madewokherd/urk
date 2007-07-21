@@ -14,6 +14,13 @@ except:
 
 import events
 import urk
+import ui
+
+import editor
+try:
+    editorwindows = editor.editorwindows
+except AttributeError:
+    editorwindows = {}
 
 class EditorWidget(gtk.VBox):
     def goto(self, line, offset):
@@ -216,6 +223,8 @@ class EditorWindow(gtk.Window):
         if self.filename:
             file(self.filename, "wb").write(self.editor.text)          
             
+            editorwindows[self.filename] = self
+            
             if events.is_loaded(self.filename):            
                 try:
                     events.reload(self.filename)
@@ -308,19 +317,26 @@ class EditorWindow(gtk.Window):
                 if response_id == gtk.RESPONSE_OK: #Save
                     def on_save():
                         widget.destroy()
+                        self.on_destroy()
                         self.destroy()
                     self.save(parent=widget, on_save=on_save)
                 elif response_id == gtk.RESPONSE_CANCEL:
                     widget.destroy()
                 elif response_id == gtk.RESPONSE_CLOSE:
                     widget.destroy()
+                    self.on_destroy()
                     self.destroy()
             
             dialog.connect("response", on_response)
 
             return True
+        else:
+            self.on_destroy()
     
-    def __init__(self, filename=''):
+    def on_destroy(self, *args):
+        editorwindows.pop(self.filename, None)
+    
+    def __init__(self, filename='', open_lineno=None):
         gtk.Window.__init__(self)
         
         self.filename = filename
@@ -340,7 +356,7 @@ class EditorWindow(gtk.Window):
 
         self.load()
         self.title()
-
+        
         self.status = gtk.Statusbar()
         self.status.set_has_resize_grip(True)
         
@@ -352,6 +368,7 @@ class EditorWindow(gtk.Window):
         box.pack_end(self.status, expand=False)
         
         self.connect("delete-event", EditorWindow.on_delete)
+        #self.connect("destroy-event", EditorWindow.on_destroy)
         
         try:
             self.set_icon(
@@ -362,26 +379,112 @@ class EditorWindow(gtk.Window):
         
         self.add(box)    
         self.show_all()
+        
+        if filename:
+            editorwindows[filename] = self
+        
+        if open_lineno:
+            #the scrolling doesn't seem to work if we use goto immediately
+            ui.register_idle(self.editor.goto, open_lineno, 1)
 
-def edit(filename=None):
+def realfilename(filename):
+    try:
+        filename = os.path.abspath(events.get_filename(filename))
+    except ImportError:
+        filename = os.path.join(urk.userpath,'scripts',filename)
+        if not filename.endswith('.py'):
+            filename += ".py"
+    return filename
+
+def edit(filename=None, lineno=None):
     gc.collect()
+    
+    if filename:
+        filename = realfilename(filename)
+    if filename in editorwindows:
+        window = editorwindows[filename]
+        if lineno:
+            window.editor.goto(lineno, 1)
+        window.present()
+    else:
+        EditorWindow(filename, lineno)
 
-    EditorWindow(filename)
-
- 
 def onCommandEdit(e):
     if e.args:
-        try:
-            filename = events.get_filename(e.args[0])
-        except ImportError:
-            filename = os.path.join(urk.userpath,'scripts',e.args[0])
-            if not filename.endswith('.py'):
-                filename += ".py"
-
-        edit(filename)
-            
+        edit(e.args[0])
     else:
         edit() 
 
 def onMainMenu(e):
     e.menu += [('Editor', edit)]
+
+
+
+def findsubstr(text, substr):
+    """findsubstr(text, substr) - returns an iterator of positions of substr within text"""
+    position = text.find(substr)
+    while position != -1:
+        yield position
+        position = text.find(substr, position+1)
+
+def get_codelink(e):
+    """get_codelink(e) - check a mouse event for code links like the following:
+    "/usr/lib/python2.5/os.py", line 348
+    "events.py", line 44
+    /usr/lib/python2.5/os.py, line 348
+    os.py, line 348
+
+set the following variables on the event:
+    e._hascodelink: True if the cursor is on a code link and the others are set
+    e._codelink_file: The absolute or relative filename without quotes
+    e._codelink_lineno: The line number
+    e._codelink_fr, e_codelink_to: the starting and ending characters of the found link
+    """
+    for position in findsubstr(e.text, ', line '):
+        #find the first non-digit after " line "
+        for pos_to in range(position+7, len(e.text)):
+            if not e.text[pos_to].isdigit():
+                break
+        else:
+            #we've hit the end of the string and it's all digits; that's ok
+            pos_to = len(e.text)
+        if pos_to == position+7:
+            #a 0-digit line number
+            continue
+        if pos_to < e.pos:
+            #the cursor is to the right of this link
+            continue
+        #now find the first space before " line "
+        pos_fr = e.text.rfind(' ', 0, position)+1
+        #conveniently, if there was no space, we're at the start of the line
+        if e.pos < pos_fr:
+            #we're to the left of this link and any others we might find
+            e._hascodelink = False
+            return
+        else:
+            #whee, found a link!
+            break
+    else:
+        e._hascodelink = False
+        return
+    
+    e._hascodelink = True
+    e._codelink_file = e.text[pos_fr:position].strip('"')
+    e._codelink_lineno = int(e.text[position+7:pos_to])
+    e._codelink_fr = pos_fr
+    e._codelink_to = pos_to
+    
+    if e._codelink_file == "<string>":
+        e._hascodelink = False
+
+def onHover(e):
+    get_codelink(e)
+    
+    if e._hascodelink:
+        e.tolink.add((e._codelink_fr, e._codelink_to))
+
+def onClick(e):
+    get_codelink(e)
+    
+    if e._hascodelink:
+        edit(e._codelink_file, e._codelink_lineno)
