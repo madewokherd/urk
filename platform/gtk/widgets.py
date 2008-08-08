@@ -283,6 +283,7 @@ class NickEditor(gtk.EventBox):
 class TextInput(gtk.Entry):
     # Generates an input event
     def entered_text(self, ctrl):
+        #FIXME: move this logic into Window
         for line in self.text.splitlines():
             if line:
                 e_data = events.data(

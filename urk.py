@@ -34,7 +34,7 @@ else:
     if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
         os.mkdir(os.path.join(userpath,'scripts'), 0700)
 
-platforms = ['gtk']
+platforms = ['gtk', 'stdio']
 
 def test_platform(platform, verbose=False):
     try:
