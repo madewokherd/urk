@@ -15,7 +15,13 @@ def path(filename=""):
     else:
         return urkpath
 
-if os.access(path('profile'),os.F_OK) or os.path.expanduser("~") == "~":
+if 'URK_PROFILE' in os.environ:
+    userpath = os.environ['URK_PROFILE']
+    if not os.access(userpath,os.F_OK):
+        os.mkdir(userpath, 0700)
+    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+        os.mkdir(os.path.join(userpath,'scripts'), 0700)
+elif os.access(path('profile'),os.F_OK) or os.path.expanduser("~") == "~":
     userpath = path('profile')
     if not os.access(userpath,os.F_OK):
         os.mkdir(userpath)
@@ -40,10 +46,11 @@ sys.path = [
 import events
 import ui
 
-import remote
+if 'URK_NO_REMOTE' not in os.environ:
+    import remote
 
-if remote.run(' '.join(sys.argv[1:])):
-    sys.exit(0)
+    if remote.run(' '.join(sys.argv[1:])):
+        sys.exit(0)
 
 name = "urk"
 long_name = "urk IRC"
