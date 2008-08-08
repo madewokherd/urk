@@ -34,7 +34,52 @@ else:
     if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
         os.mkdir(os.path.join(userpath,'scripts'), 0700)
 
+platforms = ['gtk']
+
+def test_platform(platform, verbose=False):
+    try:
+        f = open(os.path.join(path('platform'), platform, 'check.py'), 'U')
+    except:
+        if verbose:
+            traceback.print_exc()
+        return False
+    try:
+        exec f.read()
+        return True
+    except:
+        if verbose:
+            traceback.print_exc()
+        return False
+    finally:
+        f.close()
+
+if 'URK_PLATFORM' in os.environ:
+    platform = os.environ['URK_PLATFORM']
+    if not test_platform(platform, verbose=True):
+        print("Cannot use forced platform '%s'" % platform)
+        sys.exit(1)
+    platform_path = os.path.join(path('platform'), platform)
+    print("Using forced platform '%s'" % platform)
+else:
+    for platform in platforms:
+        f = open(os.path.join(path('platform'), platform, 'check.py'), 'U')
+        try:
+            exec f.read()
+        except:
+            print("Couldn't load platform '%s'" % platform)
+        else:
+            print("Using platform '%s'" % platform)
+            platform_path = os.path.join(path('platform'), platform)
+            break
+        f.close()
+        del f
+    else:
+        print("Cannot use any available platform")
+        sys.exit(1)
+
 sys.path = [
+    platform_path,
+    os.path.join(platform_path, "scripts"),
     userpath,
     os.path.join(userpath, "scripts"),
     os.curdir,
@@ -61,7 +106,7 @@ authors = ["Vincent Povirk", "Marc Liddell"]
 copyright = "2005 %s" % ', '.join(authors)
 
 def main():
-    for script_path in set(sys.path[1:6:2]):
+    for script_path in set(sys.path[1:8:2]):
         try:
             suffix = os.extsep+"py"
             for script in os.listdir(script_path):
