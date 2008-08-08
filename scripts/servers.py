@@ -303,3 +303,7 @@ def main():
     
     win.add(widget)    
     win.show_all()
+
+def setupMainMenu(e):
+    e.menu += [('Servers', gtk.STOCK_CONNECT, main)]
+

@@ -11,8 +11,6 @@ import parse_mirc
 import urk
 import windows
 
-import servers
-
 def about(*args):
     about = gtk.AboutDialog()
     
@@ -819,11 +817,6 @@ class UrkUITabs(gtk.Window):
         menu.show_all()
     
     def build_menubar(self):
-        def add_defaults_to_menu(e):
-            e.menu += [('Servers', gtk.STOCK_CONNECT, servers.main)]
-
-        events.register('MainMenu', 'on', add_defaults_to_menu, 'widgets')
-
         self.urk_menu = gtk.MenuItem("urk")
         self.urk_submenu = gtk.Menu()
         self.urk_menu.set_submenu(self.urk_submenu)
