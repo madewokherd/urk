@@ -94,8 +94,6 @@ idle_tasks = []
 
 timer_tasks = []
 
-stop = False
-
 def set_clipboard(text):
     pass
 
@@ -152,8 +150,6 @@ def open_file(filename):
     pass
 
 def start(command=''):
-    #signal.signal(signal.SIGTERM, we_get_signal)
-    
     def trigger_start():
         events.trigger("Start")
         
@@ -164,10 +160,6 @@ def start(command=''):
            window.activate()
 
         events.run(command, window, window.network)
-
-        #for i in range(100):
-        #    window.nicklist.append(chr(__import__('random').randint(ord('a'), ord('z'))), '<span color="green">%s</span>')
-        #    window.write(file("urk/ui.py").read().splitlines()[i])
         
     register_idle(trigger_start)
 
