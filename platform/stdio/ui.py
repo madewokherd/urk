@@ -51,10 +51,11 @@ else:
     import select
     
     class Event(object):
-        __fields__ = ['r', 'w']
+        __fields__ = ['r', 'w', 'lock']
         
         def __init__(self):
             self.r, self.w = os.pipe()
+            self.lock = thread.allocate_lock()
         
         def isSet(self):
             readable, writeable, err = select.select([self.r], [], [], 0)
@@ -65,8 +66,10 @@ else:
                 os.write(self.w, 'a')
         
         def clear(self):
+            self.lock.acquire()
             while self.isSet():
                 os.read(self.r, 1)
+            self.lock.release()
         
         def wait(self, timeout=None):
             if timeout is None:
