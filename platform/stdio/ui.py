@@ -4,10 +4,73 @@ import thread
 import time
 import signal
 import traceback
+import os
 
 import windows
 import events
 import irc
+
+# threading.Event would be ideal if not for the fact that Event.wait() works by
+# sleeping for lots of short times.
+if os.name == 'nt':
+    import math
+    import ctypes
+    kernel32 = ctypes.windll.kernel32
+    kernel32.WaitForSingleObject.argtypes = [ctypes.c_int, ctypes.c_uint]
+    
+    class Event(object):
+        __fields__ = ['event_handle']
+        
+        _closehandle = kernel32.CloseHandle # apparently I can't expect this to exist while __del__ is being called
+        
+        def __init__(self):
+            self.event_handle = kernel32.CreateEventA(0, 1, 0, 0)
+            if not self.event_handle:
+                raise ctypes.WinError()
+        
+        def isSet(self):
+            return bool(kernel32.WaitForSingleObject(self.event_handle, 0))
+        
+        def set(self):
+            if not kernel32.SetEvent(self.event_handle):
+                raise ctypes.WinError()
+        
+        def clear(self):
+            if not kernel32.ResetEvent(self.event_handle):
+                raise ctypes.WinError()
+        
+        def wait(self, timeout):
+            kernel32.WaitForSingleObject(self.event_handle, min(int(math.ceil(timeout * 1000)), 0xffffffff))
+        
+        def __del__(self):
+            self._closehandle(self.event_handle)
+else:
+    import select
+    
+    class Event(object):
+        __fields__ = ['r', 'w']
+        
+        def __init__(self):
+            self.r, self.w = os.pipe()
+        
+        def isSet(self):
+            readable, writeable, err = select.select([self.r], [], [], 0)
+            return bool(readable)
+        
+        def set(self):
+            if not self.isSet(): #not strictly necessary, but we'd like to keep the number of unread bytes small
+                os.write(self.w, 'a')
+        
+        def clear(self):
+            while self.isSet():
+                os.read(self.r, 1)
+        
+        def wait(self, timeout):
+            select.select([self.r], [], [], timeout)
+        
+        def __del__(self):
+            os.close(self.r)
+            os.close(self.w)
 
 #priority constants (ignored)
 PRIORITY_HIGH = -100
@@ -16,10 +79,7 @@ PRIORITY_HIGH_IDLE = 100
 PRIORITY_DEFAULT_IDLE = 200
 PRIORITY_LOW = 300
 
-main_thread_id = thread.get_ident
-
-main_work_mutex = thread.allocate_lock()
-main_work_mutex.acquire()
+main_work_event = Event()
 
 idle_tasks = []
 
@@ -46,16 +106,11 @@ class Source(object):
     def unregister(self):
         self.enabled = False
 
-def wake_main_thread():
-    if thread.get_ident != main_thread_id and main_work_mutex.acquire(0):
-        thread.interrupt_main()
-        #don't release the mutex; it needs to be locked so nothing else interrupts the main thread
-
 def register_idle(f, *args, **kwargs):
     priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     source = Source(f, *args, **kwargs)
     idle_tasks.append(source)
-    wake_main_thread()
+    main_work_event.set()
     return source
 
 def register_timer(t, f, *args, **kwargs):
@@ -63,7 +118,7 @@ def register_timer(t, f, *args, **kwargs):
     activate_time = time.time() + t/1000
     source = Source(f, *args, **kwargs)
     timer_tasks.append((activate_time, source))
-    wake_main_thread()
+    main_work_event.set()
     return source
 
 def fork(cb, f, *args, **kwargs):
@@ -108,11 +163,12 @@ def start(command=''):
     register_idle(trigger_start)
 
     while not windows.manager.quitted:
+        main_work_event.clear()
         if idle_tasks:
             idle_tasks.pop(0)()
             continue
         current_time = time.time()
-        next_timeout_time = current_time + 0.5 #FIXME: using short waits because interrupt_main() doesn't work while main is sleeping
+        next_timeout_time = time.time() + 3600
         for n, (t, task) in enumerate(timer_tasks):
             if current_time > t:
                 timer_tasks.pop(n)
@@ -120,16 +176,5 @@ def start(command=''):
                 break
             next_timeout_time = min(t, next_timeout_time)
         else:
-            try:
-                main_work_mutex.release()
-                time.sleep(next_timeout_time - current_time)
-                if main_work_mutex.acquire(0) == False:
-                    #some thread is about to send a KeyboardInterrupt
-                    time.sleep(10000)
-            except KeyboardInterrupt:
-                if main_work_mutex.acquire(0) == True:
-                    #KeyboardInterrupt originated from outside the process
-                    raise
-            finally:
-                main_work_mutex.acquire(0)
+            main_work_event.wait(next_timeout_time - current_time)
 
