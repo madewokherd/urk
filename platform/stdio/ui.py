@@ -29,7 +29,7 @@ if os.name == 'nt':
                 raise ctypes.WinError()
         
         def isSet(self):
-            return bool(kernel32.WaitForSingleObject(self.event_handle, 0))
+            return kernel32.WaitForSingleObject(self.event_handle, 0) == 0
         
         def set(self):
             if not kernel32.SetEvent(self.event_handle):
@@ -39,8 +39,11 @@ if os.name == 'nt':
             if not kernel32.ResetEvent(self.event_handle):
                 raise ctypes.WinError()
         
-        def wait(self, timeout):
-            kernel32.WaitForSingleObject(self.event_handle, min(int(math.ceil(timeout * 1000)), 0xffffffff))
+        def wait(self, timeout=None):
+            if timeout is None:
+                kernel32.WaitForSingleObject(self.event_handle, 0xffffffff)
+            else:
+                kernel32.WaitForSingleObject(self.event_handle, min(int(math.ceil(timeout * 1000)), 0xfffffffe))
         
         def __del__(self):
             self._closehandle(self.event_handle)
@@ -65,8 +68,11 @@ else:
             while self.isSet():
                 os.read(self.r, 1)
         
-        def wait(self, timeout):
-            select.select([self.r], [], [], timeout)
+        def wait(self, timeout=None):
+            if timeout is None:
+                select.select([self.r], [], [])
+            else:
+                select.select([self.r], [], [], timeout)
         
         def __del__(self):
             os.close(self.r)
