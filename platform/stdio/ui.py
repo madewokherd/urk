@@ -172,15 +172,17 @@ def start(command=''):
         main_work_event.clear()
         if idle_tasks:
             idle_tasks.pop(0)()
-            continue
-        current_time = time.time()
-        next_timeout_time = time.time() + 3600
-        for n, (t, task) in enumerate(timer_tasks):
-            if current_time > t:
-                timer_tasks.pop(n)
-                task()
-                break
-            next_timeout_time = min(t, next_timeout_time)
+        elif timer_tasks:
+            current_time = time.time()
+            next_timeout_time = timer_tasks[0][0]
+            for n, (t, task) in enumerate(timer_tasks):
+                if current_time > t:
+                    timer_tasks.pop(n)
+                    task()
+                    break
+                next_timeout_time = min(t, next_timeout_time)
+            else:
+                main_work_event.wait(next_timeout_time - current_time)
         else:
-            main_work_event.wait(next_timeout_time - current_time)
+            main_work_event.wait()
 
