@@ -2,10 +2,11 @@ import ui
 import windows
 
 def handle_input(result, error):
-    if result:
+    if result is not None:
         windows.manager.get_active().entered_text(result)
-    else:
-        print(error)
+    elif isinstance(error, EOFError):
+        windows.manager.exit()
+        return
 
     ui.fork(handle_input, raw_input)
 
