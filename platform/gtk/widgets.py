@@ -839,9 +839,6 @@ class UrkUITabs(gtk.Window):
         return self.menubar
     
     def __init__(self):
-        # threading stuff
-        gtk.gdk.threads_init()
-        
         gtk.Window.__init__(self)
         
         try:

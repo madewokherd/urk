@@ -91,12 +91,6 @@ sys.path = [
 import events
 import ui
 
-if 'URK_NO_REMOTE' not in os.environ:
-    import remote
-
-    if remote.run(' '.join(sys.argv[1:])):
-        sys.exit(0)
-
 name = "urk"
 long_name = "urk IRC"
 version = 0, -1, "cvs"

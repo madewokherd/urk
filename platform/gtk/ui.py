@@ -12,11 +12,18 @@ gobject.threads_init()
 #stupid workaround
 __sys_path = list(sys.path)
 import gtk
+gtk.gdk.threads_init()
 sys.path = __sys_path
 
 import irc
 from conf import conf
 import events
+
+if 'URK_NO_REMOTE' not in os.environ:
+    import remote
+
+    if remote.run(' '.join(sys.argv[1:])):
+        sys.exit(0)
 
 import widgets
 import windows
