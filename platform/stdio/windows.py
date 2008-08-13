@@ -153,7 +153,10 @@ class QueryWindow(Window):
     pass
 
 class ChannelWindow(Window):
-    pass #FIXME: add nicklist
+    def __init__(self, network, id):
+        Window.__init__(self, network, id)
+        
+        self.nicklist = widgets.Nicklist(self)
 
 manager = widgets.UrkUITabs()
 
