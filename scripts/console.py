@@ -1,6 +1,7 @@
 import sys
 import traceback
 
+import urk
 import events
 import windows
 from conf import conf
@@ -21,8 +22,9 @@ class ConsoleWindow(windows.SimpleWindow):
     
         writer = ConsoleWriter(self)
         
-        sys.stdout = writer
-        sys.stderr = writer
+        if urk.platform != 'stdio':
+            sys.stdout = writer
+            sys.stderr = writer
         
         self.globals = {'window': self}
         self.locals = {}
@@ -68,3 +70,4 @@ def onCommandSay(e):
 def onStart(e):
     if conf.get('start-console'):
         windows.new(ConsoleWindow, None, "console")
+
