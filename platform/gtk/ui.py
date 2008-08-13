@@ -7,6 +7,7 @@ import signal
 import commands
 
 import gobject
+gobject.threads_init()
 
 #stupid workaround
 __sys_path = list(sys.path)
@@ -48,13 +49,21 @@ class GtkSource(object):
 def register_idle(f, *args, **kwargs):
     priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
-        return f(*args, **kwargs)
+        gtk.gdk.threads_enter()
+        try:
+            return f(*args, **kwargs)
+        finally:
+            gtk.gdk.threads_leave()
     return GtkSource(gobject.idle_add(callback, priority=priority))
 
 def register_timer(time, f, *args, **kwargs):
     priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
-        return f(*args, **kwargs)
+        gtk.gdk.threads_enter()
+        try:
+            return f(*args, **kwargs)
+        finally:
+            gtk.gdk.threads_leave()
     return GtkSource(gobject.timeout_add(time, callback, priority=priority))
 
 def fork(cb, f, *args, **kwargs):
@@ -70,7 +79,7 @@ def fork(cb, f, *args, **kwargs):
                 if is_stopped.enabled:
                     cb(result, error)
 
-            gobject.idle_add(callback)
+            register_idle(callback)
 
     thread.start_new_thread(thread_func, ())
     return is_stopped
@@ -144,9 +153,6 @@ def start(command=''):
     register_idle(trigger_start)
 
     try:
-        gtk.gdk.threads_enter()
-        #while gtk.events_pending(): gtk.main_iteration()
         gtk.main()
-        gtk.gdk.threads_leave()
     except KeyboardInterrupt:
         windows.manager.exit()
