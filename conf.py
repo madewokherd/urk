@@ -1,6 +1,8 @@
 import events
 
 import urk
+
+import tempfile
 import os
 
 CONF_FILE = os.path.join(urk.userpath,'urk.conf')
@@ -45,12 +47,14 @@ def pprint(obj, depth=-2):
         return ''.join(string)[:-2]
 
 def save(*args):
-    new_file = not os.access(CONF_FILE,os.F_OK)
-    fd = file(CONF_FILE, "wb")
+    fd, new_file = tempfile.mkstemp()
+    os.chmod(new_file,0600)
+    os.close(fd)
+    fd = file(new_file, "wb")
     try:
-        if new_file:
-            os.chmod(CONF_FILE,0600)
         fd.write(pprint(conf))
+        fd.close()
+        os.rename(new_file, CONF_FILE)
     finally:
         fd.close()
 
