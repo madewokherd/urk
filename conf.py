@@ -3,6 +3,7 @@ import events
 import urk
 
 import tempfile
+import shutil
 import os
 
 CONF_FILE = os.path.join(urk.userpath,'urk.conf')
@@ -54,7 +55,7 @@ def save(*args):
     try:
         fd.write(pprint(conf))
         fd.close()
-        os.rename(new_file, CONF_FILE)
+        shutil.move(new_file, CONF_FILE)
     finally:
         fd.close()
 
