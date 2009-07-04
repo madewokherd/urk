@@ -550,15 +550,16 @@ def isautojoin(network, channel):
     return False
 
 def setautojoin(network, channel):
-    if 'networks' not in conf:
-        conf['networks'] = networks = {}
+    import conf
+    if 'networks' not in conf.conf:
+        conf.conf['networks'] = networks = {}
     else:
-        networks = conf['networks']
+        networks = conf.conf['networks']
     if network.name not in networks:
         networks[network.name] = network_settings = {}
         if 'start_networks' not in conf:
-            conf['start_networks'] = []
-        conf['start_networks'].append(network.name)
+            conf.conf['start_networks'] = []
+        conf.conf['start_networks'].append(network.name)
     else:
         network_settings = networks[network.name]
     
@@ -566,16 +567,20 @@ def setautojoin(network, channel):
         network_settings['join'] = [channel]
     else:
         network_settings['join'].append(channel)
+    
+    conf.save()
 
 def unsetautojoin(network, channel):
+    import conf
     try:
-        joinlist = conf['networks'][network.name]['join']
+        joinlist = conf.conf['networks'][network.name]['join']
     except KeyError:
         return False
     normchannel = network.norm_case(channel)
     for i, chan in enumerate(joinlist[:]):
         if normchannel == network.norm_case(chan):
             joinlist.pop(i)
+    conf.save()
 
 def onChannelMenu(e):
     def toggle_join():
