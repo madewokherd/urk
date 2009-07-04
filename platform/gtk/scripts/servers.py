@@ -5,10 +5,20 @@ import gtk
 import events
 import windows
 from conf import conf
+import ui
 import urk
 
 if 'networks' not in conf:
     conf['networks'] = {}
+
+_save_config_source = None
+
+def save_config():
+    global _save_config_source
+    import conf
+    if _save_config_source:
+        _save_config_source.unregister()
+    _save_config_source = ui.register_timer(3000, conf.save)
 
 def server_get_data(network_info):
     if 'port' in network_info:
@@ -25,6 +35,7 @@ def server_set_data(text, network_info):
     else:
         network_info['server'] = text
         network_info.pop('port', None)
+    save_config()
             
 def channels_get_data(network_info):
     return '\n'.join(network_info.get('join', ()))
@@ -36,12 +47,14 @@ def channels_set_data(text, network_info):
         for chan in line.split(','):
             if chan:
                 network_info['join'].append(chan.strip())
+    save_config()
     
 def perform_get_data(network_info):
     return '\n'.join(network_info.get('perform', ()))
             
 def perform_set_data(text, network_info):
     network_info['perform'] = [line for line in text.split('\n') if line]
+    save_config()
     
 def autoconnect_set_data(do_autoconnect, network): 
     if 'start_networks' not in conf:
@@ -53,6 +66,7 @@ def autoconnect_set_data(do_autoconnect, network):
             conf.get('start_networks').append(network)
         else:
             conf.get('start_networks').remove(network)
+    save_config()
 
 class NetworkInfo(gtk.Frame):
     def update(self):
@@ -142,6 +156,7 @@ class ServerWidget(gtk.VBox):
         network_list.set_value(iter, 0, new_text)
 
         self.infobox.network = new_text
+        save_config()
         
     def add_network(self, button):
         name = 'NewNetwork'
@@ -171,6 +186,7 @@ class ServerWidget(gtk.VBox):
                 conf['start_networks'].remove(name)
             del conf['networks'][name]
             model.remove(iter)
+            save_config()
             
         if len(model):
             self.networks.set_cursor((len(model)-1,))
