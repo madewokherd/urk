@@ -282,7 +282,7 @@ def main():
     gc.collect()
 
     win = gtk.Window()
-    win.set_title('Connect-o-rama') # XXX replace this
+    win.set_title('Networks')
     
     try:
         w.set_icon(
@@ -305,5 +305,5 @@ def main():
     win.show_all()
 
 def setupMainMenu(e):
-    e.menu += [('Servers', gtk.STOCK_CONNECT, main)]
+    e.menu += [('Manage Networks', main)]
 
