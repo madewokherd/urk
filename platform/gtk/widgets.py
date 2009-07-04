@@ -200,6 +200,19 @@ class Nicklist(gtk.TreeView):
     def __iter__(self):
         return (r[0] for r in self.get_model())
 
+    def on_keypress(self, event):
+        if event.string and not (event.state & (gtk.gdk.CONTROL_MASK|gtk.gdk.MOD1_MASK|gtk.gdk.MOD2_MASK|gtk.gdk.MOD3_MASK|gtk.gdk.MOD4_MASK|gtk.gdk.MOD5_MASK)):
+            #redirect character input to the TextInput
+            new_event = event.copy()
+            try:
+                new_event.window = self.win.input.window
+            except AttributeError:
+                # this window has no TextInput
+                return False
+            self.win.input.grab_focus()
+            self.win.input.event(new_event)
+            return True
+
     def __init__(self, window):
         self.win = window
         
@@ -211,7 +224,8 @@ class Nicklist(gtk.TreeView):
         self.set_property("fixed-height-mode", True)
         self.connect("button-press-event", Nicklist.click)
         self.connect_after("button-release-event", lambda *a: True)
-        
+        self.connect("key-press-event", Nicklist.on_keypress)
+   
         style_me(self, "nicklist")
 
 # Label used to display/edit your current nick on a network
@@ -596,6 +610,19 @@ class TextOutput(gtk.TextView):
             
         gobject.idle_add(set_to_scroll)
 
+    def on_keypress(self, event):
+        if event.string and not (event.state & (gtk.gdk.CONTROL_MASK|gtk.gdk.MOD1_MASK|gtk.gdk.MOD2_MASK|gtk.gdk.MOD3_MASK|gtk.gdk.MOD4_MASK|gtk.gdk.MOD5_MASK)):
+            #redirect character input to the TextInput
+            new_event = event.copy()
+            try:
+                new_event.window = self.win.input.window
+            except AttributeError:
+                # this window has no TextInput
+                return False
+            self.win.input.grab_focus()
+            self.win.input.event(new_event)
+            return True
+
     def __init__(self, window, buffer=None):
         if not buffer:
             buffer = gtk.TextBuffer(tag_table)
@@ -624,7 +651,8 @@ class TextOutput(gtk.TextView):
         self.connect('button-release-event', TextOutput.mouseup)
         self.connect_after('button-release-event', lambda *a: True)
         self.connect('leave-notify-event', TextOutput.clear_hover)
-          
+        self.connect('key-press-event', TextOutput.on_keypress)
+        
         self.hover_coords = 0, 0
 
         self.autoscroll = True
