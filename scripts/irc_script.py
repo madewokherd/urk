@@ -557,7 +557,7 @@ def setautojoin(network, channel):
         networks = conf.conf['networks']
     if network.name not in networks:
         networks[network.name] = network_settings = {}
-        if 'start_networks' not in conf:
+        if 'start_networks' not in conf.conf:
             conf.conf['start_networks'] = []
         conf.conf['start_networks'].append(network.name)
     else:
