@@ -77,7 +77,7 @@ class UrkUITabs(object):
         return iter(self.tabs)
     
     def __len__(self):
-        return self.tabs.get_n_pages()
+        return len(self.tabs)
     
     def exit(self, *args):
         events.trigger("Exit")

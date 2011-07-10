@@ -17,21 +17,21 @@ def path(filename=""):
 
 if 'URK_PROFILE' in os.environ:
     userpath = os.environ['URK_PROFILE']
-    if not os.access(userpath,os.F_OK):
+    if not os.path.exists(userpath):
         os.mkdir(userpath, 0700)
-    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+    if not os.path.exists(os.path.join(userpath,'scripts')):
         os.mkdir(os.path.join(userpath,'scripts'), 0700)
-elif os.access(path('profile'),os.F_OK) or os.path.expanduser("~") == "~":
+elif os.path.exists(path('profile')) or os.path.expanduser("~") == "~":
     userpath = path('profile')
-    if not os.access(userpath,os.F_OK):
+    if not os.path.exists(userpath):
         os.mkdir(userpath)
-    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+    if not os.path.exists(os.path.join(userpath,'scripts')):
         os.mkdir(os.path.join(userpath,'scripts'))
 else:
     userpath = os.path.join(os.path.expanduser("~"), ".urk")
-    if not os.access(userpath,os.F_OK):
+    if not os.path.exists(userpath):
         os.mkdir(userpath, 0700)
-    if not os.access(os.path.join(userpath,'scripts'),os.F_OK):
+    if not os.path.exists(os.path.join(userpath,'scripts')):
         os.mkdir(os.path.join(userpath,'scripts'), 0700)
 
 platforms = ['gtk', 'stdio']
@@ -44,12 +44,13 @@ def test_platform(platform, verbose=False):
             traceback.print_exc()
         return False
     try:
-        exec f.read()
-        return True
-    except:
-        if verbose:
-            traceback.print_exc()
-        return False
+        try:
+            exec f.read()
+            return True
+        except:
+            if verbose:
+                traceback.print_exc()
+            return False
     finally:
         f.close()
 

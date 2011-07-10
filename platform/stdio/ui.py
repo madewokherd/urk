@@ -2,9 +2,13 @@ from __future__ import division
 
 import thread
 import time
-import signal
+try:
+    import signal
+except ImportError:
+    pass
 import traceback
 import os
+import sys
 
 import windows
 import events
@@ -12,7 +16,32 @@ import irc
 
 # threading.Event would be ideal if not for the fact that Event.wait() works by
 # sleeping for lots of short times.
-if os.name == 'nt':
+if sys.platform == 'cli':
+    import math
+    import System.Threading
+
+    class Event(object):
+        __fields__ = ['event_handle']
+
+        def __init__(self):
+            self.event_handle = System.Threading.EventWaitHandle(False, System.Threading.EventResetMode.ManualReset)
+
+        def isSet(self):
+            return self.event_handle.WaitOne(0, False)
+
+        def set(self):
+            self.event_handle.Set()
+
+        def clear(self):
+            self.event_handle.Reset()
+
+        def wait(self, timeout = None):
+            if timeout is None:
+                self.event_handle.WaitOne(System.Threading.Timeout.Infinite, False)
+            else:
+                self.event_handle.WaitOne(min(int(math.ceil(timeout * 1000)), 0xfffffffe), False)
+
+elif os.name == 'nt':
     import math
     import ctypes
     kernel32 = ctypes.windll.kernel32

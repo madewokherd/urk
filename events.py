@@ -2,6 +2,7 @@ import sys
 import os
 import traceback
 import imp
+import stat
 
 pyending = os.extsep + 'py'
 
@@ -82,7 +83,7 @@ def get_filename(name):
     
     for path in dirname and (dirname,) or sys.path:
         filename = os.path.join(path, s_name + pyending)
-        if os.access(filename, os.R_OK):
+        if os.path.exists(filename):
             return filename
 
     raise ImportError("No urk script %s found" % name) 
@@ -118,7 +119,11 @@ def load_pyfile(filename):
     # When a module gets collected, everything in its __dict__ gets set to None
     # We can't let that happen until all the objects that need it are gone
     # This should protect the module from being collected without __dict__
-    module.__module__ = module
+    try:
+        module.__module__ = module
+    except AttributeError:
+        # IronPython
+        pass
     
     f = file(filename,"U")
     source = f.read()
