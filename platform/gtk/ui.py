@@ -100,6 +100,8 @@ if hasattr(os,'startfile'):
 else:
     open_file_cmd = "" #cache results of searching for the os program
     os_commands = ( #list of commands to search for for opening files
+        ('xdg-open', ('xdg-open',)),
+        ('/usr/bin/open', ('/usr/bin/open',)),
         ('gnome-open', ('gnome-open',)),
         ('kfmclient', ('kfmclient','exec')),
         ('sensible-browser', ('sensible-browser')),
