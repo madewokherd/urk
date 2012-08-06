@@ -128,7 +128,7 @@ class Window(gtk.VBox):
         if self._need_window_init:
             #make sure we don't call this an extra time when mutating
             gtk.VBox.__init__(self, False)
-            self._need_vbox_init = False
+            self._need_window_init = False
         
             self.output = widgets.TextOutput(self)
             self.buffer = self.output.get_buffer()
