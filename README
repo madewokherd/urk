@@ -1,7 +1,3 @@
-urk 0.-1.cvs
-http://urk.sourceforge.net/
-
-
 Overview:
 
 urk is an IRC client written purely in python for linux/gnome. It has a powerful
@@ -21,9 +17,6 @@ to easily install them.
 
 Because urk is pure python, no compilation of urk is required. Just extract the 
 source to somewhere and run 'python urk.py'.
-
-Windows versions of the above should theoretically work but may not in practice.
-I am hoping someone will come along and actually support urk on windows.
 
 
 Optional requirements:
@@ -54,13 +47,9 @@ one), use the -m switch as in '/server -m irc.gamesurge.net'.
 To join a channel when you're connected to a server, type '/join #channelname',
 replacing #channelname with the channel you want to join.
 
-urk currently only supports the bare minimum commands and features you should
-need to connect and chat normally. On channels, you can send messages by
-typing them (if you want to send a message that starts with a /, use /say to
-send your message). You can send actions to channels with /me and send messages
-to arbitrary targets with /msg. If urk does not recognize a command, it will
-send it to the server. This works to implement most commands you would expect
-on an irc client.
+To automatically join a channel at startup, right click on its tab and check
+"Autojoin". You can also edit the autojoin networks and channels by selecting
+"urk>>Networks" from the menu.
 
 
 Configuration:
@@ -81,62 +70,81 @@ To unset a value (meaning urk will use the default), type
 
 /pyexec del conf.conf['setting']
 
+Settings changes made manually in this way will be saved on exit. To save them
+immediately, type
+
+/pyexec conf.save()
+
 Setting:            Description:
 
 'nick'                 The nickname urk should use. The default is to try to get
-    it from the os. Put this in quotes when you set it.
+    it from the os. Changing your nickname using the gui or /nick without the -t
+    switch will set this.
+    Example: /pyexec conf.conf['nick'] = "fred"
 
-'altnicks'             A list of alternative nicknames to use. The default is
-    an empty list.
+'altnicks'             A list of alternative nicknames to use if the default is
+    not available when connecting.
+    Example: /pyexec conf.conf['altnicks'] = ["nick2", "nick3"]
 
 'quitmsg'              The message people see when you quit. The default is to
     advertise urk with your current version; we have to promote it somehow.
-    This value needs to be in quotes.
+    Example: /pyexec conf.conf['quitmsg'] = "Bye bye"
 
 'autoreconnect'        If True, urk will try to reconnect when you're
-    disconnected from a network. Defaults to True. Set this to True or False.
+    disconnected from a network. Defaults to True.
+    Example: /pyexec conf.conf['autoreconnect'] = False
 
 'highlight_words'      A list of words, in addition to your nick, that cause a
     highlight event (normally the tab label turns blue and, if it's available,
-    the tray icon shows up). For example: ['python', 'whale', 'peanut butter']
+    the tray icon shows up).
+    Example: /pyexec conf.conf['highlight_words'] = ['python', 'whale', 'peanut butter']
 
 'log_dir'              The place where logs are written. The default is a
     directory called "logs" on your profile directory.
+    Example: /pyexec conf.conf['log_dir'] = "/home/user/logs/urk"
 
 'ui-gtk/tab-pos'       The side of the window where the tabs will reside
     2 for top
     0 for left
     1 for right
     3 for bottom (default)
+    Example: /pyexec conf.conf['ui-gtk/tab-pos'] = 0
 
-'ui-gtk/show-menubar'  If True, the menubar is shown. The default is True. Set
-    this to True or False.
+'ui-gtk/show-menubar'  If True, the menubar is shown. The default is True.
+    Example: /pyexec conf.conf['ui-gtk/show-menubar'] = False
 
 'command_prefix'       The prefix used to signal a command. Defaults to '/'
+    Example: /pyexec conf.conf['command_prefix'] = ":"
 
-'font'                 The font used for output. Defaults to "sans 8".
+'font'                 The font used for output.
+    Example: /pyexec conf.conf['font'] = "Sans 8"
 
-'bg_color'             The background color ("black" or "#000000").
+'bg_color'             The background color.
+    Example: /pyexec conf.conf['bg_color'] = "#000000"
 
-'fg_color'             The foreground color ("white" or "#ffffff").
+'fg_color'             The foreground color.
+    Example: /pyexec conf.conf['fg_color'] = "white"
 
 'timestamp'            A timestamp that will show up before messages. The
-    default is no timestamp. A simple timestamp with hours and minutes is
-    "[%H:%M] ". See http://docs.python.org/lib/module-time.html#l2h-1955 for
-    a key to format this string.
+    default is no timestamp. See the "time.strftime" section of
+    http://docs.python.org/lib/module-time.html for a key to format this string.
+    Example: /pyexec conf.conf['timestamp'] = "[%H:%M:%S] "
 
 'start-console'        If True, urk will start up with a special console window
     that shows debugging output (normally sent to a terminal) and accepts
-    python expressions. Defaults to False.
+    python expressions.
+    Example: /pyexec conf.conf['start-console'] = True
 
 'status'               If True, urk will be in status window mode. Each network
     will ALWAYS have a status window. When not in status window mode, networks 
     only have a status window when there are no channel windows. Defaults to 
     False.
+    Example: /pyexec conf.conf['status'] = True
 
 'open-file-command'    The command used to open files and url's with your 
-    preferred application (such as "gnome-open"). This is ignored on Windows, 
-    and you should never need to mess with this, ever.
+    preferred application. This is ignored on Windows, and you shouldn't
+    normally need to change it.
+    Example: /pyexec conf.conf['open-file-command'] = "gnome-open"
 
 
 System-wide installation:
@@ -168,19 +176,5 @@ e.network is an object representing the network where the message was sent.
 e.window is a window that seems to be related to the event for some unspecified
 reason. It could be the status window, a channel window, a query, anything.
 
-Complete documentation doesn't exist yet. Sorry. Ask us or look at the source. theme.py is good for finding event names.
+See the project wiki for more detailed information.
 
-
-Bugs/Feedback:
-
-Naturally, feedback of any sort is welcome. Of course we want to know about
-bugs. In particular, we'd also like to hear about any features you want or
-expect in an irc client that urk doesn't have. While we'd like to limit the
-things that go in the default client (a notify list, for example, is something
-we'd want to see as an external script, not as part of the default setup, and
-something we're not likely to implement soon), there are probably a lot of 
-little things that we may have skipped over because we don't use them or have 
-become used to urk not having them.
-
-The best way to get in touch with us is by irc, at #urk on irc.gamesurge.net.
-Or send a message to the mailing list, urk-discussion@lists.sourceforge.net.
