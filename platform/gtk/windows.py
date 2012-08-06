@@ -58,14 +58,10 @@ def get_default(network):
         return window
 
 class Window(gtk.VBox):
-    need_vbox_init = True
+    _need_window_init = True
     
     def mutate(self, newclass, network, id):
         isactive = self == manager.get_active()
-        self.hide()
-        
-        for child in self.get_children():
-            self.remove(child)
 
         self.__class__ = newclass
         self.__init__(network, id)
@@ -129,27 +125,21 @@ class Window(gtk.VBox):
         manager.update(self)
 
     def __init__(self, network, id):
-        if self.need_vbox_init:
+        if self._need_window_init:
             #make sure we don't call this an extra time when mutating
             gtk.VBox.__init__(self, False)
-            self.need_vbox_init = False
+            self._need_vbox_init = False
         
-        if hasattr(self, "buffer"):
-            self.output = widgets.TextOutput(self, self.buffer)
-        else:
             self.output = widgets.TextOutput(self)
             self.buffer = self.output.get_buffer()
             
-        if hasattr(self, "input"):
-            if self.input.parent:
-                self.input.parent.remove(self.input)
-        else:
             self.input = widgets.TextInput(self)
+
+            self.__activity = set()
         
         self.network = network
         self.rawid = id
         
-        self.__activity = set()
     
 class SimpleWindow(Window):
     def __init__(self, network, id):    
@@ -168,7 +158,51 @@ class SimpleWindow(Window):
 
         self.show_all()
 
-class StatusWindow(Window):
+class _ChannelStatusBase(Window):
+    _need_channelstatusbase_init = True
+
+    def __init__(self, network, id):
+        Window.__init__(self, network, id)
+
+        if self._need_channelstatusbase_init:
+            self.nicklist = widgets.Nicklist(self)
+            self.nick_label = widgets.NickEditor(self)
+
+            self.focus = self.input.grab_focus
+            self.connect("key-press-event", self.transfer_text)
+            
+            topbox = gtk.ScrolledWindow()
+            topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+            topbox.add(self.output)
+            
+            self.nlbox = gtk.ScrolledWindow()
+            self.nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
+            self.nlbox.add(self.nicklist)
+
+            self.nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 112), -1)
+
+            botbox = gtk.HBox()
+            botbox.pack_start(self.input)
+            botbox.pack_end(self.nick_label, expand=False)
+            
+            self.pack_end(botbox, expand=False)
+            
+            pane = gtk.HPaned()
+            pane.pack1(topbox, resize=True, shrink=False)
+            pane.pack2(self.nlbox, resize=False, shrink=True)
+            
+            self.nicklist.pos = None
+     
+            pane.connect("button-press-event", move_nicklist)
+            pane.connect("button-release-event", drop_nicklist)
+            
+            self.pack_end(pane)
+
+            self.show_all()
+
+            self._need_channelstatusbase_init = False
+
+class StatusWindow(_ChannelStatusBase):
     def get_toplevel_title(self):
         return '%s - %s' % (self.network.me, self.get_title())
 
@@ -179,27 +213,10 @@ class StatusWindow(Window):
         else:
             return "[%s]" % self.network.server
 
-    def __init__(self, network, id):    
-        Window.__init__(self, network, id)
+    def __init__(self, network, id):
+        _ChannelStatusBase.__init__(self, network, id)
 
-        self.nick_label = widgets.NickEditor(self)
-
-        self.focus = self.input.grab_focus
-        self.connect("key-press-event", self.transfer_text)
-
-        botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
-
-        self.pack_end(botbox, expand=False)
-        
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-
-        self.pack_end(topbox)
-
-        self.show_all()
+        self.nlbox.hide()
 
 class QueryWindow(Window):
     def __init__(self, network, id):    
@@ -256,41 +273,9 @@ def drop_nicklist(paned, event):
         if pos != nicklist_pos:
             conf["ui-gtk/nicklist-width"] = width - pos - 6
 
-class ChannelWindow(Window):
+class ChannelWindow(_ChannelStatusBase):
     def __init__(self, network, id):
-        Window.__init__(self, network, id)
+        _ChannelStatusBase.__init__(self, network, id)
 
-        self.nicklist = widgets.Nicklist(self)
-        self.nick_label = widgets.NickEditor(self)
+        self.nlbox.show()
 
-        self.focus = self.input.grab_focus
-        self.connect("key-press-event", self.transfer_text)
-        
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        topbox.add(self.output)
-        
-        nlbox = gtk.ScrolledWindow()
-        nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
-        nlbox.add(self.nicklist)
-
-        nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 112), -1)
-
-        botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
-        
-        self.pack_end(botbox, expand=False)
-        
-        pane = gtk.HPaned()
-        pane.pack1(topbox, resize=True, shrink=False)
-        pane.pack2(nlbox, resize=False, shrink=True)
-        
-        self.nicklist.pos = None
- 
-        pane.connect("button-press-event", move_nicklist)
-        pane.connect("button-release-event", drop_nicklist)
-        
-        self.pack_end(pane)
-
-        self.show_all()
