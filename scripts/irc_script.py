@@ -127,6 +127,12 @@ def setdownRaw(e):
         elif e.msg[1] == "NOTICE":
             events.trigger('Notice', e)
             e.done = True
+
+        elif e.msg[1] == "INVITE":
+            e.channel = e.msg[3]
+            if e.network.norm_case(e.target) == e.network.norm_case(e.network.me):
+                events.trigger('Invite', e)
+            e.done = True
         
         elif e.msg[1] == "TOPIC":
             events.trigger('Topic', e)
@@ -537,6 +543,10 @@ def onConnect(e):
         for command in e.network.temp_perform:
             events.run(command, e.window, e.network)
         del e.network.temp_perform
+
+def onInvite(e):
+    if not e.done and isautojoin(e.network, e.channel):
+        events.run('join -n %s' % e.channel, e.window, e.network)
 
 def isautojoin(network, channel):
     try:
