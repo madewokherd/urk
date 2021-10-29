@@ -1,4 +1,5 @@
 import socket
+import ssl
 import sys
 
 from conf import conf
@@ -54,7 +55,7 @@ class Network(object):
     socket = None
     
     def __init__(self, server="irc.default.org", port=6667, nicks=[], 
-                    username="", fullname="", name=None, **kwargs):
+                    username="", fullname="", name=None, ssl=None, **kwargs):
         self.server = server
         self.port = port
         
@@ -81,8 +82,20 @@ class Network(object):
         self.on_channels = set()
         self.requested_joins = set()
         self.requested_parts = set()
+
+        self.ssl = ssl
         
         self.buffer = ''
+
+    def create_socket(self, family, type, proto):
+        sock = socket.socket(family, type, proto)
+        if self.ssl is not None:
+            if self.ssl is True:
+                context = ssl.create_default_context()
+            else:
+                context = self.ssl
+            sock = context.wrap_socket(sock, server_hostname=self.server)
+        return sock
     
     #called when we get a result from the dns lookup
     def on_dns(self, result, error):
@@ -103,8 +116,9 @@ class Network(object):
             for f, t, p, c, a in result:
                 if (f, t, p, c, a) not in self.failedhosts:
                     try:
-                        self.socket = socket.socket(f, t, p)
+                        self.socket = self.create_socket(f, t, p)
                     except:
+                        __import__('traceback').print_exc()
                         continue
                     self.source = ui.fork(self.on_connect, self.socket.connect, a)
                     self.failedhosts.append((f, t, p, c, a))
@@ -117,7 +131,7 @@ class Network(object):
                     self.failedhosts[:] = (f, t, p, c, a),
                     f, t, p, c, a = result[0]
                     try:
-                        self.socket = socket.socket(f, t, p)
+                        self.socket = self.create_socket(f, t, p)
                         self.source = ui.fork(self.on_connect, self.socket.connect, a)
                     except:
                         self.disconnect(error="Couldn't find a host we can connect to")

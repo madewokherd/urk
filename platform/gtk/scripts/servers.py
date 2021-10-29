@@ -21,16 +21,28 @@ def save_config():
     _save_config_source = ui.register_timer(3000, conf.save)
 
 def server_get_data(network_info):
+    if network_info.get('ssl', None):
+        if 'port' in network_info:
+            return "%s:+%s" % (
+                network_info.get('server', '') , network_info.get('port')
+                )
+        return "%s:+6697" % (
+            network_info.get('server', '') , network_info.get('port')
+            )
     if 'port' in network_info:
         return "%s:%s" % (
             network_info.get('server', '') , network_info.get('port')
             )
-    else:
-        return network_info.get('server', '')
+    return network_info.get('server', '')
         
 def server_set_data(text, network_info):
     if ':' in text:
         network_info['server'], port = text.rsplit(':',1)
+        if port.startswith('+'):
+            network_info['ssl'] = True
+            port = port[1:]
+        else:
+            network_info['ssl'] = None
         network_info['port'] = int(port)
     else:
         network_info['server'] = text

@@ -360,12 +360,14 @@ def onCommandHop(e):
         raise events.CommandError("You must supply a channel.")
 
 #this should be used whereever a new irc.Network may need to be created
-def server(server=None,port=6667,network=None,connect=True):
+def server(server=None,port=6667,network=None,ssl=None,connect=True):
     network_info = {}
     
     if server:
         network_info["name"] = server
         network_info["server"] = server
+        if ssl:
+            network_info["ssl"] = ssl
         if port:
             network_info["port"] = port
         get_network_info(server, network_info)
@@ -383,13 +385,15 @@ def server(server=None,port=6667,network=None,connect=True):
                     window.update()
         if "port" in network_info:
             network.port = network_info["port"]
+        if "ssl" in network_info:
+            network.ssl = network_info["ssl"]
     
     if network.status:
         network.quit()
     if connect:
         network.connect()
         windows.get_default(network).write(
-            "* Connecting to %s on port %s" % (network.server, network.port)
+            "* Connecting to %s on port %s%s" % (network.server, network.port, " (SSL enabled)" if network.ssl else "")
             )
     
     return network
@@ -397,25 +401,38 @@ def server(server=None,port=6667,network=None,connect=True):
 def onCommandServer(e):
     host = port = None
     
+    ssl = None
+
+    if 'e' in e.switches:
+        ssl = True
+
     if e.args:
         host = e.args[0]
 
         if ':' in host:
             host, port = host.rsplit(':', 1)
-            port = int(port)
             
         elif len(e.args) > 1:
-            port = int(e.args[1])
+            port = e.args[1]
+
+        elif ssl:
+            port = "6697"
 
         else:
-            port = 6667
+            port = "6667"
     
+    if port.startswith('+'):
+        ssl = True
+        port = port[1:]
+
+    port = int(port)
+
     if 'm' in e.switches:    
         network = None
     else:
         network = e.network
     
-    server(server=host, port=port, network=network, connect='o' not in e.switches)
+    server(server=host, port=port, network=network, ssl=ssl, connect='o' not in e.switches)
 
 #see http://www.w3.org/Addressing/draft-mirashi-url-irc-01.txt
 def onCommandIrcurl(e):
