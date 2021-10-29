@@ -421,11 +421,11 @@ def onCommandServer(e):
         else:
             port = "6667"
     
-    if port.startswith('+'):
-        ssl = True
-        port = port[1:]
+        if port.startswith('+'):
+            ssl = True
+            port = port[1:]
 
-    port = int(port)
+        port = int(port)
 
     if 'm' in e.switches:    
         network = None
