@@ -22,12 +22,8 @@ def save_config():
 
 def server_get_data(network_info):
     if network_info.get('ssl', None):
-        if 'port' in network_info:
-            return "%s:+%s" % (
-                network_info.get('server', '') , network_info.get('port')
-                )
-        return "%s:+6697" % (
-            network_info.get('server', '') , network_info.get('port')
+        return "%s:+%s" % (
+            network_info.get('server', '') , network_info.get('port', 6697)
             )
     if 'port' in network_info:
         return "%s:%s" % (
