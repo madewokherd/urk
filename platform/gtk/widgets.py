@@ -455,6 +455,8 @@ class TextOutput(gtk.TextView):
             self.forward_display_line(iter)
         yalign = float(self.get_iter_location(iter).y-y)/self.height
         self.scroll_to_iter(iter, 0, True, 0, yalign)
+        
+        self.check_autoscroll()
     
     def get_ymax(self):
         buffer = self.get_buffer()
@@ -593,6 +595,21 @@ class TextOutput(gtk.TextView):
         
         self.get_pointer()
 
+    def scroll(self, _allocation=None):
+        if self.autoscroll:
+            def do_scroll():
+                self.scroller.value = self.scroller.upper - self.scroller.page_size
+                self._scrolling = False
+            
+            if not self._scrolling:
+                self._scrolling = gobject.idle_add(do_scroll)
+    
+    def check_autoscroll(self, *args):
+        def set_to_scroll():
+            self.autoscroll = self.scroller.value + self.scroller.page_size >= self.scroller.upper
+            
+        gobject.idle_add(set_to_scroll)
+
     def on_keypress(self, event):
         if event.string and not (event.state & (gtk.gdk.CONTROL_MASK|gtk.gdk.MOD1_MASK|gtk.gdk.MOD2_MASK|gtk.gdk.MOD3_MASK|gtk.gdk.MOD4_MASK|gtk.gdk.MOD5_MASK)):
             #redirect character input to the TextInput
@@ -639,6 +656,7 @@ class TextOutput(gtk.TextView):
         self.hover_coords = 0, 0
 
         self.autoscroll = True
+        self._scrolling = False
         self.scroller = gtk.Adjustment()
 
         def setup_scroll(self, _adj, vadj):
@@ -647,14 +665,11 @@ class TextOutput(gtk.TextView):
             if vadj:
                 def set_scroll(adj):
                     self.autoscroll = adj.value + adj.page_size >= adj.upper
-                def do_scroll(adj):
-                    if self.autoscroll:
-                        adj.set_value(adj.upper - adj.page_size)
     
-                vadj.connect("changed", do_scroll)
                 vadj.connect("value-changed", set_scroll)
 
         self.connect("set-scroll-adjustments", setup_scroll)
+        self.connect("size-allocate", TextOutput.scroll)
 
         def set_cursor(widget):
             self.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(None)      
