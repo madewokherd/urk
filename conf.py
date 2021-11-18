@@ -48,12 +48,16 @@ def pprint(obj, depth=-2):
         return ''.join(string)[:-2]
 
 def save(*args):
+    data = pprint(conf)
+    reloaded_conf = eval(data)
+    if reloaded_conf != conf:
+        raise Exception("Configuration round-trip failed")
     fd, new_file = tempfile.mkstemp()
     os.chmod(new_file,0600)
     os.close(fd)
     fd = file(new_file, "wb")
     try:
-        fd.write(pprint(conf))
+        fd.write(data)
         fd.close()
         shutil.move(new_file, CONF_FILE)
     finally:
