@@ -624,10 +624,12 @@ class TextOutput(Gtk.TextView):
             return True
 
     def __init__(self, window, buffer=None):
-        if not buffer:
-            buffer = Gtk.TextBuffer(tag_table)
+        GObject.GObject.__init__(self)
         
-        GObject.GObject.__init__(self, buffer)
+        if not buffer:
+            buffer = Gtk.TextBuffer.new(tag_table)
+
+        self.set_buffer(buffer)
         
         self.win = window
         
