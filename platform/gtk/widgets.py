@@ -179,7 +179,8 @@ class Nicklist(Gtk.TreeView):
         
         self.insert_column_with_attributes(
             0, '', Gtk.CellRendererText(), markup=1
-            ).set_sizing(Gtk.TreeViewColumnSizing.FIXED)
+            )
+        self.get_column(0).set_sizing(Gtk.TreeViewColumnSizing.FIXED)
 
         for name in names:
             self.append(*name)
