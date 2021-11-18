@@ -3,8 +3,8 @@ import os
 import sys
 import traceback
 
-import gtk
-import pango
+from gi.repository import Gtk
+from gi.repository import Pango
 
 try:
     import gtksourceview
@@ -22,7 +22,7 @@ try:
 except AttributeError:
     editorwindows = {}
 
-class EditorWidget(gtk.VBox):
+class EditorWidget(Gtk.VBox):
     def goto(self, line, offset):
         buffer = self.output.get_buffer()
                     
@@ -57,10 +57,10 @@ class EditorWidget(gtk.VBox):
         if GTK_SOURCE_VIEW:
             self.output = gtksourceview.SourceView(gtksourceview.SourceBuffer())
         else:
-            self.output = gtk.TextView()
+            self.output = Gtk.TextView()
             
-        self.output.modify_font(pango.FontDescription('monospace 9'))
-        self.output.set_wrap_mode(gtk.WRAP_WORD)
+        self.output.modify_font(Pango.FontDescription('monospace 9'))
+        self.output.set_wrap_mode(Gtk.WrapMode.WORD)
             
         if GTK_SOURCE_VIEW:
             self.output.set_show_line_numbers(True)
@@ -83,15 +83,15 @@ class EditorWidget(gtk.VBox):
             buffer.set_highlight(True)
 
     def __init__(self):
-        gtk.VBox.__init__(self)
+        GObject.GObject.__init__(self)
 
         self.edit_widget()
 
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox = Gtk.ScrolledWindow()
+        topbox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         topbox.add(self.output)
         
-        self.pack_end(topbox)
+        self.pack_end(topbox, True, True, 0)
 
         self.show_all()
 
@@ -108,20 +108,20 @@ menu_ui = """
 </ui>
 """
 
-class ConfirmCloseDialog(gtk.Dialog):
+class ConfirmCloseDialog(Gtk.Dialog):
     def __init__(self, parent, name):
-        gtk.Dialog.__init__(self, "Question", parent,
-                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_NO_SEPARATOR,
-                            ("Close without Saving", gtk.RESPONSE_CLOSE,
-                            gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                            gtk.STOCK_SAVE, gtk.RESPONSE_OK,))
+        GObject.GObject.__init__(self, "Question", parent,
+                            Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT|Gtk.DialogFlags.NO_SEPARATOR,
+                            ("Close without Saving", Gtk.ResponseType.CLOSE,
+                            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                            Gtk.STOCK_SAVE, Gtk.ResponseType.OK,))
         self.set_property("resizable", False)
         self.set_property("border_width", 6)
 
-        image = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING,gtk.ICON_SIZE_DIALOG)
+        image = Gtk.Image.new_from_stock(Gtk.STOCK_DIALOG_WARNING,Gtk.IconSize.DIALOG)
         image.set_property("yalign",0.0)
 
-        label = gtk.Label()
+        label = Gtk.Label()
         label.set_property("selectable", True)
         label.set_markup(
 """<span weight="bold" size="larger">Save changes to script "%s" before closing?</span>
@@ -129,33 +129,33 @@ class ConfirmCloseDialog(gtk.Dialog):
 If you don't save, changes will be permanently lost.
 """ % name)
 
-        hbox = gtk.HBox(spacing=12)
+        hbox = Gtk.HBox(spacing=12)
         hbox.set_property('border-width', 6)
-        hbox.pack_start(image)
-        hbox.pack_end(label)
+        hbox.pack_start(image, True, True, 0)
+        hbox.pack_end(label, True, True, 0)
         
         self.vbox.set_property("spacing", 12)
-        self.vbox.pack_start(hbox)
+        self.vbox.pack_start(hbox, True, True, 0)
         
         self.show_all()
 
 #This really is needed for pygtk 2.6
-class ConfirmOverwriteDialog(gtk.Dialog):
+class ConfirmOverwriteDialog(Gtk.Dialog):
     def __init__(self, parent, filename):
-        gtk.Dialog.__init__(self, "Question", parent,
-                            gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_NO_SEPARATOR,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                            "Replace", gtk.RESPONSE_OK,))
+        GObject.GObject.__init__(self, "Question", parent,
+                            Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT|Gtk.DialogFlags.NO_SEPARATOR,
+                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                            "Replace", Gtk.ResponseType.OK,))
         self.set_property("resizable", False)
         self.set_property("border_width", 6)
 
-        image = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING,gtk.ICON_SIZE_DIALOG)
+        image = Gtk.Image.new_from_stock(Gtk.STOCK_DIALOG_WARNING,Gtk.IconSize.DIALOG)
         image.set_property("yalign",0.0)
         
         path, shortfile = os.path.split(filename)
         path = os.path.split(path)[1] or path
 
-        label = gtk.Label()
+        label = Gtk.Label()
         label.set_property("selectable", True)
         label.set_markup(
 """<span weight="bold" size="larger">A file named "%s" already exists.  Do you want to replace it?</span>
@@ -163,17 +163,17 @@ class ConfirmOverwriteDialog(gtk.Dialog):
 The file already exists in "%s".  Replacing it will overwrite its contents.
 """ % (shortfile, path))
 
-        hbox = gtk.HBox(spacing=12)
+        hbox = Gtk.HBox(spacing=12)
         hbox.set_property('border-width', 6)
-        hbox.pack_start(image)
-        hbox.pack_end(label)
+        hbox.pack_start(image, True, True, 0)
+        hbox.pack_end(label, True, True, 0)
         
         self.vbox.set_property("spacing", 12)
-        self.vbox.pack_start(hbox)
+        self.vbox.pack_start(hbox, True, True, 0)
 
         self.show_all()
 
-class EditorWindow(gtk.Window):
+class EditorWindow(Gtk.Window):
     def title(self, *args):
         if self.editor.output.get_buffer().get_modified():
             modified = '*'
@@ -191,18 +191,18 @@ class EditorWindow(gtk.Window):
             self.set_title('%sNew Script' % modified)
 
     def open(self, _action):
-        chooser = gtk.FileChooserDialog(
-            "Open Script", self, gtk.FILE_CHOOSER_ACTION_OPEN,
+        chooser = Gtk.FileChooserDialog(
+            "Open Script", self, Gtk.FileChooserAction.OPEN,
             (
-                gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                gtk.STOCK_OPEN, gtk.RESPONSE_OK
+                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
             )
             )
 
         chooser.set_current_folder(os.path.realpath(os.path.join(urk.userpath, 'scripts')))
 
         def on_response(dialog, response_id):
-            if response_id == gtk.RESPONSE_OK:
+            if response_id == Gtk.ResponseType.OK:
                 self.filename = chooser.get_filename()
                 self.load()
 
@@ -246,20 +246,20 @@ class EditorWindow(gtk.Window):
 
         else:
             parent = parent or self
-            chooser = gtk.FileChooserDialog(
-                "Save Script", parent, gtk.FILE_CHOOSER_ACTION_SAVE,
+            chooser = Gtk.FileChooserDialog(
+                "Save Script", parent, Gtk.FileChooserAction.SAVE,
                 (
-                    gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                    gtk.STOCK_SAVE, gtk.RESPONSE_OK
+                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                    Gtk.STOCK_SAVE, Gtk.ResponseType.OK
                 )
                 )
 
             chooser.set_current_folder(os.path.realpath(os.path.join(urk.userpath, 'scripts')))
-            chooser.set_default_response(gtk.RESPONSE_OK)
+            chooser.set_default_response(Gtk.ResponseType.OK)
 
             def on_overwrite_response(confirm, response_id):
                 confirm.destroy()
-                if response_id == gtk.RESPONSE_OK:
+                if response_id == Gtk.ResponseType.OK:
                     self.filename = chooser.get_filename()
                     self.title()
                     self.save(action, parent, on_save)
@@ -267,7 +267,7 @@ class EditorWindow(gtk.Window):
                     chooser.destroy()
 
             def on_response(chooser, response_id):
-                if response_id == gtk.RESPONSE_OK:
+                if response_id == Gtk.ResponseType.OK:
                     filename = chooser.get_filename()
                     if os.path.exists(filename):
                         confirm = ConfirmOverwriteDialog(chooser, filename)
@@ -293,14 +293,14 @@ class EditorWindow(gtk.Window):
     def menu(self):
         actions = (
             ('ScriptMenu', None, '_Script'),
-                ('Save', gtk.STOCK_SAVE, '_Save', '<Control>S', None, self.save),
-                ('Open', gtk.STOCK_OPEN, '_Open', '<Control>O', None, self.open),
+                ('Save', Gtk.STOCK_SAVE, '_Save', '<Control>S', None, self.save),
+                ('Open', Gtk.STOCK_OPEN, '_Open', '<Control>O', None, self.open),
             )
     
-        actiongroup = gtk.ActionGroup('Edit')
+        actiongroup = Gtk.ActionGroup('Edit')
         actiongroup.add_actions(actions)
 
-        uimanager = gtk.UIManager()
+        uimanager = Gtk.UIManager()
         uimanager.add_ui_from_string(menu_ui)
         uimanager.insert_action_group(actiongroup, 0)
  
@@ -314,15 +314,15 @@ class EditorWindow(gtk.Window):
               self.filename and events.get_scriptname(self.filename) or "New Script")
             
             def on_response(widget, response_id):
-                if response_id == gtk.RESPONSE_OK: #Save
+                if response_id == Gtk.ResponseType.OK: #Save
                     def on_save():
                         widget.destroy()
                         self.on_destroy()
                         self.destroy()
                     self.save(parent=widget, on_save=on_save)
-                elif response_id == gtk.RESPONSE_CANCEL:
+                elif response_id == Gtk.ResponseType.CANCEL:
                     widget.destroy()
-                elif response_id == gtk.RESPONSE_CLOSE:
+                elif response_id == Gtk.ResponseType.CLOSE:
                     widget.destroy()
                     self.on_destroy()
                     self.destroy()
@@ -337,13 +337,13 @@ class EditorWindow(gtk.Window):
         editorwindows.pop(self.filename, None)
     
     def __init__(self, filename='', open_lineno=None):
-        gtk.Window.__init__(self)
+        GObject.GObject.__init__(self)
         
         self.filename = filename
         
         try:
             self.set_icon(
-                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                GdkPixbuf.Pixbuf.new_from_file(urk.path("urk_icon.svg"))
                 )
         except:
             pass
@@ -357,22 +357,22 @@ class EditorWindow(gtk.Window):
         self.load()
         self.title()
         
-        self.status = gtk.Statusbar()
+        self.status = Gtk.Statusbar()
         self.status.set_has_resize_grip(True)
         
         menu = self.menu()
 
-        box = gtk.VBox()
-        box.pack_start(menu, expand=False)
-        box.pack_start(self.editor)
-        box.pack_end(self.status, expand=False)
+        box = Gtk.VBox()
+        box.pack_start(menu, False, True, 0)
+        box.pack_start(self.editor, True, True, 0)
+        box.pack_end(self.status, False, True, 0)
         
         self.connect("delete-event", EditorWindow.on_delete)
         #self.connect("destroy-event", EditorWindow.on_destroy)
         
         try:
             self.set_icon(
-                gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+                GdkPixbuf.Pixbuf.new_from_file(urk.path("urk_icon.svg"))
                 )
         except:
             pass

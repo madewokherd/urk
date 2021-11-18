@@ -6,13 +6,13 @@ import signal
 
 import commands
 
-import gobject
-gobject.threads_init()
+from gi.repository import GObject
+GObject.threads_init()
 
 #stupid workaround
 __sys_path = list(sys.path)
-import gtk
-gtk.gdk.threads_init()
+from gi.repository import Gtk
+Gdk.threads_init()
 sys.path = __sys_path
 
 import irc
@@ -29,15 +29,15 @@ import widgets
 import windows
 
 # Priority Constants
-PRIORITY_HIGH = gobject.PRIORITY_HIGH
-PRIORITY_DEFAULT = gobject.PRIORITY_DEFAULT
-PRIORITY_HIGH_IDLE = gobject.PRIORITY_HIGH_IDLE
-PRIORITY_DEFAULT_IDLE = gobject.PRIORITY_DEFAULT_IDLE
-PRIORITY_LOW = gobject.PRIORITY_LOW
+PRIORITY_HIGH = GObject.PRIORITY_HIGH
+PRIORITY_DEFAULT = GObject.PRIORITY_DEFAULT
+PRIORITY_HIGH_IDLE = GObject.PRIORITY_HIGH_IDLE
+PRIORITY_DEFAULT_IDLE = GObject.PRIORITY_DEFAULT_IDLE
+PRIORITY_LOW = GObject.PRIORITY_LOW
 
 def set_clipboard(text):
-    gtk.clipboard_get(gtk.gdk.SELECTION_CLIPBOARD).set_text(text)
-    gtk.clipboard_get(gtk.gdk.SELECTION_PRIMARY).set_text(text)
+    Gtk.clipboard_get(Gdk.SELECTION_CLIPBOARD).set_text(text)
+    Gtk.clipboard_get(Gdk.SELECTION_PRIMARY).set_text(text)
 
 class Source(object):
     __slots__ = ['enabled']
@@ -51,27 +51,27 @@ class GtkSource(object):
     def __init__(self, tag):
         self.tag = tag
     def unregister(self):
-        gobject.source_remove(self.tag)
+        GObject.source_remove(self.tag)
 
 def register_idle(f, *args, **kwargs):
     priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
-        gtk.gdk.threads_enter()
+        Gdk.threads_enter()
         try:
             return f(*args, **kwargs)
         finally:
-            gtk.gdk.threads_leave()
-    return GtkSource(gobject.idle_add(callback, priority=priority))
+            Gdk.threads_leave()
+    return GtkSource(GObject.idle_add(callback, priority=priority))
 
 def register_timer(time, f, *args, **kwargs):
     priority = kwargs.pop("priority",PRIORITY_DEFAULT_IDLE)
     def callback():
-        gtk.gdk.threads_enter()
+        Gdk.threads_enter()
         try:
             return f(*args, **kwargs)
         finally:
-            gtk.gdk.threads_leave()
-    return GtkSource(gobject.timeout_add(time, callback, priority=priority))
+            Gdk.threads_leave()
+    return GtkSource(GObject.timeout_add(time, callback, priority=priority))
 
 def fork(cb, f, *args, **kwargs):
     is_stopped = Source()
@@ -107,18 +107,18 @@ else:
         ('sensible-browser', ('sensible-browser')),
         )
     def open_file(filename):
-        flags = gobject.SPAWN_LEAVE_DESCRIPTORS_OPEN | gobject.SPAWN_SEARCH_PATH
+        flags = GObject.SPAWN_LEAVE_DESCRIPTORS_OPEN | GObject.SPAWN_SEARCH_PATH
         filename = str(filename) #gobject won't accept unicode strings
         if conf.get('open-file-command'):
             command = conf['open-file-command'].split(' ') + [filename]
             try:
-                gobject.spawn_async(command,flags=flags)
+                GObject.spawn_async(command,flags=flags)
             except OSError:
                 print "Unable to start %s" % command
         elif open_file_cmd:
             try:
                 command = open_file_cmd + (filename,)
-                gobject.spawn_async(command,flags=flags)
+                GObject.spawn_async(command,flags=flags)
             except OSError:
                 print "Unable to start %s" % command
         else:
@@ -129,14 +129,14 @@ else:
                         globals()['open_file_cmd'] = cmd
                         try:
                             command = cmd + (filename,)
-                            gobject.spawn_async(command,flags=flags)
+                            GObject.spawn_async(command,flags=flags)
                         except OSError:
                             print "Unable to start %s" % command
                         return
             print "Unable to find a method to open %s." % filename
 
 def we_get_signal(*what):
-    gobject.idle_add(windows.manager.exit)
+    GObject.idle_add(windows.manager.exit)
 
 def start(command=''):
     #for i in range(10): windows[0].write("\x040000CC<\x04nick\x040000CC>\x04 text")
@@ -162,6 +162,6 @@ def start(command=''):
     register_idle(trigger_start)
 
     try:
-        gtk.main()
+        Gtk.main()
     except KeyboardInterrupt:
         windows.manager.exit()

@@ -59,7 +59,7 @@ def onKeyPress(e):
         
         find = widgets.FindBox(window)
         
-        window.pack_start(find, expand=False)
+        window.pack_start(find, False, True, 0)
         
         find.textbox.grab_focus()
     

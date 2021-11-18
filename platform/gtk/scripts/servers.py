@@ -1,6 +1,6 @@
 import gc
 
-import gtk
+from gi.repository import Gtk
 
 import events
 import windows
@@ -76,28 +76,28 @@ def autoconnect_set_data(do_autoconnect, network):
             conf.get('start_networks').remove(network)
     save_config()
 
-class NetworkInfo(gtk.Frame):
+class NetworkInfo(Gtk.Frame):
     def update(self):
         for child in self.get_children():
             self.remove(child)
     
         network_info = conf.get('networks', {}).get(self.network, {})
 
-        table = gtk.Table(4, 2)
+        table = Gtk.Table(4, 2)
         table.set_row_spacings(3)
         
         # server
-        label = gtk.Label('Server:')
+        label = Gtk.Label(label='Server:')
 
-        data = gtk.Entry()
+        data = Gtk.Entry()
         data.set_text(server_get_data(network_info))
         data.connect(
             'key-release-event', 
             lambda w, e: server_set_data(w.get_text(), network_info)
             )
 
-        table.attach(label, 0, 1, 0, 1, xoptions=gtk.FILL)
-        table.attach(data, 1, 2, 0, 1, xoptions=gtk.FILL)
+        table.attach(label, 0, 1, 0, 1, xoptions=Gtk.AttachOptions.FILL)
+        table.attach(data, 1, 2, 0, 1, xoptions=Gtk.AttachOptions.FILL)
         
         def get_text_from_textview(textview):
             buffer = textview.get_buffer()
@@ -106,49 +106,49 @@ class NetworkInfo(gtk.Frame):
                 )
         
         # channels
-        label = gtk.Label('Channels:')
+        label = Gtk.Label(label='Channels:')
 
-        data = gtk.TextView()
+        data = Gtk.TextView()
         data.get_buffer().set_text(channels_get_data(network_info))
         data.connect(
             'key-release-event', 
             lambda w, e: channels_set_data(get_text_from_textview(w), network_info)
             )
 
-        table.attach(label, 0, 1, 1, 2, xoptions=gtk.FILL)
-        table.attach(data, 1, 2, 1, 2, xoptions=gtk.FILL)
+        table.attach(label, 0, 1, 1, 2, xoptions=Gtk.AttachOptions.FILL)
+        table.attach(data, 1, 2, 1, 2, xoptions=Gtk.AttachOptions.FILL)
         
         # perform
-        label = gtk.Label('Perform:')
+        label = Gtk.Label(label='Perform:')
 
-        data = gtk.TextView()
+        data = Gtk.TextView()
         data.get_buffer().set_text(perform_get_data(network_info))
         data.connect(
             'key-release-event',
             lambda w, e: perform_set_data(get_text_from_textview(w), network_info)
             )
 
-        table.attach(label, 0, 1, 2, 3, xoptions=gtk.FILL)
-        table.attach(data, 1, 2, 2, 3, xoptions=gtk.FILL)
+        table.attach(label, 0, 1, 2, 3, xoptions=Gtk.AttachOptions.FILL)
+        table.attach(data, 1, 2, 2, 3, xoptions=Gtk.AttachOptions.FILL)
 
         # autoconnect
-        data = gtk.CheckButton(label='Connect on startup')
+        data = Gtk.CheckButton(label='Connect on startup')
         data.set_active(self.network in conf.get('start_networks', []))  
         data.connect(
             'toggled',
             lambda w: autoconnect_set_data(w.get_active(), self.network)
             )  
         
-        table.attach(data, 1, 2, 3, 4, xoptions=gtk.FILL)
+        table.attach(data, 1, 2, 3, 4, xoptions=Gtk.AttachOptions.FILL)
 
-        box = gtk.HBox()
-        box.pack_start(table, padding=5)
+        box = Gtk.HBox()
+        box.pack_start(table, True, True, 5)
         self.add(box)
         
         self.set_label(self.network)
         self.show_all()
 
-class ServerWidget(gtk.VBox):
+class ServerWidget(Gtk.VBox):
     def edit_network(self, cell, path_string, new_text):
         network_list = self.networks.get_model()
         old_text = network_list[path_string][0]
@@ -232,7 +232,7 @@ class ServerWidget(gtk.VBox):
     def __init__(self):
         self.infobox = NetworkInfo()
 
-        network_list = gtk.ListStore(str)
+        network_list = Gtk.ListStore(str)
         for network in conf.get('start_networks', []):
              network_list.append([network])
         
@@ -240,26 +240,26 @@ class ServerWidget(gtk.VBox):
             if network not in conf.get('start_networks', []):
                 network_list.append([network])
 
-        renderer = gtk.CellRendererText()
+        renderer = Gtk.CellRendererText()
         renderer.set_property('editable', True)
         renderer.connect('edited', self.edit_network)
 
-        self.networks = gtk.TreeView(network_list)
+        self.networks = Gtk.TreeView(network_list)
         self.networks.set_headers_visible(False)
         self.networks.insert_column_with_attributes(
             0, '', renderer, text=0
             )
             
         selection = self.networks.get_selection()
-        selection.set_mode(gtk.SELECTION_SINGLE)
+        selection.set_mode(Gtk.SelectionMode.SINGLE)
         selection.connect('changed', self.on_selection_changed)
 
         self.buttons = {
-            'add': gtk.Button(stock='gtk-add'),
-            'remove': gtk.Button(stock='gtk-remove'),
+            'add': Gtk.Button(stock='gtk-add'),
+            'remove': Gtk.Button(stock='gtk-remove'),
             
-            'close': gtk.Button(stock='gtk-close'),
-            'connect': gtk.Button(stock='gtk-connect'),
+            'close': Gtk.Button(stock='gtk-close'),
+            'connect': Gtk.Button(stock='gtk-connect'),
             }
         
         self.buttons['add'].connect('clicked', self.add_network)
@@ -267,50 +267,50 @@ class ServerWidget(gtk.VBox):
 
         self.buttons['connect'].connect('clicked', self.on_connect)
 
-        gtk.VBox.__init__(self)
+        GObject.GObject.__init__(self)
         self.set_spacing(5)
         
-        serverlist = gtk.VBox()
+        serverlist = Gtk.VBox()
         serverlist.set_spacing(5)
 
-        serverlist_buttons = gtk.HButtonBox()
-        serverlist_buttons.set_layout(gtk.BUTTONBOX_START)
+        serverlist_buttons = Gtk.HButtonBox()
+        serverlist_buttons.set_layout(Gtk.ButtonBoxStyle.START)
         
-        serverlist_window = gtk.ScrolledWindow()
-        serverlist_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        serverlist_window.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        serverlist_window = Gtk.ScrolledWindow()
+        serverlist_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        serverlist_window.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
         serverlist_window.add(self.networks)
         
         serverlist_buttons.add(self.buttons['add'])
         serverlist_buttons.add(self.buttons['remove'])
         
-        serverlist.pack_start(serverlist_window, expand=True)
-        serverlist.pack_start(serverlist_buttons, expand=False)
+        serverlist.pack_start(serverlist_window, True, True, 0)
+        serverlist.pack_start(serverlist_buttons, False, True, 0)
         
-        hb = gtk.HBox()
+        hb = Gtk.HBox()
         hb.set_spacing(5)
-        hb.pack_start(serverlist, expand=False)
-        hb.pack_start(self.infobox)
+        hb.pack_start(serverlist, False, True, 0)
+        hb.pack_start(self.infobox, True, True, 0)
         
-        self.pack_start(hb)
+        self.pack_start(hb, True, True, 0)
         
-        hb = gtk.HButtonBox()
-        hb.set_layout(gtk.BUTTONBOX_END)
+        hb = Gtk.HButtonBox()
+        hb.set_layout(Gtk.ButtonBoxStyle.END)
         
         hb.add(self.buttons['close'])
         hb.add(self.buttons['connect'])
         
-        self.pack_end(hb, expand=False)
+        self.pack_end(hb, False, True, 0)
 
 def main():
     gc.collect()
 
-    win = gtk.Window()
+    win = Gtk.Window()
     win.set_title('Networks')
     
     try:
         w.set_icon(
-            gtk.gdk.pixbuf_new_from_file(urk.path("urk_icon.svg"))
+            GdkPixbuf.Pixbuf.new_from_file(urk.path("urk_icon.svg"))
             )
     except:
         pass

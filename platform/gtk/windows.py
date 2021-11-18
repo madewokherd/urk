@@ -1,4 +1,4 @@
-import gtk
+from gi.repository import Gtk
 
 import irc
 from conf import conf
@@ -57,7 +57,7 @@ def get_default(network):
     for window in get_with(network=network):
         return window
 
-class Window(gtk.VBox):
+class Window(Gtk.VBox):
     _need_window_init = True
     
     def mutate(self, newclass, network, id):
@@ -127,7 +127,7 @@ class Window(gtk.VBox):
     def __init__(self, network, id):
         if self._need_window_init:
             #make sure we don't call this an extra time when mutating
-            gtk.VBox.__init__(self, False)
+            GObject.GObject.__init__(self, False)
             self._need_window_init = False
         
             self.output = widgets.TextOutput(self)
@@ -148,13 +148,13 @@ class SimpleWindow(Window):
         self.focus = self.input.grab_focus
         self.connect("key-press-event", self.transfer_text)
 
-        self.pack_end(self.input, expand=False)
+        self.pack_end(self.input, False, True, 0)
         
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox = Gtk.ScrolledWindow()
+        topbox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         topbox.add(self.output)
 
-        self.pack_end(topbox)
+        self.pack_end(topbox, True, True, 0)
 
         self.show_all()
 
@@ -171,23 +171,23 @@ class _ChannelStatusBase(Window):
             self.focus = self.input.grab_focus
             self.connect("key-press-event", self.transfer_text)
             
-            topbox = gtk.ScrolledWindow()
-            topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+            topbox = Gtk.ScrolledWindow()
+            topbox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
             topbox.add(self.output)
             
-            self.nlbox = gtk.ScrolledWindow()
-            self.nlbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)   
+            self.nlbox = Gtk.ScrolledWindow()
+            self.nlbox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)   
             self.nlbox.add(self.nicklist)
 
             self.nlbox.set_size_request(conf.get("ui-gtk/nicklist-width", 112), -1)
 
-            botbox = gtk.HBox()
-            botbox.pack_start(self.input)
-            botbox.pack_end(self.nick_label, expand=False)
+            botbox = Gtk.HBox()
+            botbox.pack_start(self.input, True, True, 0)
+            botbox.pack_end(self.nick_label, False, True, 0)
             
-            self.pack_end(botbox, expand=False)
+            self.pack_end(botbox, False, True, 0)
             
-            pane = gtk.HPaned()
+            pane = Gtk.HPaned()
             pane.pack1(topbox, resize=True, shrink=False)
             pane.pack2(self.nlbox, resize=False, shrink=True)
             
@@ -196,7 +196,7 @@ class _ChannelStatusBase(Window):
             pane.connect("button-press-event", move_nicklist)
             pane.connect("button-release-event", drop_nicklist)
             
-            self.pack_end(pane)
+            self.pack_end(pane, True, True, 0)
 
             self.show_all()
 
@@ -227,23 +227,23 @@ class QueryWindow(Window):
         self.focus = self.input.grab_focus
         self.connect("key-press-event", self.transfer_text)
 
-        botbox = gtk.HBox()
-        botbox.pack_start(self.input)
-        botbox.pack_end(self.nick_label, expand=False)
+        botbox = Gtk.HBox()
+        botbox.pack_start(self.input, True, True, 0)
+        botbox.pack_end(self.nick_label, False, True, 0)
 
-        self.pack_end(botbox, expand=False)
+        self.pack_end(botbox, False, True, 0)
         
-        topbox = gtk.ScrolledWindow()
-        topbox.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        topbox = Gtk.ScrolledWindow()
+        topbox.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         topbox.add(self.output)
 
-        self.pack_end(topbox)
+        self.pack_end(topbox, True, True, 0)
 
         self.show_all()
 
 def move_nicklist(paned, event):
     paned._moving = (
-        event.type == gtk.gdk._2BUTTON_PRESS,
+        event.type == Gdk._2BUTTON_PRESS,
         paned.get_position()
         )
         

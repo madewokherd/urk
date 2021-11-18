@@ -1,7 +1,7 @@
 import traceback
 
 try:
-    import gobject
+    from gi.repository import GObject
     import dbus
     import dbus.service
     import dbus.glib
