@@ -265,7 +265,7 @@ class NickEditor(Gtk.EventBox):
 
             self.remove(self.label)
             self.add(entry)
-            self.window.set_cursor(None)
+            self.props.window.set_cursor(None)
                 
             entry.show()
             entry.grab_focus()
@@ -274,7 +274,7 @@ class NickEditor(Gtk.EventBox):
         self.remove(widget)
         self.add(self.label)
         self.win.input.grab_focus()
-        self.window.set_cursor(Gdk.Cursor.new(Gdk.XTERM))
+        self.props.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.XTERM))
 
     def __init__(self, window):
         GObject.GObject.__init__(self)
@@ -291,7 +291,7 @@ class NickEditor(Gtk.EventBox):
 
         self.connect(
             "realize", 
-            lambda *a: self.window.set_cursor(Gdk.Cursor.new(Gdk.XTERM))
+            lambda *a: self.props.window.set_cursor(Gdk.Cursor.new(Gdk.CursorType.XTERM))
             )
 
 # The entry which you type in to send messages        
