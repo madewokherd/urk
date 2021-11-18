@@ -41,10 +41,10 @@ ACTIVITY_MARKUP = {
 # This holds all tags for all windows ever
 tag_table = Gtk.TextTagTable()
 
-link_tag = Gtk.TextTag('link')
+link_tag = Gtk.TextTag.new('link')
 link_tag.set_property('underline', Pango.Underline.SINGLE)
 
-indent_tag = Gtk.TextTag('indent')
+indent_tag = Gtk.TextTag.new('indent')
 indent_tag.set_property('indent', -20)
 
 tag_table.add(link_tag)
