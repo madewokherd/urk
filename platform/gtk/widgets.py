@@ -920,7 +920,7 @@ class UrkUITabs(Gtk.Window):
         self.tabs.set_property("can-focus", False)
         
         def super_window_change(self, event):
-            if event.type == Gdk.FOCUS_CHANGE and event.in_:
+            if event.type == Gdk.EventType.FOCUS_CHANGE and event.in_:
                 window = windows.manager.get_active()
             
                 if window:
