@@ -670,8 +670,9 @@ class TextOutput(Gtk.TextView):
     
                 vadj.connect("value-changed", set_scroll)
 
-        self.connect("set-scroll-adjustments", setup_scroll)
-        self.connect("size-allocate", TextOutput.scroll)
+        # TODO: reimplement auto window scroll in GTK3
+        #self.connect("set-scroll-adjustments", setup_scroll)
+        #self.connect("size-allocate", TextOutput.scroll)
 
         def set_cursor(widget):
             self.get_window(Gtk.TextWindowType.TEXT).set_cursor(None)      
