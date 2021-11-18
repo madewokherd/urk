@@ -7,6 +7,7 @@ import signal
 import commands
 
 from gi.repository import GObject
+from gi.repository import Gdk
 GObject.threads_init()
 
 #stupid workaround

@@ -2,7 +2,7 @@ import codecs
 
 from gi.repository import GObject
 from gi.repository import Gtk
-import Gtk.gdk
+from gi.repository import Gdk
 from gi.repository import Pango
 
 from conf import conf
