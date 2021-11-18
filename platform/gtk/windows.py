@@ -1,4 +1,5 @@
 from gi.repository import Gtk
+from gi.repository import GObject
 
 import irc
 from conf import conf
@@ -127,7 +128,7 @@ class Window(Gtk.VBox):
     def __init__(self, network, id):
         if self._need_window_init:
             #make sure we don't call this an extra time when mutating
-            GObject.GObject.__init__(self, False)
+            GObject.GObject.__init__(self)
             self._need_window_init = False
         
             self.output = widgets.TextOutput(self)
